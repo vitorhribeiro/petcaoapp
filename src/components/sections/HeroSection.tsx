@@ -6,7 +6,7 @@ import { useHomeContent } from '@/hooks/useHomeContent';
 import { usePetshop } from '@/contexts/PetshopContext';
 import { useHeroGalleryImages } from '@/hooks/useHeroGalleryImages';
 import { OrbitalVisual } from '@/components/hero/OrbitalVisual';
-import heroDog from '@/assets/hero-dog.png';
+import heroDog from '@/assets/hero-dog.webp';
 import {
   Tooltip,
   TooltipContent,
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/tooltip';
 
 import { heroStagger as stagger, heroFadeUp as fadeUp } from '@/lib/animations';
+import { cn } from '@/lib/utils';
 
 /* ── Inject scroll indicator animation (CSS-only) ── */
 const scrollStyleId = 'hero-scroll-styles';

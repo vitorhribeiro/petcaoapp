@@ -102,7 +102,7 @@ function FaviconUploader() {
     if (!validation.valid) { toast.error(validation.error || 'Arquivo inválido'); e.target.value = ''; return; }
     setUploading(true);
     try {
-      const { url } = await uploadImageToStorage(file, 'logos', 'favicon', { quality: 0.9, maxWidth: 256, maxHeight: 256 });
+      const { url } = await uploadImageToStorage(file, 'logos', 'favicon', { quality: 0.75, maxWidth: 256, maxHeight: 256 });
       setFaviconPreview(url);
       // Update the actual favicon in the document
       let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
@@ -230,7 +230,7 @@ export default function Configuracoes() {
     if (!validation.valid) { toast.error(validation.error || 'Arquivo inválido'); e.target.value = ''; return; }
     try {
       toast.loading('Enviando logo...');
-      const { url } = await uploadImageToStorage(file, 'logos', undefined, { quality: 0.9, maxWidth: 800, maxHeight: 400 });
+      const { url } = await uploadImageToStorage(file, 'logos', undefined, { quality: 0.8, maxWidth: 800, maxHeight: 400 });
       setLogoPreview(url);
       setBrandingForm(prev => ({ ...prev, logoUrl: url }));
       toast.dismiss();
@@ -565,7 +565,7 @@ export default function Configuracoes() {
                 </Button>
                 <p className="text-[11px] text-muted-foreground mt-1">Exibida no centro do collage</p>
               </div>
-              <input id="cms-hero-mascot" type="file" accept="image/*" className="hidden" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const validation = validateImageFile(file); if (!validation.valid) { toast.error(validation.error || 'Arquivo inválido'); e.target.value = ''; return; } try { toast.loading('Convertendo para WebP...'); const { url } = await uploadImageToStorage(file, 'gallery', undefined, { quality: 0.9, maxWidth: 800, maxHeight: 800 }); setCmsForm(p => ({ ...p, hero: { ...p.hero, imageUrl: url } })); toast.dismiss(); toast.success('Imagem enviada! Salve para aplicar.'); } catch { toast.dismiss(); toast.error('Erro ao enviar imagem.'); } e.target.value = ''; }} />
+              <input id="cms-hero-mascot" type="file" accept="image/*" className="hidden" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const validation = validateImageFile(file); if (!validation.valid) { toast.error(validation.error || 'Arquivo inválido'); e.target.value = ''; return; } try { toast.loading('Convertendo para WebP...'); const { url } = await uploadImageToStorage(file, 'gallery', undefined, { quality: 0.8, maxWidth: 1024, maxHeight: 1024 }); setCmsForm(p => ({ ...p, hero: { ...p.hero, imageUrl: url } })); toast.dismiss(); toast.success('Imagem enviada! Salve para aplicar.'); } catch { toast.dismiss(); toast.error('Erro ao enviar imagem.'); } e.target.value = ''; }} />
             </div>
 
             <SectionLabel>Fotos Circulares do Hero</SectionLabel>

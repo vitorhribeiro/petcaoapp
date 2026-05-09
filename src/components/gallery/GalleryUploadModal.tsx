@@ -113,7 +113,11 @@ export function GalleryUploadModal({ open, onOpenChange, onSubmit, isAdmin }: Ga
         selectedFile,
         'gallery',
         undefined,
-        { quality: 0.85 }
+        { 
+          quality: 0.75, // Reduzido de 0.85 para 0.75 para maior economia
+          maxWidth: 1600, // Limite máximo de largura
+          maxHeight: 1600, // Limite máximo de altura
+        }
       );
 
       setUploadProgress('Salvando no banco...');

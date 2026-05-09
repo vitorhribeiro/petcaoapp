@@ -2,8 +2,8 @@ import { ReactNode } from 'react';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import { Link } from 'react-router-dom';
 import { useBranding } from '@/contexts/BrandingContext';
-import logoPetDefault from '@/assets/logopet.png';
-import petTexture from '@/assets/pet-texture-gray.png';
+import logoPetDefault from '@/assets/logopet.webp';
+import petTexture from '@/assets/pet-texture-gray.webp';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ArrowLeft } from 'lucide-react';
 

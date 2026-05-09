@@ -32,7 +32,9 @@ interface AdminContextType {
   approvePhoto: (id: string, category?: string) => Promise<void>;
   rejectPhoto: (id: string) => Promise<void>;
   addPhoto: (data: Parameters<typeof galleryService.createGalleryPhoto>[0]) => Promise<void>;
+  updatePhoto: (id: string, data: Partial<galleryService.GalleryPhotoRow>) => Promise<void>;
   updatePhotoCategory: (id: string, category: string) => Promise<void>;
+  deletePhoto: (id: string) => Promise<void>;
 
   // Reviews
   reviewsList: reviewsService.ReviewRow[];
@@ -41,6 +43,7 @@ interface AdminContextType {
   approveReview: (id: string) => Promise<void>;
   rejectReview: (id: string) => Promise<void>;
   addReview: (data: Parameters<typeof reviewsService.createReview>[0]) => Promise<void>;
+  updateReview: (id: string, data: Partial<reviewsService.ReviewRow>) => Promise<void>;
   setShopResponse: (reviewId: string, response: string) => Promise<void>;
 
   // Services
@@ -290,10 +293,24 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     await refreshGallery();
   }, [refreshGallery]);
 
-  const updatePhotoCategory = useCallback(async (id: string, category: string) => {
-    await galleryService.updateGalleryPhoto(id, { category });
+  const updatePhoto = useCallback(async (id: string, data: Partial<galleryService.GalleryPhotoRow>) => {
+    await galleryService.updateGalleryPhoto(id, data);
     await refreshGallery();
   }, [refreshGallery]);
+
+  const updatePhotoCategory = useCallback(async (id: string, category: string) => {
+    await updatePhoto(id, { category });
+  }, [updatePhoto]);
+
+  const deletePhoto = useCallback(async (id: string) => {
+    const success = await galleryService.deleteGalleryPhoto(id);
+    if (success) {
+      await refreshGallery();
+    } else {
+      throw new Error('Falha ao excluir foto.');
+    }
+  }, [refreshGallery]);
+
 
   // Review actions
   const approveReview = useCallback(async (id: string) => {
@@ -319,10 +336,14 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     await refreshReviews();
   }, [refreshReviews]);
 
-  const setShopResponse = useCallback(async (reviewId: string, response: string) => {
-    await reviewsService.updateReview(reviewId, { shop_response: response });
+  const updateReview = useCallback(async (id: string, data: Partial<reviewsService.ReviewRow>) => {
+    await reviewsService.updateReview(id, data);
     await refreshReviews();
   }, [refreshReviews]);
+
+  const setShopResponse = useCallback(async (reviewId: string, response: string) => {
+    await updateReview(reviewId, { shop_response: response });
+  }, [updateReview]);
 
   // Service actions
   const addService = useCallback(async (data: Omit<servicesService.ServiceRow, 'id' | 'petshop_id'>) => {
@@ -370,10 +391,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       addPreAgendamento: async (data: any) => { await handleCreateAppointment(data); }, // Alias
 
       galleryImages: gallery, galleryLoading, refreshGallery,
-      approvePhoto, rejectPhoto, addPhoto, updatePhotoCategory,
+      approvePhoto, rejectPhoto, addPhoto, updatePhoto, updatePhotoCategory, deletePhoto,
 
       reviewsList: reviews, reviewsLoading, refreshReviews,
-      approveReview, rejectReview, addReview, setShopResponse,
+      approveReview, rejectReview, addReview, updateReview, setShopResponse,
 
       servicesList: services, servicesLoading, refreshServices,
       addService, updateService: handleUpdateService, deleteService: handleDeleteService,

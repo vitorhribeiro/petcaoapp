@@ -7,7 +7,7 @@ import { useBranding } from '@/contexts/BrandingContext';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
-import logoPetDefault from '@/assets/logopet.png';
+import logoPetDefault from '@/assets/logopet.webp';
 import { useTestModes } from '@/contexts/TestModesContext';
 
 interface MobileDrawerMenuProps {

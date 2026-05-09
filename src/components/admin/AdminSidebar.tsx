@@ -8,9 +8,9 @@ import {
   LayoutDashboard, CalendarDays, Package, Shield, Scissors,
   Settings, ArrowLeft, UserCheck, Wrench, PawPrint,
   ChevronsLeft, ChevronsRight, History, Monitor, ChevronDown,
-  DollarSign, ShoppingBag, BarChart3, Bell, Megaphone, Crown,
+  DollarSign, ShoppingBag, BarChart3, Bell, Megaphone, Crown, Images,
 } from 'lucide-react';
-import logoPetDefault from '@/assets/logopet.png';
+import logoPetDefault from '@/assets/logopet.webp';
 import { useBranding } from '@/contexts/BrandingContext';
 import { usePageAccess } from '@/hooks/usePageAccess';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -76,7 +76,7 @@ export function AdminSidebar({ collapsed, onToggle, mobile = false }: AdminSideb
     { path: '/admin/clientes', label: 'Clientes', icon: UserCheck, pageKey: 'clientes' },
     { path: '/admin/pets', label: 'Pets', icon: PawPrint, pageKey: 'clientes' },
     { path: '/admin/servicos', label: 'Serviços e Valores', icon: Scissors, pageKey: 'servicos' },
-    { path: '/admin/moderacao', label: 'Galeria e Avaliações', icon: Shield, pageKey: 'moderacao' },
+    { path: '/admin/moderacao', label: 'Galeria e Avaliações', icon: Images, pageKey: 'moderacao' },
     { path: '/admin/configuracoes', label: 'Configurações', icon: Settings, pageKey: 'configuracoes' },
     { path: '/admin/audit-log', label: 'Registro de Alterações', icon: History, pageKey: 'configuracoes' },
   ];

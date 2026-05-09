@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import { Menu, LogOut } from 'lucide-react';
-import logoPetDefault from '@/assets/logopet.png';
+import logoPetDefault from '@/assets/logopet.webp';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';

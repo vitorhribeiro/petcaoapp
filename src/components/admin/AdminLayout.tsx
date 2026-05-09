@@ -2,9 +2,10 @@ import { Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminSidebar } from './AdminSidebar';
 import { Button } from '@/components/ui/button';
-import { LogOut, Menu } from 'lucide-react';
+import { LogOut, Menu, Globe, Clock } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { NavLink } from 'react-router-dom';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useSidebarCollapse } from '@/hooks/useSidebarCollapse';
 
@@ -12,6 +13,21 @@ export function AdminLayout() {
   const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { collapsed, toggle } = useSidebarCollapse();
+  
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 10000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formattedDate = new Intl.DateTimeFormat('pt-BR', { 
+    day: '2-digit', month: 'short' 
+  }).format(currentTime);
+  
+  const formattedTime = currentTime.toLocaleTimeString('pt-BR', { 
+    hour: '2-digit', minute: '2-digit' 
+  });
 
   return (
     <div className="h-screen overflow-hidden flex">
@@ -35,7 +51,6 @@ export function AdminLayout() {
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-72 overflow-y-auto">
                 <div onClick={(e) => {
-                  // Only close the sheet when clicking an actual navigation link (anchor/NavLink)
                   const target = e.target as HTMLElement;
                   if (target.closest('a[href]')) setMobileOpen(false);
                 }}>
@@ -43,15 +58,41 @@ export function AdminLayout() {
                 </div>
               </SheetContent>
             </Sheet>
-            <span className="text-sm font-medium text-foreground">
-              {user?.name} <span className="text-xs text-muted-foreground ml-1 capitalize">({user?.role})</span>
-            </span>
-            
+
+            {/* Status Bar */}
+            <div className="flex items-center gap-3 px-3 py-1.5 bg-muted/40 rounded-full border border-border/50">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Clock className="w-3.5 h-3.5 text-primary" />
+                <div className="flex items-center gap-1.5 leading-none">
+                  <span className="text-[11px] font-bold uppercase tracking-tight">{formattedDate}</span>
+                  <span className="w-px h-2.5 bg-border/60" />
+                  <span className="text-[11px] tabular-nums font-medium opacity-80">{formattedTime}</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-3">
+            <NavLink 
+              to="/" 
+              className="flex items-center gap-2 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors bg-muted/30 hover:bg-muted/50 rounded-full border border-border/40"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Voltar ao Site</span>
+            </NavLink>
+
+            <div className="w-px h-6 bg-border/60 mx-1" />
+
             <ThemeToggle />
-            <Button variant="ghost" size="sm" onClick={logout} className="text-muted-foreground">
-              <LogOut className="w-4 h-4 mr-1" /> Sair
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={logout} 
+              className="h-9 px-3 gap-2 rounded-xl text-destructive hover:text-destructive-foreground hover:bg-destructive transition-all font-bold text-xs"
+            >
+              <LogOut className="w-4 h-4" /> 
+              <span className="hidden sm:inline text-[11px] uppercase tracking-wider">Sair</span>
             </Button>
           </div>
         </header>

@@ -1,5 +1,5 @@
 import { MessageCircle, Phone, ExternalLink, Clock, Sparkles } from 'lucide-react';
-import petTextureGray from '@/assets/pet-texture-gray.png';
+import petTextureGray from '@/assets/pet-texture-gray.webp';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { getPetshopWhatsAppPhone, openWhatsAppConversation } from '@/lib/whatsapp';
