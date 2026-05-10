@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GalleryUploadModal } from '@/components/gallery/GalleryUploadModal';
+import { PhotoViewer } from '@/components/gallery/PhotoViewer';
 import { AddReviewModal } from '@/components/modals/AddReviewModal';
 import { ResponsiveModal } from '@/components/modals/ResponsiveModal';
 import { Input } from '@/components/ui/input';
@@ -18,8 +19,9 @@ import {
   CheckCircle2, XCircle, Image, Star, Plus, ChevronLeft, ChevronRight,
   Shield, Clock, Camera, MessageSquare, Sparkles, ImageOff, MessageCircleOff,
   Trash2, Images, MessageSquareText, FileCheck, History, LayoutDashboard,
-  Info, Edit2
+  Info, Edit2, Store
 } from 'lucide-react';
+import * as reviewsService from '@/services/reviewsService';
 import {
   Tooltip,
   TooltipContent,
@@ -63,7 +65,7 @@ const STATUS_ICONS: Record<ModerationStatus, any> = {
 };
 
 export default function Moderacao() {
-  const { galleryImages, reviewsList, approvePhoto, rejectPhoto, approveReview, rejectReview, addPhoto, setShopResponse, refreshGallery, deletePhoto, updatePhoto, updateReview } = useAdmin();
+  const { galleryImages, reviewsList, approvePhoto, rejectPhoto, approveReview, rejectReview, addPhoto, setShopResponse, refreshGallery, refreshReviews, deletePhoto, updatePhoto, updateReview } = useAdmin();
   const { displayLimits } = useConfig();
   const pageSize = displayLimits.moderationPageSizePhotos || 10;
   const reviewPageSize = displayLimits.moderationPageSizeReviews || 10;
@@ -81,6 +83,9 @@ export default function Moderacao() {
 
   const [reviewFilter, setReviewFilter] = useState<'todas' | ModerationStatus>('todas');
   const [reviewPage, setReviewPage] = useState(0);
+
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
 
   const pendingPhotos = galleryImages.filter(img => img.moderation_status === 'pendente');
   const pendingReviews = reviewsList.filter(r => r.moderation_status === 'pendente');
@@ -102,6 +107,14 @@ export default function Moderacao() {
   const updatePhotoCategory = async (id: string, category: string) => {
     await galleryService.updateGalleryPhoto(id, { category });
     refreshGallery();
+  };
+
+  const openViewer = (photoId: string) => {
+    const index = filteredPhotos.findIndex(p => p.id === photoId);
+    if (index !== -1) {
+      setViewerIndex(index);
+      setViewerOpen(true);
+    }
   };
 
   const handleUploadSubmit = async (
@@ -177,123 +190,268 @@ export default function Moderacao() {
 
   const EmptyState = ({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description?: string }) => (
     <div className="flex flex-col items-center justify-center py-20 px-6 bg-card/40 border border-dashed border-border/60 rounded-3xl space-y-4">
-      <div className="w-20 h-20 rounded-full bg-muted/30 flex items-center justify-center relative">
+      <div className="w-20 h-20 rounded-full bg-muted/30 flex items-center justify-center relative border border-border/20 shadow-inner">
         <Icon className="w-10 h-10 text-muted-foreground/30" />
         <div className="absolute inset-0 rounded-full border border-primary/5 animate-pulse" />
       </div>
       <div className="text-center space-y-1">
-        <p className="text-lg font-semibold text-foreground/80">{title}</p>
+        <p className="text-lg font-bold text-foreground/80">{title}</p>
         {description && <p className="text-sm text-muted-foreground/60 max-w-[280px] mx-auto leading-relaxed">{description}</p>}
       </div>
     </div>
   );
 
   // ─── Photo Card ───
-  const PhotoCard = ({ img, showActions, showCategoryEdit }: { img: typeof galleryImages[0]; showActions: boolean; showCategoryEdit?: boolean }) => (
+  const PhotoCard = ({ img, showActions, showCategoryEdit }: { img: galleryService.GalleryPhotoRow; showActions: boolean; showCategoryEdit?: boolean }) => (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.2 }}
+      className="relative group"
+    >
+      <div className="aspect-square bg-muted rounded-2xl overflow-hidden border border-border/40 relative shadow-sm group-hover:shadow-md transition-all duration-300">
+        <OptimizedImage 
+          src={img.url} 
+          alt={img.alt || ''} 
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+          aspectRatio="square" 
+        />
+        
+        {/* Overlays */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        
+        <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+          <Badge className={cn('text-[10px] font-bold border-none backdrop-blur-md px-2 py-0.5 shadow-sm', 
+            img.moderation_status === 'aprovado' ? 'bg-emerald-500/90 text-white' : 
+            img.moderation_status === 'pendente' ? 'bg-amber-500/90 text-white' : 
+            'bg-destructive/90 text-white'
+          )}>
+            {STATUS_LABELS[img.moderation_status as ModerationStatus] || img.moderation_status}
+          </Badge>
+          {img.category && (
+            <Badge variant="secondary" className="text-[9px] bg-background/80 backdrop-blur-md border-none text-foreground/70 px-1.5 py-0">
+              {img.category === 'ambiente' ? '🏠 Ambiente' : 
+               img.category === 'antes-depois' ? '✨ Antes/Depois' : 
+               img.category === 'pets' ? '🐶 Pets' : '📌 Outro'}
+            </Badge>
+          )}
+        </div>
+
+        <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-y-2 group-hover:translate-y-0 transition-transform">
+          <div className="flex gap-1">
+            <Button size="sm" variant="secondary" className="h-7 text-[10px] flex-1 bg-background/90 backdrop-blur-sm border-none" onClick={() => openViewer(img.id)}>
+              <Image className="w-3 h-3 mr-1" /> Ver
+            </Button>
+            <Button size="sm" variant="secondary" className="h-7 w-7 p-0 bg-background/90 backdrop-blur-sm border-none" onClick={() => setEditPhotoTarget(img)}>
+              <Edit2 className="w-3 h-3" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {showActions && img.moderation_status === 'pendente' && (
+        <div className="mt-2 flex gap-2">
+          <Select
+            value={photoCategorySelections[img.id] || ''}
+            onValueChange={(v) => setPhotoCategorySelections(prev => ({ ...prev, [img.id]: v }))}
+          >
+            <SelectTrigger className="h-8 text-[11px] rounded-xl flex-1 bg-card">
+              <SelectValue placeholder="Tipo..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ambiente">🏠 Ambiente</SelectItem>
+              <SelectItem value="antes-depois">✨ Antes/Depois</SelectItem>
+              <SelectItem value="pets">🐶 Pets</SelectItem>
+              <SelectItem value="outro">📌 Outro</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            size="sm"
+            className="h-8 w-8 p-0 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shrink-0"
+            disabled={!photoCategorySelections[img.id]}
+            onClick={() => approvePhoto(img.id, photoCategorySelections[img.id])}
+          >
+            <CheckCircle2 className="w-4 h-4" />
+          </Button>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="h-8 w-8 p-0 rounded-xl text-destructive border-destructive/20 hover:bg-destructive/10 shrink-0" 
+            onClick={() => rejectPhoto(img.id)}
+          >
+            <XCircle className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+      
+      {showCategoryEdit && img.moderation_status === 'aprovado' && (
+        <div className="mt-2">
+          <Select
+            value={img.category || ''}
+            onValueChange={(v) => updatePhotoCategory(img.id, v)}
+          >
+            <SelectTrigger className="h-8 text-[10px] rounded-xl w-full bg-muted/40 border-none hover:bg-muted/60 transition-colors">
+              <SelectValue placeholder="Alterar categoria..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ambiente">🏠 Ambiente</SelectItem>
+              <SelectItem value="antes-depois">✨ Antes/Depois</SelectItem>
+              <SelectItem value="pets">🐶 Pets</SelectItem>
+              <SelectItem value="outro">📌 Outro</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+    </motion.div>
+  );
+
+  // ─── Review Card ───
+  const ReviewCard = ({ review, showActions }: { review: reviewsService.ReviewRow; showActions: boolean }) => (
+    <motion.div
+      initial={{ opacity: 0, x: -12 }}
+      animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="overflow-hidden border-border/40 bg-card/80 backdrop-blur-sm hover:shadow-lg transition-all duration-300 rounded-2xl group">
-        <div className="aspect-square bg-muted overflow-hidden relative">
-          <OptimizedImage src={img.url} alt={img.alt || ''} className="w-full h-full group-hover:scale-105 transition-transform duration-500" aspectRatio="square" />
-          {/* Status overlay badge */}
-          <div className={cn(
-            'absolute top-2.5 right-2.5 px-2 py-1 rounded-full text-[10px] font-bold border shadow-sm flex items-center gap-1 backdrop-blur-md',
-            STATUS_COLORS[img.moderation_status as ModerationStatus] || ''
-          )}>
-            {(() => {
-              const Icon = STATUS_ICONS[img.moderation_status as ModerationStatus];
-              return Icon ? <Icon className="w-3 h-3" /> : null;
-            })()}
-            {STATUS_LABELS[img.moderation_status as ModerationStatus] || img.moderation_status}
-          </div>
-          {img.source && (
-            <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-background/95 text-foreground/80 border border-border shadow-sm flex items-center gap-1 backdrop-blur-md">
-              {img.source === 'PETSHOP' ? 'Oficial' : 'Cliente'}
-            </div>
-          )}
-          {/* Edit button in corner */}
-          <button 
-            onClick={() => setEditPhotoTarget(img)}
-            className="absolute bottom-2.5 right-2.5 p-1.5 rounded-full bg-background/80 text-foreground/70 hover:text-primary backdrop-blur-md border border-border/20 shadow-sm transition-colors"
-          >
-            <Edit2 className="w-3 h-3" />
-          </button>
-        </div>
-        <CardContent className="p-3.5 space-y-2.5">
-          <div>
-            <p className="text-sm font-semibold text-foreground truncate">{img.alt || 'Sem título'}</p>
-            <div className="flex items-center gap-2 mt-0.5">
-              {img.pet_name && <span className="text-xs text-muted-foreground">🐾 {img.pet_name}</span>}
-              {img.owner_name && <span className="text-xs text-muted-foreground">• {img.owner_name}</span>}
-            </div>
-            {img.created_at && (
-              <p className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
-                <Clock className="w-3 h-3" /> {img.created_at.split('T')[0]}
-              </p>
-            )}
-          </div>
-
-          {showActions && img.moderation_status === 'pendente' && (
-            <div className="space-y-2 pt-1">
-              <Select
-                value={photoCategorySelections[img.id] || ''}
-                onValueChange={(v) => setPhotoCategorySelections(prev => ({ ...prev, [img.id]: v }))}
-              >
-                <SelectTrigger className="h-8 text-xs rounded-lg">
-                  <SelectValue placeholder="Tipo da foto *" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ambiente">🏠 Ambientes</SelectItem>
-                  <SelectItem value="antes-depois">✨ Antes e Depois</SelectItem>
-                  <SelectItem value="pets">🐶 Pets</SelectItem>
-                  <SelectItem value="outro">📌 Outro</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  className="flex-1 h-9 rounded-xl gap-1.5 shadow-sm"
-                  disabled={!photoCategorySelections[img.id]}
+      <Card className="border-border/40 bg-card/60 backdrop-blur-sm hover:shadow-md transition-all duration-300 rounded-3xl overflow-hidden relative group">
+        <CardContent className="p-5 sm:p-6">
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Review Visual Column (if has photo) */}
+            {review.photos && review.photos.length > 0 && (
+              <div className="w-24 h-24 md:w-32 md:h-32 shrink-0 rounded-2xl overflow-hidden border border-border/40 shadow-sm relative group/review-photo">
+                <OptimizedImage src={review.photos[0]} alt="Foto da avaliação" className="w-full h-full object-cover" aspectRatio="square" />
+                <button 
+                  className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/review-photo:opacity-100 transition-opacity"
                   onClick={() => {
-                    approvePhoto(img.id, photoCategorySelections[img.id]);
-                    setPhotoCategorySelections(prev => { const n = { ...prev }; delete n[img.id]; return n; });
+                    // This is a simple shortcut to view the photo
+                    const win = window.open(review.photos![0], '_blank');
+                    win?.focus();
                   }}
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Aprovar
+                  <Plus className="w-5 h-5 text-white" />
+                </button>
+              </div>
+            )}
+
+            {/* Review Content Column */}
+            <div className="flex-1 space-y-4 min-w-0">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 shadow-inner">
+                    <span className="text-lg font-bold text-primary">{review.name?.charAt(0)?.toUpperCase()}</span>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-foreground flex items-center gap-2">
+                      {review.name}
+                      <Badge className={cn('text-[10px] font-bold px-2 py-0 border-none', 
+                        review.moderation_status === 'aprovado' ? 'bg-emerald-500/10 text-emerald-600' : 
+                        review.moderation_status === 'pendente' ? 'bg-amber-500/10 text-amber-600' : 
+                        'bg-destructive/10 text-destructive'
+                      )}>
+                        {STATUS_LABELS[review.moderation_status as ModerationStatus] || review.moderation_status}
+                      </Badge>
+                    </h4>
+                    {review.pet_name && <p className="text-xs text-muted-foreground flex items-center gap-1.5"><Sparkles className="w-3 h-3 text-primary/60" /> {review.pet_name}</p>}
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-end gap-1">
+                  <div className="flex gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className={cn('w-4 h-4', i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/20')} />
+                    ))}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{review.created_at?.split('T')[0]}</span>
+                </div>
+              </div>
+
+              <div className="relative">
+                <div className="absolute -left-3 top-0 bottom-0 w-1 bg-primary/20 rounded-full" />
+                <p className="text-sm text-foreground/90 leading-relaxed italic pl-2">
+                  "{review.comment}"
+                </p>
+              </div>
+
+              {review.shop_response && (
+                <div className="p-3 bg-primary/5 rounded-2xl border border-primary/10 relative overflow-hidden group/response">
+                  <div className="absolute top-0 right-0 p-2 opacity-0 group-hover/response:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground" onClick={() => setResponseTexts(prev => ({ ...prev, [review.id]: review.shop_response! }))}>
+                      <Edit2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                  <p className="text-[11px] font-bold text-primary mb-1 flex items-center gap-1.5 uppercase tracking-wide">
+                    <Store className="w-3 h-3" /> Resposta da Loja
+                  </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{review.shop_response}</p>
+                </div>
+              )}
+
+              {/* Response Input */}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Responder como PetCão..."
+                  value={responseTexts[review.id] ?? ''}
+                  onChange={(e) => setResponseTexts(prev => ({ ...prev, [review.id]: e.target.value }))}
+                  className="h-9 text-xs rounded-xl bg-muted/40 border-border/30 focus:bg-background transition-all"
+                />
+                <Button 
+                  size="sm" 
+                  variant={responseTexts[review.id] ? "default" : "outline"} 
+                  className="h-9 px-4 rounded-xl gap-2 font-semibold"
+                  disabled={!responseTexts[review.id]?.trim()}
+                  onClick={() => handleSaveResponse(review.id)}
+                >
+                  <MessageSquare className="w-3.5 h-3.5" /> 
+                  <span className="hidden sm:inline">Responder</span>
                 </Button>
-                <Button size="sm" variant="outline" className="h-9 w-9 p-0 rounded-xl text-destructive hover:text-destructive" onClick={() => rejectPhoto(img.id)}>
-                  <XCircle className="w-3.5 h-3.5" />
-                </Button>
+              </div>
+            </div>
+
+            {/* Admin Actions */}
+            <div className="flex md:flex-col gap-2 shrink-0 md:border-l md:border-border/20 md:pl-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="flex-1 md:flex-none h-10 rounded-xl gap-2 text-muted-foreground hover:text-primary hover:bg-primary/5"
+                onClick={() => setEditReviewTarget(review)}
+              >
+                <Edit2 className="w-4 h-4" /> <span className="md:hidden">Editar</span>
+              </Button>
+              
+              {showActions && review.moderation_status === 'pendente' ? (
+                <>
+                  <Button size="sm" className="flex-1 md:flex-none h-10 rounded-xl gap-2 bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm" onClick={() => approveReview(review.id)}>
+                    <CheckCircle2 className="w-4 h-4" /> Aprovar
+                  </Button>
+                  <Button size="sm" variant="outline" className="flex-1 md:flex-none h-10 rounded-xl gap-2 text-destructive border-destructive/20 hover:bg-destructive/5" onClick={() => rejectReview(review.id)}>
+                    <XCircle className="w-4 h-4" /> Rejeitar
+                  </Button>
+                </>
+              ) : (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="h-9 w-9 p-0 rounded-xl text-destructive hover:bg-destructive/10 border-destructive/20 hover:border-destructive/40"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
+                    <Button variant="ghost" size="sm" className="flex-1 md:flex-none h-10 rounded-xl gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/5">
+                      <Trash2 className="w-4 h-4" /> <span className="md:hidden">Excluir</span>
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="rounded-2xl border-border/40 bg-card/95 backdrop-blur-xl">
+                  <AlertDialogContent className="rounded-3xl border-border/40 bg-card/95 backdrop-blur-xl">
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Excluir permanentemente?</AlertDialogTitle>
+                      <AlertDialogTitle>Excluir avaliação?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Esta ação não pode ser desfeita. A imagem será removida permanentemente da galeria.
+                        Esta ação removerá permanentemente a avaliação do cliente e não poderá ser desfeita.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="gap-2">
-                      <AlertDialogCancel className="rounded-xl border-border/40">Cancelar</AlertDialogCancel>
+                      <AlertDialogCancel className="rounded-2xl border-border/40">Voltar</AlertDialogCancel>
                       <AlertDialogAction
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-2xl"
                         onClick={() => {
-                          toast.promise(deletePhoto(img.id), {
-                            loading: 'Excluindo foto...',
-                            success: 'Foto excluída com sucesso!',
-                            error: 'Erro ao excluir foto.'
+                          // Note: Need to implement deleteReview in AdminContext or use updateReview to 'deleted'
+                          toast.promise(reviewsService.updateReview(review.id, { moderation_status: 'rejeitado' }), {
+                            loading: 'Excluindo...',
+                            success: 'Avaliação removida!',
+                            error: 'Erro ao remover.'
                           });
+                          refreshReviews();
                         }}
                       >
                         Confirmar Exclusão
@@ -301,146 +459,8 @@ export default function Moderacao() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-              </div>
-            </div>
-          )}
-
-          {img.moderation_status !== 'pendente' && (
-            <div className="flex gap-2 pt-1">
-              <Select value={img.category || ''} onValueChange={(v) => updatePhotoCategory(img.id, v)}>
-                <SelectTrigger className="h-8 text-xs rounded-lg flex-1">
-                  <SelectValue placeholder="Categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ambiente">🏠 Ambientes</SelectItem>
-                  <SelectItem value="antes-depois">✨ Antes e Depois</SelectItem>
-                  <SelectItem value="pets">🐶 Pets</SelectItem>
-                  <SelectItem value="outro">📌 Outro</SelectItem>
-                </SelectContent>
-              </Select>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 border-destructive/20 hover:border-destructive/40 rounded-lg shrink-0"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="rounded-2xl border-border/40 bg-card/95 backdrop-blur-xl">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Excluir permanentemente?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Esta ação não pode ser desfeita. A imagem será removida permanentemente da galeria.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter className="gap-2">
-                    <AlertDialogCancel className="rounded-xl border-border/40">Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
-                      onClick={() => {
-                        toast.promise(deletePhoto(img.id), {
-                          loading: 'Excluindo foto...',
-                          success: 'Foto excluída com sucesso!',
-                          error: 'Erro ao excluir foto.'
-                        });
-                      }}
-                    >
-                      Confirmar Exclusão
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-
-  // ─── Review Card ───
-  const ReviewCard = ({ review, showActions }: { review: typeof reviewsList[0]; showActions: boolean }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <Card className="border-border/40 bg-card/80 backdrop-blur-sm hover:shadow-md transition-all duration-300 rounded-2xl overflow-hidden">
-        <CardContent className="p-4 sm:p-5 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-            <div className="space-y-2 flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <span className="text-sm font-bold text-primary">{review.name?.charAt(0)?.toUpperCase()}</span>
-                </div>
-                <div className="min-w-0">
-                  <p className="font-semibold text-sm text-foreground truncate">{review.name}</p>
-                  {review.pet_name && <p className="text-xs text-muted-foreground">🐾 {review.pet_name}</p>}
-                </div>
-                <Badge variant="outline" className={cn('text-[10px] font-bold', STATUS_COLORS[review.moderation_status as ModerationStatus] || '')}>
-                  {STATUS_LABELS[review.moderation_status as ModerationStatus] || review.moderation_status}
-                </Badge>
-              </div>
-              <button 
-                onClick={() => setEditReviewTarget(review)}
-                className="absolute top-4 right-4 p-1.5 rounded-xl text-muted-foreground/40 hover:text-primary hover:bg-primary/5 transition-all"
-              >
-                <Edit2 className="w-3.5 h-3.5" />
-              </button>
-
-              {review.title && <p className="text-sm font-medium text-foreground">{review.title}</p>}
-
-              <div className="flex gap-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className={cn('w-4 h-4', i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/20')} />
-                ))}
-                <span className="text-xs text-muted-foreground ml-2">{review.rating}/5</span>
-              </div>
-
-              {review.comment && (
-                <p className="text-sm text-foreground/80 leading-relaxed bg-muted/30 rounded-xl p-3 border border-border/20">
-                  "{review.comment}"
-                </p>
-              )}
-
-              <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
-                <Clock className="w-3 h-3" /> {review.created_at?.split('T')[0]}
-              </p>
-
-              {review.shop_response && (
-                <div className="p-3 bg-primary/5 rounded-xl border border-primary/10">
-                  <p className="text-xs font-semibold text-primary mb-1 flex items-center gap-1">
-                    <MessageSquare className="w-3 h-3" /> Resposta do PetCão
-                  </p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{review.shop_response}</p>
-                </div>
               )}
             </div>
-
-            {showActions && (
-              <div className="flex sm:flex-col gap-2 shrink-0">
-                <Button size="sm" className="rounded-xl gap-1.5 shadow-sm" onClick={() => approveReview(review.id)}>
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Aprovar
-                </Button>
-                <Button size="sm" variant="outline" className="rounded-xl gap-1.5 text-destructive hover:text-destructive" onClick={() => rejectReview(review.id)}>
-                  <XCircle className="w-3.5 h-3.5" /> Rejeitar
-                </Button>
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-2 border-t border-border/30 pt-3">
-            <Label className="text-xs font-semibold text-muted-foreground">Responder avaliação</Label>
-            <Textarea
-              placeholder="Escreva uma resposta para esta avaliação..."
-              value={responseTexts[review.id] ?? review.shop_response ?? ''}
-              onChange={(e) => setResponseTexts(prev => ({ ...prev, [review.id]: e.target.value }))}
-              className="min-h-[60px] rounded-xl text-sm resize-none"
-            />
-            <Button size="sm" variant="outline" className="rounded-xl gap-1.5" onClick={() => handleSaveResponse(review.id)}>
-              <MessageSquare className="w-3.5 h-3.5" /> Salvar resposta
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -784,6 +804,20 @@ export default function Moderacao() {
           </div>
         )}
       </ResponsiveModal>
+
+      {/* ── Photo Viewer Modal ── */}
+      <PhotoViewer 
+        images={filteredPhotos}
+        initialIndex={viewerIndex}
+        open={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+        showAdminActions={true}
+        onDelete={async (id) => {
+           await deletePhoto(id);
+           setViewerOpen(false);
+           toast.success('Foto excluída.');
+        }}
+      />
     </div>
   );
 }

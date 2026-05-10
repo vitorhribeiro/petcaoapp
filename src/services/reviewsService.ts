@@ -59,6 +59,7 @@ export async function createReview(data: {
   title?: string;
   comment?: string;
   photos?: string[];
+  moderation_status?: string;
 }): Promise<ReviewRow | null> {
   const { data: row, error } = await supabase
     .from('reviews')
@@ -70,7 +71,7 @@ export async function createReview(data: {
       rating: data.rating,
       title: data.title || '',
       comment: data.comment || '',
-      moderation_status: 'pendente',
+      moderation_status: data.moderation_status || 'pendente',
     } as any)
     .select()
     .single();

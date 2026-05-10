@@ -75,3 +75,42 @@ export async function getCommentCountsForPhotos(photoIds: string[]): Promise<Rec
   }
   return counts;
 }
+
+export async function getCommentLikes(commentIds: string[]): Promise<Record<string, { count: number; likedByMe: boolean }>> {
+  if (commentIds.length === 0) return {};
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData?.session?.user?.id;
+
+  const { data } = await supabase
+    .from('gallery_comment_likes')
+    .select('id, comment_id, user_id')
+    .in('comment_id', commentIds);
+
+  const result: Record<string, { count: number; likedByMe: boolean }> = {};
+  for (const id of commentIds) result[id] = { count: 0, likedByMe: false };
+  for (const row of data || []) {
+    const r = row as any;
+    result[r.comment_id].count += 1;
+    if (userId && r.user_id === userId) {
+      result[r.comment_id].likedByMe = true;
+    }
+  }
+  return result;
+}
+
+export async function toggleCommentLike(commentId: string, userId: string): Promise<{ liked: boolean; success: boolean }> {
+  const { data: existing } = await supabase
+    .from('gallery_comment_likes')
+    .select('id')
+    .eq('comment_id', commentId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (existing) {
+    const { error } = await supabase.from('gallery_comment_likes').delete().eq('id', existing.id);
+    return { liked: false, success: !error };
+  } else {
+    const { error } = await supabase.from('gallery_comment_likes').insert({ comment_id: commentId, user_id: userId } as any);
+    return { liked: true, success: !error };
+  }
+}

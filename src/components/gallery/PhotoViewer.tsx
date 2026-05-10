@@ -8,6 +8,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toggleLike, getLikesForPhotos } from '@/services/galleryLikesService';
 import { PhotoComments } from './PhotoComments';
 import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { createPortal } from 'react-dom';
+import { getCommentCountsForPhotos } from '@/services/galleryCommentsService';
 
 interface GalleryImage {
   id: string;
@@ -35,18 +45,21 @@ export function PhotoViewer({ images, initialIndex, open, onClose, showAdminActi
   const [loaded, setLoaded] = useState(false);
   const { user, isAuthenticated } = useAuth();
   const [likes, setLikes] = useState<Record<string, { count: number; liked: boolean }>>({});
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [likeAnimating, setLikeAnimating] = useState(false);
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const doubleTapRef = useRef<number>(0);
   const [showComments, setShowComments] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => { setIndex(initialIndex); }, [initialIndex]);
-  useEffect(() => { setLoaded(false); setShowComments(false); }, [index]);
+  useEffect(() => { setLoaded(false); setShowComments(false); setIsEditing(false); }, [index]);
 
-  // Load likes
+  // Load likes and comment counts
   useEffect(() => {
     if (!open || images.length === 0) return;
     getLikesForPhotos(images.map(i => i.id), user?.id).then(setLikes);
+    getCommentCountsForPhotos(images.map(i => i.id)).then(setCommentCounts);
   }, [open, images, user?.id]);
 
   // Preload next
@@ -80,6 +93,7 @@ export function PhotoViewer({ images, initialIndex, open, onClose, showAdminActi
   if (!image) return null;
 
   const currentLike = likes[image.id] || { count: 0, liked: false };
+  const commentCount = commentCounts[image.id] || 0;
 
   const handleLike = async () => {
     if (!isAuthenticated || !user) {
@@ -131,151 +145,300 @@ export function PhotoViewer({ images, initialIndex, open, onClose, showAdminActi
   const displayName = image.submitted_by_name || image.owner_name || 'PetCão';
   const initials = displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   const isOfficial = displayName === 'PetCão' || !image.submitted_by_name;
-  const timeAgo = image.created_at ? formatPhotoDate(image.created_at) : '';
+  const timeAgo = image.created_at ? getTimeAgo(image.created_at) : '';
 
-  const [isWritingComment, setIsWritingComment] = useState(false);
-  const commentInputRef = useRef<HTMLInputElement>(null);
-
-  const toggleComment = () => {
-    setIsWritingComment(!isWritingComment);
-    if (!isWritingComment) {
-      setTimeout(() => commentInputRef.current?.focus(), 100);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={v => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-[100vw] md:max-w-[95vw] w-full h-[100dvh] md:h-[85vh] p-0 flex flex-col md:flex-row overflow-hidden border-none bg-black md:bg-transparent shadow-2xl [&>button]:hidden">
-        
-        {/* ======= LEFT COLUMN: IMAGE VIEWER ======= */}
-        <div className="relative w-full md:flex-1 bg-black flex items-center justify-center group overflow-hidden select-none aspect-square md:aspect-auto shrink-0 md:shrink">
-          {/* Mobile Close Button */}
-          <button 
-            onClick={onClose}
-            className="absolute top-4 left-4 z-50 md:hidden p-2 bg-black/40 backdrop-blur-md rounded-full text-white"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          <img
-            src={image.url}
-            alt={image.alt || 'Visualização da foto'}
-            className="w-full h-full md:w-auto md:h-auto md:max-w-full md:max-h-full object-contain animate-in fade-in zoom-in-95 duration-300"
-            draggable={false}
-            onClick={handleDoubleTap}
-          />
-
-          {/* Double-tap heart animation */}
-          {likeAnimating && (
-            <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-              <Heart className="w-24 h-24 text-red-500 fill-red-500 animate-[heartBounce_0.6s_ease-out_forwards] drop-shadow-2xl" />
-            </div>
-          )}
-
-          {/* Navigation Controls (Desktop only) */}
-          {images.length > 1 && (
-            <div className="hidden md:block">
-              <Button
-                variant="ghost" size="icon" onClick={goPrev}
-                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white rounded-full z-30 h-12 w-12 border border-white/10"
-              >
-                <ChevronLeft className="w-8 h-8" />
-              </Button>
-              <Button
-                variant="ghost" size="icon" onClick={goNext}
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/20 hover:bg-black/40 text-white rounded-full z-30 h-12 w-12 border border-white/10"
-              >
-                <ChevronRight className="w-8 h-8" />
-              </Button>
-            </div>
+  const renderProfileHeader = (className?: string) => (
+    <div className={cn("flex items-center gap-3 px-4 py-3.5 border-b border-border bg-card", className)}>
+      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary text-xs font-bold shrink-0 ring-2 ring-primary/10">
+        {initials}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
+          {isOfficial && (
+            <span className="inline-flex items-center gap-0.5 bg-primary/10 text-primary text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+              🐾 Oficial
+            </span>
           )}
         </div>
-
-        {/* ======= RIGHT COLUMN: DETAILS SIDEBAR ======= */}
-        <div className="flex-1 md:w-[400px] lg:w-[450px] md:h-full flex flex-col bg-card md:border-l border-border/30 relative z-20 overflow-hidden">
-          
-          {/* 1. Sidebar Header (Desktop) / Mini Header (Mobile) */}
-          <div className="flex items-center gap-3 px-4 py-3 md:py-4 border-b border-border/10 shrink-0">
-            <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] md:text-xs font-bold ring-2 ring-primary/5">
-              {initials}
-            </div>
-            <div className="flex-1 min-w-0 pr-8">
-              <p className="text-sm font-bold text-foreground truncate">{displayName}</p>
-              {!isOfficial && (
-                <p className="text-[10px] md:text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
-                  Dono (a) do {image.pet_name || 'Pet'}
-                </p>
+        {timeAgo && <p className="text-xs text-muted-foreground">{timeAgo}</p>}
+      </div>
+      <div className="flex items-center gap-1">
+        {showAdminActions && onDelete && (
+          <Button variant="ghost" size="icon" onClick={() => onDelete(image.id)} className="text-muted-foreground hover:text-destructive h-8 w-8 rounded-full">
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        )}
+        {isEditing ? (
+          <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)} className="h-8 text-xs font-medium">
+            Concluir
+          </Button>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-muted-foreground h-8 w-8 rounded-full">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={handleShare} className="cursor-pointer">Compartilhar</DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  toast.success('Link copiado!');
+                }}
+                className="cursor-pointer"
+              >
+                Copiar link
+              </DropdownMenuItem>
+              {showAdminActions && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setIsEditing(true)} className="cursor-pointer">Editar post</DropdownMenuItem>
+                </>
               )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer text-muted-foreground">Cancelar</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {open && !showComments && typeof document !== 'undefined' && createPortal(
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={onClose}
+          className="hidden md:flex fixed top-5 right-5 md:top-6 md:right-6 z-[9999] rounded-full shadow-xl bg-background/80 hover:bg-accent border-border/50 backdrop-blur-xl transition-all hover:scale-110 active:scale-95 text-foreground cursor-pointer pointer-events-auto"
+        >
+          <X className="w-5 h-5 md:w-6 md:h-6" />
+        </Button>,
+        document.body
+      )}
+      <Dialog open={open} onOpenChange={v => { if (!v) onClose(); }}>
+      <DialogContent
+        className="max-w-[100vw] md:max-w-5xl w-full h-[100dvh] md:h-[85vh] p-0 border-none rounded-none md:rounded-2xl bg-transparent [&>button]:hidden overflow-hidden shadow-none md:shadow-2xl"
+      >
+        {/* O botão X agora é renderizado na raiz do documento via Portal */}
+
+        <div className="flex flex-col md:flex-row w-full h-full overflow-y-auto md:overflow-hidden">
+          
+          {/* ======= MOBILE TOP BAR & PROFILE ======= */}
+          <div className="md:hidden flex flex-col bg-card w-full shrink-0">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
+               <button onClick={onClose} className="p-1 -ml-1 active:scale-95 transition-transform text-foreground">
+                 <ChevronLeft className="w-6 h-6" />
+               </button>
+               <span className="font-semibold text-sm">Galeria</span>
+               <div className="w-6" />
             </div>
-            <button onClick={onClose} className="p-1.5 text-muted-foreground/40 hover:text-foreground hover:bg-muted/80 rounded-full transition-all">
-              <X className="w-5 h-5" />
-            </button>
+            {renderProfileHeader("border-b-0")}
           </div>
 
-          {/* 2. Scrollable Content Area: Legend + Comments */}
-          <div className="flex-1 flex flex-col min-h-0 overflow-hidden order-2 md:order-2">
-            
-            {/* Action Bar (Pinned below header on mobile, at bottom on desktop) */}
-            <div className="px-4 py-3 border-b border-border/5 flex items-center justify-between bg-card shrink-0 order-first md:order-none">
-              <div className="flex items-center gap-6">
-                <div className="flex flex-col items-center gap-1">
-                  <button onClick={handleLike} className={cn("transition-all active:scale-125", currentLike.liked ? "text-red-500" : "text-muted-foreground hover:text-red-500")}>
-                    <Heart className={cn("w-7 h-7 md:w-6 md:h-6", currentLike.liked && "fill-current")} />
+          {/* ======= IMAGE AREA ======= */}
+          <div
+            className="relative flex-1 flex items-center justify-center bg-transparent min-h-[45dvh] md:min-h-0"
+            onClick={handleDoubleTap}
+            onPointerDown={(e) => { touchStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() }; }}
+            onPointerUp={(e) => {
+              if (!touchStartRef.current) return;
+              const dx = e.clientX - touchStartRef.current.x;
+              const dy = e.clientY - touchStartRef.current.y;
+              const dt = Date.now() - touchStartRef.current.time;
+              touchStartRef.current = null;
+              if (dt > 500) return;
+              if (Math.abs(dy) > 80 && Math.abs(dy) > Math.abs(dx)) { onClose(); return; }
+              if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+                if (dx > 0) {
+                  // Se arrastar da esquerda para direita na primeira foto, fecha.
+                  if (index === 0) onClose();
+                  else goPrev();
+                } else {
+                  goNext();
+                }
+              }
+            }}
+          >
+            {/* Desktop arrows */}
+            {index > 0 && (
+              <button onClick={e => { e.stopPropagation(); goPrev(); }} className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-card/90 hover:bg-card shadow-lg border border-border/30 items-center justify-center transition-all hover:scale-105">
+                <ChevronLeft className="w-5 h-5 text-foreground" />
+              </button>
+            )}
+            {index < images.length - 1 && (
+              <button onClick={e => { e.stopPropagation(); goNext(); }} className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-card/90 hover:bg-card shadow-lg border border-border/30 items-center justify-center transition-all hover:scale-105">
+                <ChevronRight className="w-5 h-5 text-foreground" />
+              </button>
+            )}
+
+            {/* Double-tap heart */}
+            {likeAnimating && (
+              <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
+                <Heart className="w-20 h-20 text-red-500 fill-red-500 animate-[heartBounce_0.6s_ease-out_forwards] drop-shadow-lg" />
+              </div>
+            )}
+
+            {!loaded && <Skeleton className="w-full h-full bg-muted absolute inset-0" />}
+            <img
+              src={image.url}
+              alt={image.alt || ''}
+              onLoad={() => setLoaded(true)}
+              className={cn(
+                'w-full h-full object-cover select-none',
+                !loaded && 'opacity-0'
+              )}
+              draggable={false}
+            />
+
+            {/* Pagination indicator - pill style */}
+            {images.length > 1 && (
+              <div className="absolute bottom-4 inset-x-0 z-20 flex justify-center gap-1 md:hidden pointer-events-none">
+                {images.length <= 12 ? images.map((_, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      'h-1 rounded-full transition-all duration-300',
+                      i === index ? 'bg-primary w-5' : 'bg-foreground/20 w-1.5'
+                    )}
+                  />
+                )) : (
+                  <div className="bg-card/80 backdrop-blur-sm rounded-full px-2.5 py-0.5 text-[11px] font-medium text-foreground">
+                    {index + 1} / {images.length}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ======= DETAILS SIDEBAR ======= */}
+          <div className="w-full md:w-[380px] lg:w-[420px] flex flex-col bg-card md:border-l border-border/30">
+
+            {/* Profile header */}
+            {renderProfileHeader("hidden md:flex")}
+
+            {/* Caption (desktop scrollable) */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 hidden md:block">
+              {(image.caption || image.pet_name) && (
+                <p className="text-sm text-foreground leading-relaxed">
+                  <span className="font-semibold">{displayName}</span>{' '}
+                  {image.caption || ''}
+                  {image.pet_name && !image.caption && (
+                    <span className="text-muted-foreground">🐾 {image.pet_name}</span>
+                  )}
+                </p>
+              )}
+              {image.pet_name && image.caption && (
+                <p className="text-xs text-muted-foreground mt-1">🐾 {image.pet_name}</p>
+              )}
+
+            </div>
+
+            {/* ======= ACTION BAR ======= */}
+            <div className="pt-3 pb-2.5 flex flex-col">
+              {/* Desktop inline comments */}
+              <div className="px-0 md:px-0 pb-1 hidden md:block">
+                <PhotoComments photoId={image.id} isAuthenticated={isAuthenticated} isEditing={isEditing} />
+              </div>
+              
+              {/* Mobile caption (moved above icons) */}
+              <div className="md:hidden mt-0 mb-3 px-4">
+                {(image.caption || image.pet_name) && (
+                  <p className="text-sm text-foreground leading-snug">
+                    <span className="font-semibold">{displayName}</span>{' '}
+                    {image.caption || ''}
+                    {image.pet_name && !image.caption && (
+                      <span className="text-muted-foreground">🐾 {image.pet_name}</span>
+                    )}
+                  </p>
+                )}
+                {image.pet_name && image.caption && (
+                  <p className="text-xs text-muted-foreground mt-0.5">🐾 {image.pet_name}</p>
+                )}
+              </div>
+
+              <div className="px-4 mt-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                  <button
+                    onClick={handleLike}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all active:scale-95',
+                      currentLike.liked
+                        ? 'bg-red-50 dark:bg-red-500/10'
+                        : 'hover:bg-muted/60'
+                    )}
+                  >
+                    <Heart
+                      className={cn(
+                        'w-5 h-5 transition-all duration-200',
+                        currentLike.liked
+                          ? 'text-red-500 fill-red-500 scale-110'
+                          : 'text-foreground'
+                      )}
+                    />
+                    {currentLike.count > 0 && (
+                      <span className={cn('text-xs font-semibold', currentLike.liked ? 'text-red-500' : 'text-foreground')}>
+                        {currentLike.count}
+                      </span>
+                    )}
                   </button>
-                  {timeAgo && <span className="text-[8px] text-muted-foreground/40 font-bold uppercase">{timeAgo}</span>}
+
+                  <Sheet open={showComments} onOpenChange={setShowComments}>
+                    <SheetTrigger asChild>
+                      <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-muted/60 transition-all active:scale-95 md:hidden">
+                        <MessageCircle className="w-5 h-5 text-foreground" />
+                        {commentCount > 0 && (
+                          <span className="text-sm font-medium text-foreground">{commentCount}</span>
+                        )}
+                      </button>
+                    </SheetTrigger>
+                    <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl p-0 border-none flex flex-col pt-6 z-[99999]">
+                      <div className="flex-1 overflow-y-auto w-full">
+                        <PhotoComments photoId={image.id} isAuthenticated={isAuthenticated} isEditing={isEditing} />
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+
+                  <button
+                    onClick={handleShare}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-muted/60 transition-all active:scale-95"
+                  >
+                    <Share2 className="w-5 h-5 text-foreground" />
+                  </button>
                 </div>
 
-                <button 
-                  onClick={toggleComment}
-                  className={cn("p-1 transition-colors", isWritingComment ? "text-primary" : "text-muted-foreground hover:text-primary")}
-                >
-                  <MessageCircle className="w-7 h-7 md:w-6 md:h-6" />
-                </button>
-
-                <button onClick={handleShare} className="text-muted-foreground hover:text-primary transition-colors p-1">
-                  <Share2 className="w-7 h-7 md:w-6 md:h-6" />
-                </button>
-
-                {currentLike.count > 0 && (
-                  <span className="text-sm font-black text-foreground ml-2">{currentLike.count} curtidas</span>
+                {/* Counter desktop */}
+                {images.length > 1 && (
+                  <span className="hidden md:inline text-xs text-muted-foreground">
+                    {index + 1} de {images.length}
+                  </span>
                 )}
               </div>
             </div>
+          </div>
 
-            {/* Legend Area (Appears ONLY ONCE right below action bar) */}
-            <div className="px-4 py-4 border-b border-border/5 bg-muted/5 shrink-0">
-              <p className="text-sm text-foreground leading-relaxed">
-                <span className="font-bold mr-2 text-foreground">{displayName}</span>
-                {image.caption || <span className="text-muted-foreground/40 italic text-xs">Sem legenda</span>}
-              </p>
-              {image.pet_name && (
-                <p className="text-[11px] text-primary font-bold uppercase tracking-tighter mt-1.5 flex items-center gap-1.5">
-                  🐾 {image.pet_name}
-                </p>
-              )}
-            </div>
-
-            {/* Comments List Area */}
-            <div className="flex-1 min-h-0 overflow-hidden relative">
-              <PhotoComments 
-                photoId={image.id} 
-                isAuthenticated={isAuthenticated} 
-                showInput={isWritingComment}
-                inputRef={commentInputRef}
-              />
-            </div>
           </div>
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
 
-function formatPhotoDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric'
-  });
+function getTimeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'agora';
+  if (mins < 60) return `há ${mins} min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `há ${hours} ${hours === 1 ? 'hora' : 'horas'}`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `há ${days} ${days === 1 ? 'dia' : 'dias'}`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return `há ${weeks} ${weeks === 1 ? 'semana' : 'semanas'}`;
+  return new Date(dateStr).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
 }
