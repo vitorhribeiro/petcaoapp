@@ -48,7 +48,7 @@ export function AdminSidebar({ collapsed, onToggle, mobile = false }: AdminSideb
   const { isProActive } = useProAccess();
   const location = useLocation();
   const navigateTo = useNavigate();
-  const logoSrc = branding.logoUrl || logoPetDefault;
+  const logoSrc = branding.mascotUrl || logoPetDefault;
   const role = user?.role || 'cliente';
   const pendingCount = appointments.filter(a => a.status === 'pendente').length;
 

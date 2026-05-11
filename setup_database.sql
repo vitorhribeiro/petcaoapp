@@ -65,6 +65,8 @@ AS $$
   )
 $$;
 
+GRANT EXECUTE ON FUNCTION public.has_role(UUID, public.app_role) TO anon, authenticated;
+
 -- 5. Only devs can insert/update/delete roles
 CREATE POLICY "Devs can manage roles"
   ON public.user_roles FOR ALL

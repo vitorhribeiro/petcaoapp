@@ -130,10 +130,15 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     return realClientProfiles;
   }, [realClientProfiles, demoModeActive, demoData]);
 
-  // Load data when authenticated
+  // Load public data immediately
+  useEffect(() => {
+    loadPublicData();
+  }, []);
+
+  // Load private data when authenticated
   useEffect(() => {
     if (!isAuthenticated) return;
-    loadAll();
+    loadPrivateData();
 
     // Realtime subscription for appointments
     const channel = supabase
@@ -152,17 +157,30 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     };
   }, [isAuthenticated]);
 
-  const loadAll = useCallback(async () => {
+  const loadPublicData = useCallback(async () => {
     await Promise.all([
-      refreshAppointments(),
       refreshGallery(),
       refreshReviews(),
       refreshServices(),
-      refreshPackages(),
+      refreshPublicPackages(),
+    ]);
+  }, []);
+
+  const loadPrivateData = useCallback(async () => {
+    await Promise.all([
+      refreshAppointments(),
       refreshClients(),
+      refreshCustomerPackages(),
       loadFeatureFlags(),
     ]);
   }, []);
+
+  const loadAll = useCallback(async () => {
+    await Promise.all([
+      loadPublicData(),
+      loadPrivateData(),
+    ]);
+  }, [loadPublicData, loadPrivateData]);
 
   const refreshAppointments = useCallback(async () => {
     setAppointmentsLoading(true);
@@ -192,16 +210,24 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     setServicesLoading(false);
   }, []);
 
-  const refreshPackages = useCallback(async () => {
-    setPackagesLoading(true);
-    const [types, customers] = await Promise.all([
-      packagesService.getPackages(),
-      packagesService.getCustomerPackages(),
-    ]);
+  const refreshPublicPackages = useCallback(async () => {
+    const types = await packagesService.getPackages();
     setPackageTypes(types);
+  }, []);
+
+  const refreshCustomerPackages = useCallback(async () => {
+    setPackagesLoading(true);
+    const customers = await packagesService.getCustomerPackages();
     setCustomerPackages(customers);
     setPackagesLoading(false);
   }, []);
+
+  const refreshPackages = useCallback(async () => {
+    await refreshPublicPackages();
+    if (isAuthenticated) {
+      await refreshCustomerPackages();
+    }
+  }, [isAuthenticated, refreshPublicPackages, refreshCustomerPackages]);
 
   const refreshClients = useCallback(async () => {
     setClientsLoading(true);

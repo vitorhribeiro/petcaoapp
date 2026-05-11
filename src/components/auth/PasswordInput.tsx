@@ -28,7 +28,7 @@ export function PasswordInput({ value, onChange, placeholder = '•••••�
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
           className={cn(
-            "pl-11 pr-11 h-[52px] rounded-[14px] text-base border-border/60 bg-background focus-visible:ring-primary/30",
+            "pl-11 pr-11 h-[52px] rounded-[14px] text-base border-border/60 bg-background focus-visible:ring-primary/30 dark:bg-white/5 dark:border-white/10 dark:placeholder:text-white/30 dark:text-white",
             error && "border-destructive focus-visible:ring-destructive/30",
             className
           )}

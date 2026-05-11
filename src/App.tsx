@@ -23,8 +23,7 @@ import { ProtectedRoute } from "@/components/admin/ProtectedRoute";
 
 // Lazy-loaded routes for code splitting
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
-const LoginPage = lazy(() => import("./pages/auth/LoginPage"));
-const RegisterPage = lazy(() => import("./pages/auth/RegisterPage"));
+const AuthPage = lazy(() => import("./pages/auth/AuthPage"));
 const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage"));
 const AdminLayout = lazy(() => import("@/components/admin/AdminLayout").then(m => ({ default: m.AdminLayout })));
 const Dashboard = lazy(() => import("@/pages/admin/Dashboard"));
@@ -101,8 +100,8 @@ const App = () => (
                   <Suspense fallback={<RouteFallback />}>
                     <Routes>
                       <Route path="/" element={<Index />} />
-                      <Route path="/auth/login" element={<LoginPage />} />
-                      <Route path="/auth/register" element={<RegisterPage />} />
+                      <Route path="/auth/login" element={<AuthPage />} />
+                      <Route path="/auth/register" element={<AuthPage />} />
                       <Route path="/auth/forgot" element={<ForgotPasswordPage />} />
                       <Route path="/cliente" element={<ProfilePage />} />
                       <Route path="/perfil" element={<ProfilePage />} />

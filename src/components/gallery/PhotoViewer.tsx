@@ -363,62 +363,71 @@ export function PhotoViewer({ images, initialIndex, open, onClose, showAdminActi
               <div className="px-4 mt-0">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1">
-                  <button
-                    onClick={handleLike}
-                    className={cn(
-                      'flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all active:scale-95',
-                      currentLike.liked
-                        ? 'bg-red-50 dark:bg-red-500/10'
-                        : 'hover:bg-muted/60'
-                    )}
-                  >
-                    <Heart
-                      className={cn(
-                        'w-5 h-5 transition-all duration-200',
-                        currentLike.liked
-                          ? 'text-red-500 fill-red-500 scale-110'
-                          : 'text-foreground'
-                      )}
-                    />
-                    {currentLike.count > 0 && (
-                      <span className={cn('text-xs font-semibold', currentLike.liked ? 'text-red-500' : 'text-foreground')}>
-                        {currentLike.count}
-                      </span>
-                    )}
-                  </button>
+                    {isAuthenticated ? (
+                      <>
+                        <button
+                          onClick={handleLike}
+                          className={cn(
+                            'flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all active:scale-95',
+                            currentLike.liked
+                              ? 'bg-red-50 dark:bg-red-500/10'
+                              : 'hover:bg-muted/60'
+                          )}
+                        >
+                          <Heart
+                            className={cn(
+                              'w-5 h-5 transition-all duration-200',
+                              currentLike.liked
+                                ? 'text-red-500 fill-red-500 scale-110'
+                                : 'text-foreground'
+                            )}
+                          />
+                          {currentLike.count > 0 && (
+                            <span className={cn('text-xs font-semibold', currentLike.liked ? 'text-red-500' : 'text-foreground')}>
+                              {currentLike.count}
+                            </span>
+                          )}
+                        </button>
 
-                  <Sheet open={showComments} onOpenChange={setShowComments}>
-                    <SheetTrigger asChild>
-                      <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-muted/60 transition-all active:scale-95 md:hidden">
-                        <MessageCircle className="w-5 h-5 text-foreground" />
-                        {commentCount > 0 && (
-                          <span className="text-sm font-medium text-foreground">{commentCount}</span>
-                        )}
-                      </button>
-                    </SheetTrigger>
-                    <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl p-0 border-none flex flex-col pt-6 z-[99999]">
-                      <div className="flex-1 overflow-y-auto w-full">
+                        <Sheet open={showComments} onOpenChange={setShowComments}>
+                          <SheetTrigger asChild>
+                            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-muted/60 transition-all active:scale-95 md:hidden">
+                              <MessageCircle className="w-5 h-5 text-foreground" />
+                              {commentCount > 0 && (
+                                <span className="text-sm font-medium text-foreground">{commentCount}</span>
+                              )}
+                            </button>
+                          </SheetTrigger>
+                          <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl p-0 border-none flex flex-col pt-6 z-[99999]">
+                            <div className="flex-1 overflow-y-auto w-full">
+                              <PhotoComments photoId={image.id} isAuthenticated={isAuthenticated} isEditing={isEditing} />
+                            </div>
+                          </SheetContent>
+                        </Sheet>
+
+                        <button
+                          onClick={handleShare}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-muted/60 transition-all active:scale-95"
+                        >
+                          <Share2 className="w-5 h-5 text-foreground" />
+                        </button>
+                      </>
+                    ) : (
+                      /* Mobile-only login message when deslogado (since desktop already has it via sidebar) */
+                      <div className="md:hidden w-full pb-2">
                         <PhotoComments photoId={image.id} isAuthenticated={isAuthenticated} isEditing={isEditing} />
                       </div>
-                    </SheetContent>
-                  </Sheet>
+                    )}
+                  </div>
 
-                  <button
-                    onClick={handleShare}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-muted/60 transition-all active:scale-95"
-                  >
-                    <Share2 className="w-5 h-5 text-foreground" />
-                  </button>
+                  {/* Counter desktop */}
+                  {images.length > 1 && (
+                    <span className="hidden md:inline text-xs text-muted-foreground">
+                      {index + 1} de {images.length}
+                    </span>
+                  )}
                 </div>
-
-                {/* Counter desktop */}
-                {images.length > 1 && (
-                  <span className="hidden md:inline text-xs text-muted-foreground">
-                    {index + 1} de {images.length}
-                  </span>
-                )}
               </div>
-            </div>
           </div>
 
           </div>

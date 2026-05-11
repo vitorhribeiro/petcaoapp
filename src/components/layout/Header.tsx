@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
-import { Menu, LogOut } from 'lucide-react';
+import { Menu, LogOut, User } from 'lucide-react';
 import logoPetDefault from '@/assets/logopet.webp';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -111,10 +111,16 @@ export function Header({ onOpenLogin, onOpenRegister }: HeaderProps) {
             </div>
 
             {/* Mobile: theme toggle + hamburger */}
-            <div className="lg:hidden flex items-center gap-1">
-              
+            <div className="lg:hidden flex items-center gap-0.5 sm:gap-1">
               <NotificationBell />
               <ThemeToggle />
+              <button
+                onClick={() => isAuthenticated ? navigate('/perfil') : handleOpenLogin()}
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                aria-label={isAuthenticated ? "Acessar perfil" : "Fazer login"}
+              >
+                <User className="w-[1.15rem] h-[1.15rem]" />
+              </button>
               <button
                 onClick={() => setDrawerOpen(true)}
                 className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"

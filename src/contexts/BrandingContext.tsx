@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useTheme } from 'next-themes';
 import { usePetshop } from '@/contexts/PetshopContext';
+import { DEFAULT_HOME_CONTENT } from '@/lib/constants';
 
 export type TemplateId = 'modern' | 'minimal' | 'playful' | 'premiumDark';
 
 export interface Branding {
   shopName: string;
   logoUrl: string;
+  mascotUrl: string;
   primaryColor: string;
   templateSelected: TemplateId;
 }
@@ -114,6 +116,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
   const branding: Branding = {
     shopName: petshop?.name || 'PetCão',
     logoUrl: petshop?.logo_url || '',
+    mascotUrl: settings.homeContent?.hero?.imageUrl || '',
     primaryColor: settings.primaryColor || '#0A7AE6',
     templateSelected: (settings.templateSelected || 'modern') as TemplateId,
   };
@@ -142,6 +145,15 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
 
     if (partial.shopName !== undefined) petshopUpdates.name = partial.shopName;
     if (partial.logoUrl !== undefined) petshopUpdates.logo_url = partial.logoUrl;
+    if (partial.mascotUrl !== undefined) {
+      settingsUpdates.homeContent = {
+        ...(settings.homeContent || DEFAULT_HOME_CONTENT),
+        hero: {
+          ...(settings.homeContent?.hero || DEFAULT_HOME_CONTENT.hero),
+          imageUrl: partial.mascotUrl
+        }
+      };
+    }
     if (partial.primaryColor !== undefined) settingsUpdates.primaryColor = partial.primaryColor;
     if (partial.templateSelected !== undefined) settingsUpdates.templateSelected = partial.templateSelected;
 

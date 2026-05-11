@@ -187,8 +187,12 @@ export default function Configuracoes() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [overrideNote, setOverrideNote] = useState('');
   const [logoPreview, setLogoPreview] = useState<string>(branding.logoUrl);
+  const [mascotPreview, setMascotPreview] = useState<string>(branding.mascotUrl);
   const [brandingForm, setBrandingForm] = useState({
-    shopName: branding.shopName, primaryColor: branding.primaryColor, logoUrl: branding.logoUrl,
+    shopName: branding.shopName, 
+    primaryColor: branding.primaryColor, 
+    logoUrl: branding.logoUrl,
+    mascotUrl: branding.mascotUrl,
   });
   const [openTime, setOpenTime] = useState(config.openingHours.openTime);
   const [closeTime, setCloseTime] = useState(config.openingHours.closeTime);
@@ -234,10 +238,29 @@ export default function Configuracoes() {
       setLogoPreview(url);
       setBrandingForm(prev => ({ ...prev, logoUrl: url }));
       toast.dismiss();
-      toast.success('Logo enviado! Clique em "Salvar" para aplicar.');
+      toast.success('Foto atualizada! Clique em "Salvar" para aplicar.');
     } catch {
       toast.dismiss();
-      toast.error('Erro ao enviar logo. Tente novamente.');
+      toast.error('Erro ao enviar foto. Tente novamente.');
+    }
+    e.target.value = '';
+  };
+
+  const handleMascotUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const validation = validateImageFile(file);
+    if (!validation.valid) { toast.error(validation.error || 'Arquivo inválido'); e.target.value = ''; return; }
+    try {
+      toast.loading('Enviando foto...');
+      const { url } = await uploadImageToStorage(file, 'logos', 'mascot', { quality: 0.8, maxWidth: 1024, maxHeight: 1024 });
+      setMascotPreview(url);
+      setBrandingForm(prev => ({ ...prev, mascotUrl: url }));
+      toast.dismiss();
+      toast.success('Foto atualizada! Clique em "Salvar" para aplicar.');
+    } catch {
+      toast.dismiss();
+      toast.error('Erro ao enviar foto. Tente novamente.');
     }
     e.target.value = '';
   };
@@ -245,7 +268,7 @@ export default function Configuracoes() {
   const handleSaveBranding = () => {
     logFieldChanges(actorId, 'branding', { shopName: branding.shopName, primaryColor: branding.primaryColor }, { shopName: brandingForm.shopName, primaryColor: brandingForm.primaryColor }).catch(() => {});
     saveBranding(brandingForm);
-    toast.success('Branding salvo com sucesso!');
+    toast.success('Identidade atualizada com sucesso!');
   };
 
   const handleApplyTemplate = (id: TemplateId) => {
@@ -504,78 +527,58 @@ export default function Configuracoes() {
 
         {/* ===== APARÊNCIA ===== */}
         <TabsContent value="aparencia" className="space-y-4 mt-5">
-          <PremiumCard icon={Palette} title="Identidade do Petshop" description="Nome, logo e cor principal do seu negócio.">
+          <PremiumCard icon={Palette} title="Identidade do Petshop" description="Nome, logo do menu, mascote da home e ícone do navegador.">
             <div className="space-y-2">
               <Label className="text-xs font-medium">Nome do Petshop</Label>
               <Input value={brandingForm.shopName} onChange={(e) => setBrandingForm(p => ({ ...p, shopName: e.target.value }))} className="h-11" />
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">Logo</Label>
-              <div className="flex items-center gap-4">
-                {logoPreview && (
-                  <div className="w-16 h-16 rounded-xl border border-border/50 overflow-hidden bg-muted/50 flex items-center justify-center shadow-sm">
-                    <OptimizedImage src={logoPreview} alt="Logo" className="w-full h-full object-contain" showSkeleton={false} />
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Logo (Barra de Menu)</Label>
+                <div className="flex items-center gap-4">
+                  {logoPreview && (
+                    <div className="w-16 h-16 rounded-xl border border-border/50 overflow-hidden bg-muted/50 flex items-center justify-center shadow-sm">
+                      <OptimizedImage src={logoPreview} alt="Logo" className="w-full h-full object-contain" showSkeleton={false} />
+                    </div>
+                  )}
+                  <div>
+                    <Button type="button" variant="outline" size="sm" className="gap-1.5 h-10" onClick={() => document.getElementById('logo-upload')?.click()}>
+                      <Upload className="w-3.5 h-3.5" /> Escolher logo
+                    </Button>
+                    <input id="logo-upload" type="file" accept="image/png,image/jpeg,image/webp" onChange={handleLogoUpload} className="hidden" />
+                    <p className="text-[10px] text-muted-foreground mt-1.5">Exibida no topo do site.</p>
                   </div>
-                )}
-                <div>
-                  <Button type="button" variant="outline" size="sm" className="gap-1.5 h-10" onClick={() => document.getElementById('logo-upload')?.click()}>
-                    <Upload className="w-3.5 h-3.5" /> Escolher imagem
-                  </Button>
-                  <input id="logo-upload" type="file" accept="image/png,image/jpeg,image/webp" onChange={handleLogoUpload} className="hidden" />
-                  <p className="text-[11px] text-muted-foreground mt-1.5">PNG com fundo transparente recomendado</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Mascote (Página Inicial)</Label>
+                <div className="flex items-center gap-4">
+                  {mascotPreview && (
+                    <div className="w-16 h-16 rounded-xl border border-border/50 overflow-hidden bg-muted/50 flex items-center justify-center shadow-sm">
+                      <OptimizedImage src={mascotPreview} alt="Mascote" className="w-full h-full object-contain" showSkeleton={false} />
+                    </div>
+                  )}
+                  <div>
+                    <Button type="button" variant="outline" size="sm" className="gap-1.5 h-10" onClick={() => document.getElementById('mascot-upload')?.click()}>
+                      <Upload className="w-3.5 h-3.5" /> Escolher mascote
+                    </Button>
+                    <input id="mascot-upload" type="file" accept="image/png,image/jpeg,image/webp" onChange={handleMascotUpload} className="hidden" />
+                    <p className="text-[10px] text-muted-foreground mt-1.5">Exibida no centro da home.</p>
+                  </div>
                 </div>
               </div>
             </div>
+
             <div className="space-y-2">
-              <Label className="text-xs font-medium">Cor Primária</Label>
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <input type="color" value={brandingForm.primaryColor} onChange={(e) => setBrandingForm(p => ({ ...p, primaryColor: e.target.value }))} className="w-11 h-11 rounded-xl cursor-pointer border border-border/50 shadow-sm" />
-                </div>
-                <code className="text-sm font-mono text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-lg">{brandingForm.primaryColor}</code>
-              </div>
-            </div>
-            <SaveButton onClick={handleSaveBranding} label="Salvar Branding" />
-          </PremiumCard>
-
-          {/* Favicon */}
-          <PremiumCard icon={Sparkles} title="Favicon" description="Ícone exibido na aba do navegador.">
-            <FaviconUploader />
-          </PremiumCard>
-
-          {/* Hero Images */}
-          <PremiumCard icon={ImageIcon} title="Imagens do Hero" description="Fotos circulares exibidas no collage da página inicial. O mascote central é a imagem padrão do hero.">
-            <SectionLabel>Mascote / Imagem Central</SectionLabel>
-            <div className="flex items-center gap-4">
-              <div
-                className={`w-20 h-20 rounded-xl border-2 border-dashed overflow-hidden flex items-center justify-center cursor-pointer transition-all hover:border-primary/50 ${
-                  cmsForm.hero.imageUrl ? 'border-primary/30 bg-primary/5' : 'border-border/60 bg-muted/30'
-                }`}
-                onClick={() => document.getElementById('cms-hero-mascot')?.click()}
-              >
-                {cmsForm.hero.imageUrl ? (
-                  <OptimizedImage src={cmsForm.hero.imageUrl} alt="Mascote" className="w-full h-full object-contain" showSkeleton={false} />
-                ) : (
-                  <Upload className="w-5 h-5 text-muted-foreground/50" />
-                )}
-              </div>
-              <div>
-                <Button type="button" variant="outline" size="sm" className="gap-1.5 h-9" onClick={() => document.getElementById('cms-hero-mascot')?.click()}>
-                  <Upload className="w-3.5 h-3.5" /> Escolher imagem
-                </Button>
-                <p className="text-[11px] text-muted-foreground mt-1">Exibida no centro do collage</p>
-              </div>
-              <input id="cms-hero-mascot" type="file" accept="image/*" className="hidden" onChange={async e => { const file = e.target.files?.[0]; if (!file) return; const validation = validateImageFile(file); if (!validation.valid) { toast.error(validation.error || 'Arquivo inválido'); e.target.value = ''; return; } try { toast.loading('Convertendo para WebP...'); const { url } = await uploadImageToStorage(file, 'gallery', undefined, { quality: 0.8, maxWidth: 1024, maxHeight: 1024 }); setCmsForm(p => ({ ...p, hero: { ...p.hero, imageUrl: url } })); toast.dismiss(); toast.success('Imagem enviada! Salve para aplicar.'); } catch { toast.dismiss(); toast.error('Erro ao enviar imagem.'); } e.target.value = ''; }} />
+              <Label className="text-xs font-medium">Favicon (Ícone do Navegador)</Label>
+              <FaviconUploader />
             </div>
 
-            <SectionLabel>Fotos Circulares do Hero</SectionLabel>
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-muted/40 border border-border/40">
-              <Sparkles className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                As fotos circulares da página inicial são selecionadas automaticamente a partir das fotos aprovadas da galeria. Não é necessário configurá-las manualmente.
-              </p>
+            <div className="pt-2">
+              <SaveButton onClick={handleSaveBranding} label="Salvar Identidade" />
             </div>
-
           </PremiumCard>
 
           <PremiumCard icon={Layout} title="Templates do Site" description="Escolha um template visual para sua página.">

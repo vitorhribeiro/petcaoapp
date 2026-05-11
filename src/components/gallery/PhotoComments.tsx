@@ -112,18 +112,27 @@ export function PhotoComments({ photoId, isAuthenticated, isEditing }: Props) {
                   <p className="text-[11px] text-muted-foreground/60">
                     {getTimeAgo(c.created_at)}
                   </p>
-                  <button 
-                    onClick={() => handleLikeComment(c.id)}
-                    className={cn(
-                      "flex items-center gap-1 text-[11px] font-semibold transition-colors",
-                      likes[c.id]?.likedByMe ? "text-red-500 hover:text-red-600" : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    <Heart 
-                      className={cn("w-3 h-3 transition-all", likes[c.id]?.likedByMe ? "fill-red-500" : "")} 
-                    />
-                    {likes[c.id]?.count > 0 && <span>{likes[c.id].count}</span>}
-                  </button>
+                  {isAuthenticated ? (
+                    <button 
+                      onClick={() => handleLikeComment(c.id)}
+                      className={cn(
+                        "flex items-center gap-1 text-[11px] font-semibold transition-colors",
+                        likes[c.id]?.likedByMe ? "text-red-500 hover:text-red-600" : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <Heart 
+                        className={cn("w-3 h-3 transition-all", likes[c.id]?.likedByMe ? "fill-red-500" : "")} 
+                      />
+                      {likes[c.id]?.count > 0 && <span>{likes[c.id].count}</span>}
+                    </button>
+                  ) : (
+                    likes[c.id]?.count > 0 && (
+                      <div className="flex items-center gap-1 text-[11px] text-muted-foreground/60 font-medium">
+                        <Heart className="w-3 h-3" />
+                        <span>{likes[c.id].count}</span>
+                      </div>
+                    )
+                  )}
                 </div>
               </div>
               {isEditing && (
@@ -155,63 +164,77 @@ export function PhotoComments({ photoId, isAuthenticated, isEditing }: Props) {
       {/* Divider above input */}
       <div className="border-t border-border -mx-4 pt-3 mb-1 mt-1" />
 
-      {/* Comment input */}
-      <div className="flex items-center gap-2">
-        {isAuthenticated && user && (
-          <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold shrink-0">
-            {user.name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+      {/* Comment input or Login Prompt */}
+      <div className="mt-2">
+        {isAuthenticated ? (
+          <div className="flex items-center gap-2">
+            {user && (
+              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold shrink-0">
+                {user.name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+              </div>
+            )}
+            <div className="flex-1 flex items-center gap-1.5 bg-muted/50 rounded-full pl-2 pr-3 py-1.5 border border-border/30">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    disabled={sending}
+                    className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 hover:bg-muted rounded-full"
+                  >
+                    <Smile className="w-4 h-4" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="top" align="start" className="w-auto p-2 bg-card border-border/30 rounded-xl shadow-lg mb-2">
+                  <div className="grid grid-cols-5 gap-1">
+                    {COMMON_EMOJIS.map(emoji => (
+                      <button
+                        key={emoji}
+                        onClick={() => setText(prev => prev + emoji)}
+                        className="text-xl p-2 hover:bg-muted rounded-lg transition-colors flex items-center justify-center"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <input
+                type="text"
+                placeholder="Escreva um comentário..."
+                value={text}
+                onChange={e => setText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
+                disabled={sending}
+                maxLength={500}
+                className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 outline-none"
+              />
+              {text.trim() && (
+                <button
+                  onClick={handleSubmit}
+                  disabled={sending}
+                  className={cn(
+                    'p-1 rounded-full text-primary transition-all',
+                    sending ? 'opacity-50' : 'hover:bg-primary/10 active:scale-90'
+                  )}
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 text-center">
+            <p className="text-sm text-foreground font-medium mb-3">
+              Você precisa estar logado para curtir, comentar e compartilhar as fotos.
+            </p>
+            <button
+              onClick={() => window.location.href = '/auth/login'}
+              className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition-all active:scale-95 shadow-sm"
+            >
+              Fazer Login
+            </button>
           </div>
         )}
-        <div className="flex-1 flex items-center gap-1.5 bg-muted/50 rounded-full pl-2 pr-3 py-1.5 border border-border/30">
-          {isAuthenticated && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  disabled={sending}
-                  className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 hover:bg-muted rounded-full"
-                >
-                  <Smile className="w-4 h-4" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent side="top" align="start" className="w-auto p-2 bg-card border-border/30 rounded-xl shadow-lg mb-2">
-                <div className="grid grid-cols-5 gap-1">
-                  {COMMON_EMOJIS.map(emoji => (
-                    <button
-                      key={emoji}
-                      onClick={() => setText(prev => prev + emoji)}
-                      className="text-xl p-2 hover:bg-muted rounded-lg transition-colors flex items-center justify-center"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
-          <input
-            type="text"
-            placeholder={isAuthenticated ? 'Escreva um comentário...' : 'Faça login para comentar'}
-            value={text}
-            onChange={e => setText(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
-            disabled={!isAuthenticated || sending}
-            maxLength={500}
-            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 outline-none disabled:opacity-50"
-          />
-          {text.trim() && (
-            <button
-              onClick={handleSubmit}
-              disabled={sending}
-              className={cn(
-                'p-1 rounded-full text-primary transition-all',
-                sending ? 'opacity-50' : 'hover:bg-primary/10 active:scale-90'
-              )}
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          )}
-        </div>
       </div>
     </div>
   );

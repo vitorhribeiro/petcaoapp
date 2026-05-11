@@ -35,7 +35,7 @@ if (typeof document !== 'undefined' && !document.getElementById(scrollStyleId)) 
 }
 
 export function HeroSection() {
-  const { shopStatus } = useBranding();
+  const { shopStatus, branding } = useBranding();
   const { homeContent } = useHomeContent();
   const { settings } = usePetshop();
 
@@ -61,7 +61,7 @@ export function HeroSection() {
   const img1 = galleryUrls[0] || fallback1;
   const img2 = galleryUrls[1] || fallback2;
   const img3 = galleryUrls[2] || fallback3;
-  const mascot = homeContent.hero.imageUrl || heroDog;
+  const mascot = branding.mascotUrl || homeContent.hero.imageUrl || heroDog;
 
   const scrollToSection = (id: string) => {
     const el = document.querySelector(id);

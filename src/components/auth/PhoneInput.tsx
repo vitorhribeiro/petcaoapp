@@ -86,7 +86,7 @@ export function PhoneInput({ id, value, onChange, placeholder }: PhoneInputProps
         value={displayValue}
         onChange={handleChange}
         onPaste={handlePaste}
-        className="pl-11 h-[52px] rounded-[14px] text-base border-border/60"
+        className="pl-11 h-[52px] rounded-[14px] text-base border-border/60 bg-background dark:bg-white/5 dark:border-white/10 dark:placeholder:text-white/30 dark:text-white"
         maxLength={16} // (XX) XXXXX-XXXX = 15 chars + buffer
       />
     </div>
