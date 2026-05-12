@@ -178,6 +178,13 @@
     display: flex;
     flex-direction: column;
   }
+
+  /* Prevent auto-zoom on iOS while maintaining design */
+  @media screen and (max-width: 768px) {
+    input, select, textarea, .text-base {
+      font-size: 16px !important;
+    }
+  }
 }
 
 @layer utilities {

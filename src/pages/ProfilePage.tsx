@@ -650,38 +650,61 @@ export default function ProfilePage() {
         </motion.div>
 
         {/* ═══ EDIT PROFILE MODAL ═══ */}
-        <ResponsiveModal open={isEditingProfile} onOpenChange={setIsEditingProfile} title="Editar Perfil" maxWidth="max-w-sm">
-          <div className="space-y-4">
-            <div className="space-y-2"><Label>Nome</Label><Input value={profileForm.name} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })} className="h-12 rounded-xl text-base" /></div>
-            <div className="space-y-2"><Label>Telefone</Label><Input value={profileForm.phone} onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })} className="h-12 rounded-xl text-base" /></div>
+        <ResponsiveModal
+          open={isEditingProfile}
+          onOpenChange={setIsEditingProfile}
+          title="Editar Perfil"
+          maxWidth="max-w-sm"
+          stickyFooter={
             <div className="flex gap-2">
               <Button className="flex-1" onClick={handleProfileSave}><Check className="w-4 h-4 mr-1" /> Salvar</Button>
               <Button variant="outline" className="flex-1" onClick={() => setIsEditingProfile(false)}>Cancelar</Button>
             </div>
+          }
+        >
+          <div className="space-y-4">
+            <div className="space-y-2"><Label>Nome</Label><Input value={profileForm.name} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })} className="h-12 rounded-xl text-base" /></div>
+            <div className="space-y-2"><Label>Telefone</Label><Input value={profileForm.phone} onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })} className="h-12 rounded-xl text-base" /></div>
           </div>
         </ResponsiveModal>
       </motion.main>
 
       {/* Add Pet Modal */}
-      <ResponsiveModal open={isAddingPet} onOpenChange={setIsAddingPet} title="Adicionar Novo Pet" maxWidth="max-w-sm">
+      <ResponsiveModal
+        open={isAddingPet}
+        onOpenChange={setIsAddingPet}
+        title="Adicionar Novo Pet"
+        maxWidth="max-w-sm"
+        stickyFooter={
+          <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={handleAddPet} disabled={!petForm.name || !petForm.breed}><Plus className="w-4 h-4 mr-1" /> Adicionar Pet</Button>
+        }
+      >
         <div className="space-y-4">
           <div className="space-y-2"><Label>Nome do Pet</Label><Input value={petForm.name} onChange={(e) => setPetForm({ ...petForm, name: e.target.value })} placeholder="Ex: Rex" className="h-12 rounded-xl text-base" /></div>
           <div className="space-y-2"><Label>Porte</Label><Select value={petForm.size} onValueChange={(v) => setPetForm({ ...petForm, size: v })}><SelectTrigger className="h-12 rounded-xl"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pequeno">Pequeno</SelectItem><SelectItem value="medio">Médio</SelectItem><SelectItem value="grande">Grande</SelectItem></SelectContent></Select></div>
           <div className="space-y-2"><Label>Raça</Label><Input value={petForm.breed} onChange={(e) => setPetForm({ ...petForm, breed: e.target.value })} placeholder="Ex: SRD, Labrador..." className="h-12 rounded-xl text-base" /></div>
-          <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={handleAddPet} disabled={!petForm.name || !petForm.breed}><Plus className="w-4 h-4 mr-1" /> Adicionar Pet</Button>
         </div>
       </ResponsiveModal>
 
       {/* Edit Pet Modal */}
-      <ResponsiveModal open={editPetModalOpen} onOpenChange={(v) => { setEditPetModalOpen(v); if (!v) setEditingPetId(null); }} title="Editar Pet" maxWidth="max-w-sm">
+      <ResponsiveModal
+        open={editPetModalOpen}
+        onOpenChange={(v) => { setEditPetModalOpen(v); if (!v) setEditingPetId(null); }}
+        title="Editar Pet"
+        maxWidth="max-w-sm"
+        stickyFooter={
+          <div className="flex flex-col gap-2">
+            <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={() => { if (editingPetId) { handleEditPetSave(editingPetId); setEditPetModalOpen(false); } }}><Check className="w-4 h-4 mr-1" /> Salvar</Button>
+            <Button variant="outline" className="w-full h-10 rounded-xl text-sm text-destructive hover:text-destructive" onClick={() => { if (editingPetId) { handleRemovePet(editingPetId); setEditPetModalOpen(false); } }}>
+              <Trash2 className="w-3.5 h-3.5 mr-1" /> Remover pet
+            </Button>
+          </div>
+        }
+      >
         <div className="space-y-4">
           <div className="space-y-2"><Label>Nome do Pet</Label><Input value={petForm.name} onChange={(e) => setPetForm({ ...petForm, name: e.target.value })} className="h-12 rounded-xl text-base" /></div>
           <div className="space-y-2"><Label>Porte</Label><Select value={petForm.size} onValueChange={(v) => setPetForm({ ...petForm, size: v })}><SelectTrigger className="h-12 rounded-xl"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pequeno">Pequeno</SelectItem><SelectItem value="medio">Médio</SelectItem><SelectItem value="grande">Grande</SelectItem></SelectContent></Select></div>
           <div className="space-y-2"><Label>Raça</Label><Input value={petForm.breed} onChange={(e) => setPetForm({ ...petForm, breed: e.target.value })} className="h-12 rounded-xl text-base" /></div>
-          <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={() => { if (editingPetId) { handleEditPetSave(editingPetId); setEditPetModalOpen(false); } }}><Check className="w-4 h-4 mr-1" /> Salvar</Button>
-          <Button variant="outline" className="w-full h-10 rounded-xl text-sm text-destructive hover:text-destructive" onClick={() => { if (editingPetId) { handleRemovePet(editingPetId); setEditPetModalOpen(false); } }}>
-            <Trash2 className="w-3.5 h-3.5 mr-1" /> Remover pet
-          </Button>
         </div>
       </ResponsiveModal>
 

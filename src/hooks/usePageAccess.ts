@@ -44,32 +44,35 @@ export function usePageAccess() {
   const [matrix, setMatrix] = useState<Record<string, Record<string, boolean>>>(DEFAULT_ACCESS);
   const [loaded, setLoaded] = useState(false);
 
-  // Fetch from DB
-  useEffect(() => {
-    const fetchMatrix = async () => {
-      const { data } = await supabase
-        .from('page_access_matrix')
-        .select('role, page_key, allowed');
-      
-      if (data && data.length > 0) {
-        const built: Record<string, Record<string, boolean>> = { admin: {}, midia: {} };
-        data.forEach((row: any) => {
-          if (row.role === 'admin' || row.role === 'midia') {
-            built[row.role][row.page_key] = row.allowed;
-          }
-        });
-        // Merge with defaults
-        setMatrix({
-          admin: { ...DEFAULT_ACCESS.admin, ...built.admin },
-          midia: { ...DEFAULT_ACCESS.midia, ...built.midia },
-        });
-      }
-      setLoaded(true);
-    };
-    fetchMatrix();
+  const fetchMatrix = useCallback(async () => {
+    const { data } = await supabase
+      .from('page_access_matrix')
+      .select('role, page_key, allowed');
+    
+    if (data && data.length > 0) {
+      const built: Record<string, Record<string, boolean>> = {};
+      data.forEach((row: any) => {
+        if (!built[row.role]) built[row.role] = {};
+        built[row.role][row.page_key] = row.allowed;
+      });
+
+      // Ensure we have at least the defaults if they are missing from DB
+      const final = { ...DEFAULT_ACCESS };
+      Object.keys(built).forEach(role => {
+        final[role] = { ...(DEFAULT_ACCESS[role] || {}), ...built[role] };
+      });
+
+      setMatrix(final);
+    }
+    setLoaded(true);
   }, []);
 
-  const toggleAccess = useCallback(async (role: 'admin' | 'midia', page: PageKey) => {
+  // Fetch from DB
+  useEffect(() => {
+    fetchMatrix();
+  }, [fetchMatrix]);
+
+  const toggleAccess = useCallback(async (role: string, page: PageKey) => {
     const newValue = !matrix[role]?.[page];
     setMatrix(prev => ({
       ...prev,
@@ -85,29 +88,59 @@ export function usePageAccess() {
       );
   }, [matrix]);
 
+  const addRole = useCallback(async (newRoleName: string) => {
+    const role = newRoleName.toLowerCase().trim();
+    if (!role || matrix[role]) return false;
+
+    // Initialize with all false
+    const initialPages: Record<string, boolean> = {};
+    Object.keys(PAGE_LABELS).forEach(p => initialPages[p] = false);
+
+    setMatrix(prev => ({ ...prev, [role]: initialPages }));
+
+    // Prepare batch upsert
+    const entries = Object.keys(PAGE_LABELS).map(p => ({
+      role: role,
+      page_key: p,
+      allowed: false
+    }));
+
+    await supabase.from('page_access_matrix').upsert(entries);
+    return true;
+  }, [matrix]);
+
+  const removeRole = useCallback(async (role: string) => {
+    if (role === 'admin' || role === 'midia') return; // Protective
+    
+    setMatrix(prev => {
+      const next = { ...prev };
+      delete next[role];
+      return next;
+    });
+
+    await supabase.from('page_access_matrix').delete().eq('role', role);
+  }, []);
+
   const canAccess = useCallback((role: AppRole | string, page: PageKey): boolean => {
     if (role === 'dev') return true;
     if (role === 'cliente') return false;
-    if (role === 'admin' || role === 'midia') {
-      return matrix[role]?.[page] ?? false;
-    }
-    return false;
+    return matrix[role]?.[page] ?? false;
   }, [matrix]);
 
   const resetToDefaults = useCallback(async () => {
+    // Delete custom roles from DB? Or just reset standard ones?
+    // User probably wants to clear all and back to defaults.
+    await supabase.from('page_access_matrix').delete().neq('id', 'placeholder'); // Simple way to clear table
     setMatrix(DEFAULT_ACCESS);
-    // Update DB entry by entry
+    
+    const entries: any[] = [];
     for (const [role, pages] of Object.entries(DEFAULT_ACCESS)) {
       for (const [page, allowed] of Object.entries(pages)) {
-        await supabase
-          .from('page_access_matrix')
-          .upsert(
-            { role: role as any, page_key: page, allowed },
-            { onConflict: 'role,page_key' }
-          );
+        entries.push({ role, page_key: page, allowed });
       }
     }
+    await supabase.from('page_access_matrix').upsert(entries);
   }, []);
 
-  return { matrix, toggleAccess, canAccess, resetToDefaults, loaded };
+  return { matrix, toggleAccess, canAccess, resetToDefaults, loaded, addRole, removeRole, refresh: fetchMatrix };
 }

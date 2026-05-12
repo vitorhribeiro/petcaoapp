@@ -18,6 +18,17 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { createPortal } from 'react-dom';
 import { getCommentCountsForPhotos } from '@/services/galleryCommentsService';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface GalleryImage {
   id: string;
@@ -38,9 +49,10 @@ interface PhotoViewerProps {
   onClose: () => void;
   showAdminActions?: boolean;
   onDelete?: (id: string) => void;
+  onEdit?: (image: GalleryImage) => void;
 }
 
-export function PhotoViewer({ images, initialIndex, open, onClose, showAdminActions, onDelete }: PhotoViewerProps) {
+export function PhotoViewer({ images, initialIndex, open, onClose, showAdminActions, onDelete, onEdit }: PhotoViewerProps) {
   const [index, setIndex] = useState(initialIndex);
   const [loaded, setLoaded] = useState(false);
   const { user, isAuthenticated } = useAuth();
@@ -51,6 +63,7 @@ export function PhotoViewer({ images, initialIndex, open, onClose, showAdminActi
   const doubleTapRef = useRef<number>(0);
   const [showComments, setShowComments] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const isAdmin = user?.role === 'admin' || showAdminActions;
 
   useEffect(() => { setIndex(initialIndex); }, [initialIndex]);
   useEffect(() => { setLoaded(false); setShowComments(false); setIsEditing(false); }, [index]);
@@ -165,9 +178,33 @@ export function PhotoViewer({ images, initialIndex, open, onClose, showAdminActi
       </div>
       <div className="flex items-center gap-1">
         {showAdminActions && onDelete && (
-          <Button variant="ghost" size="icon" onClick={() => onDelete(image.id)} className="text-muted-foreground hover:text-destructive h-8 w-8 rounded-full">
-            <Trash2 className="w-4 h-4" />
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive h-8 w-8 rounded-full">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="rounded-[32px] border-border/40 bg-card/95 backdrop-blur-xl shadow-2xl">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-xl font-bold">Excluir esta foto?</AlertDialogTitle>
+                <AlertDialogDescription className="text-sm">
+                  Esta ação removerá permanentemente a imagem da galeria. Você tem certeza?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="my-4 aspect-video rounded-2xl overflow-hidden border border-border/20">
+                 <img src={image.url} className="w-full h-full object-cover" alt="" />
+              </div>
+              <AlertDialogFooter className="gap-2">
+                <AlertDialogCancel className="rounded-2xl border-none bg-muted/50 hover:bg-muted font-semibold">Voltar</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold shadow-lg shadow-red-500/20"
+                  onClick={() => onDelete(image.id)}
+                >
+                  Confirmar Exclusão
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
         {isEditing ? (
           <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)} className="h-8 text-xs font-medium">
@@ -194,7 +231,7 @@ export function PhotoViewer({ images, initialIndex, open, onClose, showAdminActi
               {showAdminActions && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setIsEditing(true)} className="cursor-pointer">Editar post</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onEdit?.(image)} className="cursor-pointer">Editar post</DropdownMenuItem>
                 </>
               )}
               <DropdownMenuSeparator />
@@ -228,15 +265,18 @@ export function PhotoViewer({ images, initialIndex, open, onClose, showAdminActi
         <div className="flex flex-col md:flex-row w-full h-full overflow-y-auto md:overflow-hidden">
           
           {/* ======= MOBILE TOP BAR & PROFILE ======= */}
-          <div className="md:hidden flex flex-col bg-card w-full shrink-0">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
-               <button onClick={onClose} className="p-1 -ml-1 active:scale-95 transition-transform text-foreground">
-                 <ChevronLeft className="w-6 h-6" />
-               </button>
-               <span className="font-semibold text-sm">Galeria</span>
-               <div className="w-6" />
-            </div>
-            {renderProfileHeader("border-b-0")}
+          <div className="md:hidden flex items-center justify-between px-5 py-4 bg-card shrink-0">
+             <div className="w-8" />
+             <div className="w-8 h-1 rounded-full bg-muted/40" />
+             <button 
+               onClick={onClose} 
+               className="w-8 h-8 flex items-center justify-center rounded-full bg-muted/30 text-foreground active:scale-90 transition-all"
+             >
+               <X className="w-4 h-4" />
+             </button>
+          </div>
+          <div className="md:hidden bg-card shrink-0">
+            {renderProfileHeader("border-b-0 pt-0")}
           </div>
 
           {/* ======= IMAGE AREA ======= */}
@@ -251,7 +291,10 @@ export function PhotoViewer({ images, initialIndex, open, onClose, showAdminActi
               const dt = Date.now() - touchStartRef.current.time;
               touchStartRef.current = null;
               if (dt > 500) return;
-              if (Math.abs(dy) > 80 && Math.abs(dy) > Math.abs(dx)) { onClose(); return; }
+              
+              // Removido o fechamento por arraste vertical (dy) a pedido do usuário
+              // if (Math.abs(dy) > 80 && Math.abs(dy) > Math.abs(dx)) { onClose(); return; }
+              
               if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
                 if (dx > 0) {
                   // Se arrastar da esquerda para direita na primeira foto, fecha.
@@ -315,37 +358,48 @@ export function PhotoViewer({ images, initialIndex, open, onClose, showAdminActi
           </div>
 
           {/* ======= DETAILS SIDEBAR ======= */}
-          <div className="w-full md:w-[380px] lg:w-[420px] flex flex-col bg-card md:border-l border-border/30">
+          <div className="w-full md:w-[380px] lg:w-[420px] flex flex-col bg-card md:border-l border-border/30 overflow-hidden">
+            {/* Desktop Profile header */}
+            {renderProfileHeader("hidden md:flex shrink-0 border-b border-border/5")}
 
-            {/* Profile header */}
-            {renderProfileHeader("hidden md:flex")}
-
-            {/* Caption (desktop scrollable) */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 hidden md:block">
+            {/* Scrollable Area (Caption + Comments List) */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar hidden md:block">
+              {/* Caption Section */}
               {(image.caption || image.pet_name) && (
-                <p className="text-sm text-foreground leading-relaxed">
-                  <span className="font-semibold">{displayName}</span>{' '}
-                  {image.caption || ''}
-                  {image.pet_name && !image.caption && (
-                    <span className="text-muted-foreground">🐾 {image.pet_name}</span>
-                  )}
-                </p>
-              )}
-              {image.pet_name && image.caption && (
-                <p className="text-xs text-muted-foreground mt-1">🐾 {image.pet_name}</p>
+                <div className="px-5 py-5 border-b border-border/5">
+                  <div className="flex gap-3 items-start">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold shrink-0 mt-0.5">
+                      {displayName[0].toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm leading-snug">
+                        <span className="font-bold text-foreground mr-2">{displayName}</span>
+                        <span className="text-foreground/90 whitespace-pre-wrap break-words">{image.caption || ''}</span>
+                      </p>
+                      {image.pet_name && (
+                        <p className="text-[11px] text-muted-foreground mt-2 font-medium flex items-center gap-1.5">
+                          <span className="opacity-50">🐾</span> {image.pet_name}
+                        </p>
+                      )}
+                      {timeAgo && (
+                        <p className="text-[10px] text-muted-foreground/50 mt-2 font-medium uppercase tracking-wider">{timeAgo}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               )}
 
+              {/* Comments List (No Input) */}
+              <div className="min-h-[100px]">
+                <PhotoComments photoId={image.id} isAuthenticated={isAuthenticated} isEditing={isAdmin} hideInput={true} />
+              </div>
             </div>
 
-            {/* ======= ACTION BAR ======= */}
-            <div className="pt-3 pb-2.5 flex flex-col">
-              {/* Desktop inline comments */}
-              <div className="px-0 md:px-0 pb-1 hidden md:block">
-                <PhotoComments photoId={image.id} isAuthenticated={isAuthenticated} isEditing={isEditing} />
-              </div>
+            {/* ======= BOTTOM FIXED AREA (Desktop: Actions + Input / Mobile: Actions) ======= */}
+            <div className="shrink-0 flex flex-col border-t border-border/5 bg-card">
               
-              {/* Mobile caption (moved above icons) */}
-              <div className="md:hidden mt-0 mb-3 px-4">
+              {/* Mobile Only: Caption moved above actions */}
+              <div className="md:hidden mt-3 mb-3 px-4">
                 {(image.caption || image.pet_name) && (
                   <p className="text-sm text-foreground leading-snug">
                     <span className="font-semibold">{displayName}</span>{' '}
@@ -360,76 +414,53 @@ export function PhotoViewer({ images, initialIndex, open, onClose, showAdminActi
                 )}
               </div>
 
-              <div className="px-4 mt-0">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    {isAuthenticated ? (
-                      <>
-                        <button
-                          onClick={handleLike}
-                          className={cn(
-                            'flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all active:scale-95',
-                            currentLike.liked
-                              ? 'bg-red-50 dark:bg-red-500/10'
-                              : 'hover:bg-muted/60'
-                          )}
-                        >
-                          <Heart
-                            className={cn(
-                              'w-5 h-5 transition-all duration-200',
-                              currentLike.liked
-                                ? 'text-red-500 fill-red-500 scale-110'
-                                : 'text-foreground'
-                            )}
-                          />
-                          {currentLike.count > 0 && (
-                            <span className={cn('text-xs font-semibold', currentLike.liked ? 'text-red-500' : 'text-foreground')}>
-                              {currentLike.count}
-                            </span>
-                          )}
-                        </button>
-
-                        <Sheet open={showComments} onOpenChange={setShowComments}>
-                          <SheetTrigger asChild>
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-muted/60 transition-all active:scale-95 md:hidden">
-                              <MessageCircle className="w-5 h-5 text-foreground" />
-                              {commentCount > 0 && (
-                                <span className="text-sm font-medium text-foreground">{commentCount}</span>
-                              )}
-                            </button>
-                          </SheetTrigger>
-                          <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl p-0 border-none flex flex-col pt-6 z-[99999]">
-                            <div className="flex-1 overflow-y-auto w-full">
-                              <PhotoComments photoId={image.id} isAuthenticated={isAuthenticated} isEditing={isEditing} />
-                            </div>
-                          </SheetContent>
-                        </Sheet>
-
-                        <button
-                          onClick={handleShare}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-muted/60 transition-all active:scale-95"
-                        >
-                          <Share2 className="w-5 h-5 text-foreground" />
-                        </button>
-                      </>
-                    ) : (
-                      /* Mobile-only login message when deslogado (since desktop already has it via sidebar) */
-                      <div className="md:hidden w-full pb-2">
-                        <PhotoComments photoId={image.id} isAuthenticated={isAuthenticated} isEditing={isEditing} />
-                      </div>
+            {/* Interaction Bar (Likes, Share, etc.) */}
+            <div className="shrink-0 border-t border-border/5 bg-card px-5 py-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-5">
+                  <button onClick={handleLike} className="group flex items-center gap-1.5 transition-all active:scale-125">
+                    <Heart className={cn("w-6 h-6", currentLike.liked ? "fill-red-500 text-red-500" : "text-foreground hover:text-red-400")} />
+                    {currentLike.count > 0 && (
+                      <span className={cn('text-sm font-bold', currentLike.liked ? 'text-red-500' : 'text-foreground')}>
+                        {currentLike.count}
+                      </span>
                     )}
-                  </div>
+                  </button>
+                  <button onClick={handleShare} className="active:scale-125 transition-all">
+                    <Share2 className="w-6 h-6 text-foreground hover:text-primary" />
+                  </button>
 
-                  {/* Counter desktop */}
-                  {images.length > 1 && (
-                    <span className="hidden md:inline text-xs text-muted-foreground">
-                      {index + 1} de {images.length}
-                    </span>
-                  )}
+                  {/* Mobile Comment Button (Opens Sheet) */}
+                  <Sheet open={showComments} onOpenChange={setShowComments}>
+                    <SheetTrigger asChild>
+                      <button className="md:hidden active:scale-125 transition-all">
+                        <MessageCircle className="w-6 h-6 text-foreground" />
+                      </button>
+                    </SheetTrigger>
+                    <SheetContent side="bottom" className="h-[85vh] rounded-t-[32px] p-0 border-none flex flex-col z-[99999] bg-card overflow-hidden [&>button]:hidden">
+                      <PhotoComments 
+                        photoId={image.id} 
+                        isAuthenticated={isAuthenticated} 
+                        isEditing={isAdmin} 
+                        isMobile={true} 
+                        onMobileClose={() => setShowComments(false)} 
+                      />
+                    </SheetContent>
+                  </Sheet>
                 </div>
+                {images.length > 1 && (
+                  <span className="text-[10px] font-bold text-muted-foreground/30 tracking-widest uppercase">
+                    {index + 1} de {images.length}
+                  </span>
+                )}
               </div>
-          </div>
+            </div>
 
+            {/* Desktop Only: Fixed Input Area */}
+            <div className="hidden md:block shrink-0 border-t border-border/5 bg-card">
+              <PhotoComments photoId={image.id} isAuthenticated={isAuthenticated} isEditing={isAdmin} hideList={true} />
+            </div>
+            </div>
           </div>
         </div>
       </DialogContent>

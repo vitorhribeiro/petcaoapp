@@ -39,10 +39,10 @@ export interface DemoData {
 }
 
 interface TestModesContextType {
+  appPlan: 'basic' | 'pro';
+  setAppPlan: (plan: 'basic' | 'pro') => void;
   proModeActive: boolean;
-  toggleProMode: () => void;
   basicModeActive: boolean;
-  toggleBasicMode: () => void;
   clientModeActive: boolean;
   toggleClientMode: () => void;
   demoModeActive: boolean;
@@ -194,6 +194,21 @@ function generateDemoData(config: DemoConfig): DemoData {
 }
 
 export function TestModesProvider({ children }: { children: ReactNode }) {
+  // Plano Persistente
+  const [appPlan, setAppPlanState] = useState<'basic' | 'pro'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('petcao_app_plan');
+      return (saved === 'basic' || saved === 'pro') ? saved : 'pro';
+    }
+    return 'pro';
+  });
+
+  const setAppPlan = useCallback((plan: 'basic' | 'pro') => {
+    setAppPlanState(plan);
+    localStorage.setItem('petcao_app_plan', plan);
+  }, []);
+
+  // Estados de Simulação (Temporários)
   const [proModeActive, setProModeActive] = useState(false);
   const [basicModeActive, setBasicModeActive] = useState(false);
   const [clientModeActive, setClientModeActive] = useState(false);
@@ -210,6 +225,13 @@ export function TestModesProvider({ children }: { children: ReactNode }) {
     setBasicModeActive(prev => !prev);
     setProModeActive(false);
   }, []);
+
+  // O "proMode" real do app é verdadeiro se o plano for pro OU se a simulação pro estiver ativa (e simulação básica inativa)
+  const isPro = useMemo(() => {
+    if (basicModeActive) return false;
+    if (proModeActive) return true;
+    return appPlan === 'pro';
+  }, [appPlan, proModeActive, basicModeActive]);
   
   const toggleClientMode = useCallback(() => setClientModeActive(prev => !prev), []);
   
@@ -237,8 +259,8 @@ export function TestModesProvider({ children }: { children: ReactNode }) {
 
   const activeModes = useMemo(() => {
     const modes: string[] = [];
-    if (proModeActive) modes.push('PRO');
-    if (basicModeActive) modes.push('Básico');
+    if (proModeActive) modes.push('Simular PRO');
+    if (basicModeActive) modes.push('Simular Básico');
     if (clientModeActive) modes.push('Cliente');
     if (demoModeActive) modes.push('Demo');
     return modes;
@@ -248,6 +270,7 @@ export function TestModesProvider({ children }: { children: ReactNode }) {
 
   return (
     <TestModesContext.Provider value={{
+      appPlan, setAppPlan,
       proModeActive, toggleProMode,
       basicModeActive, toggleBasicMode,
       clientModeActive, toggleClientMode,
@@ -255,6 +278,7 @@ export function TestModesProvider({ children }: { children: ReactNode }) {
       demoData, clearDemoData,
       demoConfig, setDemoConfig, regenerateDemoData,
       anyModeActive, activeModes,
+      isPro,
     }}>
       {children}
     </TestModesContext.Provider>

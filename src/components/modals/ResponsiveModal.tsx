@@ -21,14 +21,14 @@ export function ResponsiveModal({
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[85dvh] flex flex-col">
-          <DrawerHeader className="text-left px-6 pt-4 pb-2 shrink-0">
-            <div className="flex items-center gap-2.5">
-              {icon}
-              <div>
-                <DrawerTitle className="text-lg">{title}</DrawerTitle>
-                {description && <DrawerDescription className="text-sm text-muted-foreground mt-0.5">{description}</DrawerDescription>}
+      <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
+        <DrawerContent className="max-h-[92dvh] flex flex-col outline-none">
+          <DrawerHeader className="text-left px-6 pt-5 pb-2 shrink-0">
+            <div className="flex items-center gap-3">
+              {icon && <div className="p-2 rounded-xl bg-primary/10 text-primary">{icon}</div>}
+              <div className="flex-1 min-w-0">
+                <DrawerTitle className="text-lg font-bold leading-tight truncate">{title}</DrawerTitle>
+                {description && <DrawerDescription className="text-sm text-muted-foreground mt-0.5 line-clamp-1">{description}</DrawerDescription>}
               </div>
             </div>
           </DrawerHeader>
@@ -36,7 +36,7 @@ export function ResponsiveModal({
             {children}
           </div>
           {stickyFooter && (
-            <div className="px-6 py-4 border-t border-border shrink-0 pb-safe">
+            <div className="px-6 py-4 border-t border-border shrink-0 bg-background/80 backdrop-blur-sm pb-[calc(1rem+env(safe-area-inset-bottom))]">
               {stickyFooter}
             </div>
           )}

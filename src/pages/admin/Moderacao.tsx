@@ -19,7 +19,7 @@ import {
   CheckCircle2, XCircle, Image, Star, Plus, ChevronLeft, ChevronRight,
   Shield, Clock, Camera, MessageSquare, Sparkles, ImageOff, MessageCircleOff,
   Trash2, Images, MessageSquareText, FileCheck, History, LayoutDashboard,
-  Info, Edit2, Store
+  Info, Edit2, Store, Eye
 } from 'lucide-react';
 import * as reviewsService from '@/services/reviewsService';
 import {
@@ -86,6 +86,7 @@ export default function Moderacao() {
 
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
+  const [photoToDelete, setPhotoToDelete] = useState<galleryService.GalleryPhotoRow | null>(null);
 
   const pendingPhotos = galleryImages.filter(img => img.moderation_status === 'pendente');
   const pendingReviews = reviewsList.filter(r => r.moderation_status === 'pendente');
@@ -237,15 +238,28 @@ export default function Moderacao() {
           )}
         </div>
 
-        <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-y-2 group-hover:translate-y-0 transition-transform">
-          <div className="flex gap-1">
-            <Button size="sm" variant="secondary" className="h-7 text-[10px] flex-1 bg-background/90 backdrop-blur-sm border-none" onClick={() => openViewer(img.id)}>
-              <Image className="w-3 h-3 mr-1" /> Ver
+        <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0 flex gap-2">
+            <Button 
+              size="sm" 
+              className="h-10 px-4 text-xs flex-1 bg-white hover:bg-white/90 text-black font-bold rounded-xl shadow-xl border-none" 
+              onClick={() => openViewer(img.id)}
+            >
+              <Eye className="w-4 h-4 mr-2" /> Ver
             </Button>
-            <Button size="sm" variant="secondary" className="h-7 w-7 p-0 bg-background/90 backdrop-blur-sm border-none" onClick={() => setEditPhotoTarget(img)}>
-              <Edit2 className="w-3 h-3" />
+            <Button 
+              size="sm" 
+              className="h-10 w-10 p-0 bg-white hover:bg-white/90 text-black font-bold rounded-xl shadow-xl border-none" 
+              onClick={() => setEditPhotoTarget(img)}
+            >
+              <Edit2 className="w-4 h-4" />
             </Button>
-          </div>
+            <Button 
+              size="sm" 
+              className="h-10 w-10 p-0 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-xl border-none"
+              onClick={() => setPhotoToDelete(img)}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
         </div>
       </div>
 
@@ -658,51 +672,70 @@ export default function Moderacao() {
         open={!!editPhotoTarget} 
         onOpenChange={(v) => !v && setEditPhotoTarget(null)} 
         title="Editar Foto"
+        stickyFooter={
+          <Button 
+            className="w-full h-12 rounded-xl font-bold bg-primary text-primary-foreground shadow-lg" 
+            onClick={() => {
+              toast.promise(updatePhoto(editPhotoTarget!.id, editPhotoTarget!), {
+                loading: 'Salvando...',
+                success: 'Foto atualizada!',
+                error: 'Erro ao salvar.'
+              });
+              setEditPhotoTarget(null);
+            }}
+          >
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            Salvar Alterações
+          </Button>
+        }
       >
         {editPhotoTarget && (
           <div className="space-y-4 pt-2">
-            <div className="aspect-video relative rounded-xl overflow-hidden bg-muted">
+            <div className="aspect-video relative rounded-xl overflow-hidden bg-muted border border-border/20">
               <img src={editPhotoTarget.url} className="w-full h-full object-cover" alt="" />
             </div>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>Pet</Label>
+                  <Label className="text-xs font-semibold text-muted-foreground">Pet</Label>
                   <Input 
                     value={editPhotoTarget.pet_name || ''} 
                     onChange={(e) => setEditPhotoTarget({...editPhotoTarget, pet_name: e.target.value})}
+                    className="h-11 text-base rounded-xl"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Dono</Label>
+                  <Label className="text-xs font-semibold text-muted-foreground">Dono</Label>
                   <Input 
                     value={editPhotoTarget.owner_name || ''} 
                     onChange={(e) => setEditPhotoTarget({...editPhotoTarget, owner_name: e.target.value})}
+                    className="h-11 text-base rounded-xl"
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label>Título / Alt Text</Label>
+                <Label className="text-xs font-semibold text-muted-foreground">Título / Alt Text</Label>
                 <Input 
                   value={editPhotoTarget.alt || ''} 
                   onChange={(e) => setEditPhotoTarget({...editPhotoTarget, alt: e.target.value})}
+                  className="h-11 text-base rounded-xl"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Legenda</Label>
+                <Label className="text-xs font-semibold text-muted-foreground">Legenda</Label>
                 <Textarea 
                   value={editPhotoTarget.caption || ''} 
                   onChange={(e) => setEditPhotoTarget({...editPhotoTarget, caption: e.target.value})}
-                  className="min-h-[80px]"
+                  className="min-h-[80px] text-base rounded-xl resize-none"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Categoria</Label>
+                <Label className="text-xs font-semibold text-muted-foreground">Categoria</Label>
                 <Select 
                   value={editPhotoTarget.category || ''} 
                   onValueChange={(v) => setEditPhotoTarget({...editPhotoTarget, category: v})}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-11 rounded-xl text-base">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -714,19 +747,6 @@ export default function Moderacao() {
                 </Select>
               </div>
             </div>
-            <Button 
-              className="w-full h-11 rounded-xl font-bold" 
-              onClick={() => {
-                toast.promise(updatePhoto(editPhotoTarget.id, editPhotoTarget), {
-                  loading: 'Salvando...',
-                  success: 'Foto atualizada!',
-                  error: 'Erro ao salvar.'
-                });
-                setEditPhotoTarget(null);
-              }}
-            >
-              Salvar Alterações
-            </Button>
           </div>
         )}
       </ResponsiveModal>
@@ -736,33 +756,51 @@ export default function Moderacao() {
         open={!!editReviewTarget} 
         onOpenChange={(v) => !v && setEditReviewTarget(null)} 
         title="Editar Avaliação"
+        stickyFooter={
+          <Button 
+            className="w-full h-12 rounded-xl font-bold bg-primary text-primary-foreground shadow-lg" 
+            onClick={() => {
+              toast.promise(updateReview(editReviewTarget!.id, editReviewTarget!), {
+                loading: 'Salvando...',
+                success: 'Avaliação atualizada!',
+                error: 'Erro ao salvar.'
+              });
+              setEditReviewTarget(null);
+            }}
+          >
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            Salvar Alterações
+          </Button>
+        }
       >
         {editReviewTarget && (
           <div className="space-y-4 pt-2">
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>Cliente</Label>
+                  <Label className="text-xs font-semibold text-muted-foreground">Cliente</Label>
                   <Input 
                     value={editReviewTarget.name || ''} 
                     onChange={(e) => setEditReviewTarget({...editReviewTarget, name: e.target.value})}
+                    className="h-11 text-base rounded-xl"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Pet</Label>
+                  <Label className="text-xs font-semibold text-muted-foreground">Pet</Label>
                   <Input 
                     value={editReviewTarget.pet_name || ''} 
                     onChange={(e) => setEditReviewTarget({...editReviewTarget, pet_name: e.target.value})}
+                    className="h-11 text-base rounded-xl"
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label>Nota (1 a 5)</Label>
+                <Label className="text-xs font-semibold text-muted-foreground">Nota (1 a 5)</Label>
                 <Select 
                   value={String(editReviewTarget.rating)} 
                   onValueChange={(v) => setEditReviewTarget({...editReviewTarget, rating: Number(v)})}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-11 rounded-xl text-base">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -773,37 +811,58 @@ export default function Moderacao() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Título</Label>
+                <Label className="text-xs font-semibold text-muted-foreground">Título</Label>
                 <Input 
                   value={editReviewTarget.title || ''} 
                   onChange={(e) => setEditReviewTarget({...editReviewTarget, title: e.target.value})}
+                  className="h-11 text-base rounded-xl"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Comentário</Label>
+                <Label className="text-xs font-semibold text-muted-foreground">Comentário</Label>
                 <Textarea 
                   value={editReviewTarget.comment || ''} 
                   onChange={(e) => setEditReviewTarget({...editReviewTarget, comment: e.target.value})}
-                  className="min-h-[100px]"
+                  className="min-h-[100px] text-base rounded-xl resize-none"
                 />
               </div>
             </div>
-            <Button 
-              className="w-full h-11 rounded-xl font-bold" 
-              onClick={() => {
-                toast.promise(updateReview(editReviewTarget.id, editReviewTarget), {
-                  loading: 'Salvando...',
-                  success: 'Avaliação atualizada!',
-                  error: 'Erro ao salvar.'
-                });
-                setEditReviewTarget(null);
-              }}
-            >
-              Salvar Alterações
-            </Button>
           </div>
         )}
       </ResponsiveModal>
+
+      {/* ── Delete Confirmation Dialog ── */}
+      <AlertDialog open={!!photoToDelete} onOpenChange={(v) => !v && setPhotoToDelete(null)}>
+        <AlertDialogContent className="rounded-[32px] border-border/40 bg-card/95 backdrop-blur-xl shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-bold">Excluir imagem?</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm">
+              Esta ação removerá permanentemente a imagem da galeria. Você tem certeza?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="my-4 aspect-video rounded-2xl overflow-hidden border border-border/20">
+             {photoToDelete && <img src={photoToDelete.url} className="w-full h-full object-cover" alt="" />}
+          </div>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="rounded-2xl border-none bg-muted/50 hover:bg-muted font-semibold">Voltar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold shadow-lg shadow-red-500/20"
+              onClick={() => {
+                if (photoToDelete) {
+                  toast.promise(deletePhoto(photoToDelete.id), {
+                    loading: 'Excluindo...',
+                    success: 'Imagem excluída com sucesso!',
+                    error: 'Erro ao excluir imagem.'
+                  });
+                  setPhotoToDelete(null);
+                }
+              }}
+            >
+              Confirmar Exclusão
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* ── Photo Viewer Modal ── */}
       <PhotoViewer 
@@ -816,6 +875,10 @@ export default function Moderacao() {
            await deletePhoto(id);
            setViewerOpen(false);
            toast.success('Foto excluída.');
+        }}
+        onEdit={(img) => {
+          setEditPhotoTarget(img as any);
+          setViewerOpen(false);
         }}
       />
     </div>
