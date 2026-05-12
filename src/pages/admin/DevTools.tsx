@@ -5,7 +5,6 @@ import { DevToolsOverview } from '@/components/devtools/DevToolsOverview';
 import { DevToolsEnvironment } from '@/components/devtools/DevToolsEnvironment';
 import { DevToolsPermissions } from '@/components/devtools/DevToolsPermissions';
 import { DevToolsDemoData } from '@/components/devtools/DevToolsDemoData';
-import { DevToolsLogs } from '@/components/devtools/DevToolsLogs';
 import { DevToolsTools } from '@/components/devtools/DevToolsTools';
 import { DevToolsUsuarios } from '@/components/admin/DevToolsUsuarios';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -17,7 +16,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 
-export type DevSection = 'overview' | 'environment' | 'permissions' | 'demo' | 'logs' | 'tools' | 'usuarios';
+export type DevSection = 'overview' | 'environment' | 'permissions' | 'demo' | 'tools' | 'usuarios';
 
 const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID || '—';
 const ENV_NAME = window.location.hostname.includes('preview') ? 'Preview' : window.location.hostname.includes('localhost') ? 'Dev' : 'Produção';
@@ -120,7 +119,6 @@ export default function DevTools() {
             {section === 'environment' && <DevToolsEnvironment />}
             {section === 'permissions' && <DevToolsPermissions />}
             {section === 'demo' && <DevToolsDemoData />}
-            {section === 'logs' && <DevToolsLogs />}
             {section === 'tools' && <DevToolsTools />}
             {section === 'usuarios' && <DevToolsUsuarios />}
           </div>

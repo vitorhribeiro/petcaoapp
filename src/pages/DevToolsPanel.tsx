@@ -19,14 +19,13 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
-type Section = 'usage' | 'jobs' | 'webhooks' | 'api' | 'logs' | 'errors' | 'database' | 'tools';
+type Section = 'usage' | 'jobs' | 'webhooks' | 'api' | 'errors' | 'database' | 'tools';
 
 const SECTIONS: { key: Section; label: string; icon: typeof Activity; color: string }[] = [
   { key: 'usage', label: 'Uso do Sistema', icon: BarChart3, color: 'text-sky-500' },
   { key: 'jobs', label: 'Fila de Tarefas', icon: Layers, color: 'text-violet-500' },
   { key: 'webhooks', label: 'Webhooks', icon: Webhook, color: 'text-emerald-500' },
   { key: 'api', label: 'Requisições API', icon: Globe, color: 'text-amber-500' },
-  { key: 'logs', label: 'Logs do Backend', icon: ScrollText, color: 'text-rose-500' },
   { key: 'errors', label: 'Erros JS', icon: Bug, color: 'text-red-500' },
   { key: 'database', label: 'Banco de Dados', icon: Database, color: 'text-cyan-500' },
   { key: 'tools', label: 'Ferramentas', icon: Wrench, color: 'text-orange-500' },
@@ -172,7 +171,6 @@ export default function DevToolsPanel() {
               {section === 'jobs' && <JobsSection jobs={monitor.jobs} counts={jobCounts} />}
               {section === 'webhooks' && <WebhooksSection webhooks={monitor.webhooks} />}
               {section === 'api' && <ApiSection requests={monitor.apiRequests} onClear={monitor.clearRequests} />}
-              {section === 'logs' && <LogsSection logs={monitor.logs} onClear={monitor.clearLogs} onCopy={copyLogs} onExport={exportLogs} />}
               {section === 'errors' && <ErrorsSection errors={monitor.jsErrors} onClear={monitor.clearErrors} />}
               {section === 'database' && <DatabaseSection db={monitor.dbStatus} onRefresh={monitor.refreshAll} loading={monitor.backendLoading} />}
               {section === 'tools' && <ToolsSection onCopyLogs={copyLogs} onExportLogs={exportLogs} onClearLogs={monitor.clearLogs} onRefresh={monitor.refreshAll} />}
@@ -373,35 +371,7 @@ function ApiSection({ requests, onClear }: { requests: ApiRequest[]; onClear: ()
   );
 }
 
-/* ── 5. Logs ── */
-function LogsSection({ logs, onClear, onCopy, onExport }: { logs: BackendLog[]; onClear: () => void; onCopy: () => void; onExport: () => void }) {
-  const levelColor = (l: BackendLog['level']) => l === 'ERROR' ? 'text-destructive' : l === 'WARN' ? 'text-amber-500' : 'text-emerald-500';
-  const levelBg = (l: BackendLog['level']) => l === 'ERROR' ? 'bg-destructive/10' : l === 'WARN' ? 'bg-amber-500/10' : '';
-  return (
-    <>
-      <SectionHeader icon={ScrollText} title="Logs do Backend" description="Registros do servidor em tempo real" color="from-rose-500 to-pink-600 shadow-rose-500/20" />
-      <div className="flex gap-2 mb-3 justify-end">
-        <Button variant="ghost" size="sm" onClick={onCopy} className="text-xs h-7"><Copy className="w-3 h-3 mr-1" />Copiar</Button>
-        <Button variant="ghost" size="sm" onClick={onExport} className="text-xs h-7"><Download className="w-3 h-3 mr-1" />Exportar</Button>
-        <Button variant="ghost" size="sm" onClick={onClear} className="text-xs h-7"><Trash2 className="w-3 h-3 mr-1" />Limpar</Button>
-      </div>
-      <Card className="border-border/50 bg-zinc-950/80 dark:bg-zinc-950/60">
-        <ScrollArea className="max-h-[500px]">
-          <div className="p-3 font-mono text-xs space-y-0.5">
-            {logs.length === 0 && <p className="text-muted-foreground text-center py-8">Sem logs</p>}
-            {logs.map(l => (
-              <div key={l.id} className={cn("flex gap-2 px-2 py-1 rounded", levelBg(l.level))}>
-                <span className="text-muted-foreground/60 shrink-0 w-16">{format(l.timestamp, 'HH:mm:ss')}</span>
-                <span className={cn("shrink-0 w-12 font-bold", levelColor(l.level))}>[{l.level}]</span>
-                <span className="text-zinc-300 break-all">{l.message}</span>
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
-      </Card>
-    </>
-  );
-}
+
 
 /* ── 6. Errors ── */
 function ErrorsSection({ errors, onClear }: { errors: JsError[]; onClear: () => void }) {

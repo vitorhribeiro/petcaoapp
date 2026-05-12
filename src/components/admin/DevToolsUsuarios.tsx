@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Plus, Pencil, Trash2, Shield, Crown, Users, Eye, KeyRound, Copy, Check, Loader2, Mail } from 'lucide-react';
+import { Plus, Pencil, Trash2, Shield, Crown, Users, Eye, KeyRound, Copy, Check, Loader2, Mail, Search, Filter, MoreVertical, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import type { AppRole } from '@/contexts/AuthContext';
@@ -29,10 +29,28 @@ interface ProfileWithRole {
   created_at: string;
 }
 
-const ROLE_CONFIG: Record<string, { label: string; color: string; bg: string; icon: typeof Shield }> = {
-  dev: { label: 'DEV', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-500/10', icon: Crown },
-  admin: { label: 'ADMIN', color: 'text-primary', bg: 'bg-primary/10', icon: Shield },
-  midia: { label: 'MÍDIA', color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-500/10', icon: Users },
+const ROLE_CONFIG: Record<string, { label: string; color: string; bg: string; icon: typeof Shield; glow: string }> = {
+  dev: { 
+    label: 'DEVELOPER', 
+    color: 'text-amber-500 dark:text-amber-400', 
+    bg: 'bg-amber-500/10 border-amber-500/20', 
+    icon: Crown,
+    glow: 'shadow-amber-500/20'
+  },
+  admin: { 
+    label: 'ADMINISTRADOR', 
+    color: 'text-sky-500 dark:text-sky-400', 
+    bg: 'bg-sky-500/10 border-sky-500/20', 
+    icon: Shield,
+    glow: 'shadow-sky-500/20'
+  },
+  midia: { 
+    label: 'MÍDIA SOCIAL', 
+    color: 'text-violet-500 dark:text-violet-400', 
+    bg: 'bg-violet-500/10 border-violet-500/20', 
+    icon: Users,
+    glow: 'shadow-violet-500/20'
+  },
 };
 
 // ─── User Card ───
@@ -40,14 +58,12 @@ const UserCard = memo(function UserCard({
   user,
   onEdit,
   onViewAccount,
-  onTogglePro,
   onChangeRole,
   onDelete,
 }: {
   user: ProfileWithRole;
   onEdit: () => void;
   onViewAccount: () => void;
-  onTogglePro: () => void;
   onChangeRole: (role: AppRole) => void;
   onDelete: () => void;
 }) {
@@ -56,53 +72,80 @@ const UserCard = memo(function UserCard({
   const isDev = user.role === 'dev';
 
   return (
-    <motion.div variants={staggerItem}>
-      <Card className="group hover:shadow-md transition-shadow duration-200 border-border/60">
-        <CardContent className="p-4 sm:p-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            {/* Left: avatar + info */}
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div className={`w-11 h-11 rounded-xl ${cfg.bg} flex items-center justify-center shrink-0 ring-1 ring-border/30`}>
-                <RoleIcon className={`w-5 h-5 ${cfg.color}`} />
+    <motion.div variants={staggerItem} whileHover={{ y: -2 }} transition={{ duration: 0.2 }}>
+      <Card className="group transition-all duration-300 border-border/50 hover:border-sky-500/30 hover:shadow-lg hover:shadow-sky-500/5 bg-card/50 backdrop-blur-sm overflow-hidden relative">
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between gap-4">
+            {/* Left Section: Info */}
+            <div className="flex items-center gap-4 min-w-0">
+              <div className={`w-14 h-14 rounded-2xl ${cfg.bg} flex items-center justify-center shrink-0 ring-1 ring-border/20 group-hover:scale-105 transition-transform duration-300 relative`}>
+                <RoleIcon className={`w-6 h-6 ${cfg.color}`} />
               </div>
-              <div className="min-w-0 space-y-0.5">
-                <p className="font-semibold text-foreground text-sm truncate leading-tight">{user.name}</p>
-                {user.email && (
-                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                )}
-                <div className="flex items-center gap-1.5 pt-0.5">
-                  <Badge variant="outline" className={`text-[10px] px-2 py-0 h-5 font-semibold border ${cfg.bg} ${cfg.color}`}>
+              
+              <div className="min-w-0 space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-bold text-foreground text-sm truncate leading-none">{user.name}</h3>
+                  <Badge variant="outline" className={`text-[9px] px-1.5 py-0 h-4 font-bold tracking-wider border ${cfg.bg} ${cfg.color}`}>
                     {cfg.label}
                   </Badge>
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] px-2 py-0 h-5 font-semibold border ${
-                      user.is_pro
-                        ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
-                        : 'bg-muted/40 text-muted-foreground border-border/60'
-                    }`}
-                  >
-                    {user.is_pro ? '⭐ PRO' : 'Comum'}
-                  </Badge>
+                </div>
+                
+                {user.email && (
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Mail className="w-3 h-3 shrink-0" />
+                    <p className="text-[11px] truncate max-w-[140px] sm:max-w-none">{user.email}</p>
+                  </div>
+                )}
+                
+                <div className="flex items-center gap-2 pt-1">
+                  <p className="text-[10px] text-muted-foreground/70">
+                    Entrou {formatDistanceToNow(new Date(user.created_at), { addSuffix: true, locale: ptBR })}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Right: actions */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 text-xs rounded-lg gap-1.5 border-border/60"
-                onClick={onViewAccount}
-              >
-                <Eye className="w-3.5 h-3.5" /> Ver conta
-              </Button>
-
+            {/* Right Section: Quick Actions / Menu */}
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-lg hover:bg-sky-500/10 hover:text-sky-500 transition-colors"
+                  onClick={onViewAccount}
+                  title="Ver Detalhes"
+                >
+                  <Eye className="w-4 h-4" />
+                </Button>
+                
+                {!isDev && (
+                  <>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-lg hover:bg-amber-500/10 hover:text-amber-500 transition-colors" 
+                      onClick={onEdit}
+                      title="Editar"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors" 
+                      onClick={onDelete}
+                      title="Remover"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
+              
               {!isDev && (
-                <>
+                <div className="flex items-center gap-2">
                   <Select value={user.role} onValueChange={(v) => onChangeRole(v as AppRole)}>
-                    <SelectTrigger className="w-24 h-8 text-xs rounded-lg border-border/60">
+                    <SelectTrigger className="w-[100px] h-7 text-[10px] font-bold rounded-md border-border/40 bg-muted/30">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -110,20 +153,7 @@ const UserCard = memo(function UserCard({
                       <SelectItem value="midia">MÍDIA</SelectItem>
                     </SelectContent>
                   </Select>
-
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/40 border border-border/40">
-                    <Crown className={`w-3 h-3 ${user.is_pro ? 'text-amber-500' : 'text-muted-foreground'}`} />
-                    <span className={`text-[11px] font-semibold ${user.is_pro ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>PRO</span>
-                    <Switch checked={user.is_pro} onCheckedChange={onTogglePro} className="scale-90" />
-                  </div>
-
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={onEdit}>
-                    <Pencil className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-destructive hover:text-destructive" onClick={onDelete}>
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </>
+                </div>
               )}
             </div>
           </div>
@@ -141,34 +171,35 @@ export function DevToolsUsuarios() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editUser, setEditUser] = useState<ProfileWithRole | null>(null);
   const [viewUser, setViewUser] = useState<ProfileWithRole | null>(null);
-  const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', role: 'admin' as AppRole, is_pro: false });
+  const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', role: 'admin' as AppRole });
   const [creating, setCreating] = useState(false);
 
-  // Temp password state
   const [resetLoading, setResetLoading] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Search and filters
+  const [search, setSearch] = useState('');
+  const [filterRole, setFilterRole] = useState<'all' | AppRole>('all');
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     const { data: roles } = await supabase
       .from('user_roles')
       .select('*')
-      .in('role', ['admin', 'midia']);
+      .neq('role', 'cliente');
 
     if (!roles || roles.length === 0) { setUsers([]); setLoading(false); return; }
 
     const userIds = roles.map(r => r.user_id);
-    const [{ data: profiles }, { data: subscriptions }, { data: accounts }] = await Promise.all([
+    const [{ data: profiles }, { data: accounts }] = await Promise.all([
       supabase.from('profiles').select('*').in('user_id', userIds),
-      supabase.from('user_subscriptions').select('*').in('user_id', userIds),
       supabase.from('user_accounts').select('id, email').in('id', userIds),
     ]);
 
     if (profiles) {
       const merged: ProfileWithRole[] = profiles.map((p: any) => {
         const userRole = roles.find((r: any) => r.user_id === p.user_id);
-        const userSub = subscriptions?.find((s: any) => s.user_id === p.user_id);
         const account = accounts?.find((a: any) => a.id === p.user_id);
         return {
           user_id: p.user_id,
@@ -178,7 +209,7 @@ export function DevToolsUsuarios() {
           avatar_url: p.avatar_url,
           active: p.active,
           role: (userRole?.role as AppRole) || 'admin',
-          is_pro: userSub?.is_pro || false,
+          is_pro: false, // Not managed here anymore
           created_at: p.created_at,
         };
       });
@@ -211,35 +242,10 @@ export function DevToolsUsuarios() {
     }
 
     toast({ title: 'Usuário criado com sucesso ✓' });
-
-    if (createForm.is_pro) {
-      setTimeout(async () => {
-        const { data: newRoles } = await supabase.from('user_roles').select('user_id').in('role', ['admin', 'midia']);
-        const { data: newProfiles } = await supabase.from('profiles').select('user_id, name').in('user_id', newRoles?.map(r => r.user_id) || []);
-        const newUser = newProfiles?.find(p => p.name === createForm.name);
-        if (newUser) {
-          await supabase.from('user_subscriptions').upsert({ user_id: newUser.user_id, is_pro: true } as any, { onConflict: 'user_id' });
-        }
-        fetchUsers();
-      }, 1000);
-    } else {
-      fetchUsers();
-    }
-
-    setShowCreateDialog(false);
-    setCreateForm({ name: '', email: '', password: '', role: 'admin', is_pro: false });
-    setCreating(false);
-  };
-
-  const toggleProStatus = async (userId: string, currentPro: boolean) => {
-    const { data: existing } = await supabase.from('user_subscriptions').select('id').eq('user_id', userId).single();
-    if (existing) {
-      await supabase.from('user_subscriptions').update({ is_pro: !currentPro }).eq('user_id', userId);
-    } else {
-      await supabase.from('user_subscriptions').insert({ user_id: userId, is_pro: !currentPro } as any);
-    }
-    toast({ title: !currentPro ? 'Plano PRO ativado ⭐' : 'Plano PRO desativado' });
     fetchUsers();
+    setShowCreateDialog(false);
+    setCreateForm({ name: '', email: '', password: '', role: 'admin' });
+    setCreating(false);
   };
 
   const updateUserRole = async (userId: string, newRole: AppRole) => {
@@ -291,78 +297,221 @@ export function DevToolsUsuarios() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const counts = {
-    admin: users.filter(u => u.role === 'admin').length,
-    midia: users.filter(u => u.role === 'midia').length,
-  };
+  // Dynamic stats logic
+  const statsCards = (() => {
+    const roleCounts: Record<string, number> = {};
+    users.forEach(u => {
+      roleCounts[u.role] = (roleCounts[u.role] || 0) + 1;
+    });
+
+    const sortedEntries = Object.entries(roleCounts).sort((a, b) => b[1] - a[1]);
+    
+    const cards = [
+      { 
+        label: 'Total da Equipe', 
+        count: users.length, 
+        icon: Users, 
+        color: 'text-sky-500', 
+        bg: 'bg-sky-500/10 border-sky-500/20', 
+        shadow: 'shadow-sky-500/5' 
+      }
+    ];
+
+    // Add Top 1 and Top 2
+    sortedEntries.slice(0, 2).forEach(([role, count]) => {
+      const cfg = ROLE_CONFIG[role] || { 
+        label: role.toUpperCase(), 
+        icon: Shield, 
+        color: 'text-slate-500', 
+        bg: 'bg-slate-500/10 border-slate-500/20',
+        shadow: 'shadow-slate-500/5'
+      };
+      cards.push({ ...cfg, count, label: cfg.label });
+    });
+
+    // Add "Others" if more than 2 roles exist
+    if (sortedEntries.length > 2) {
+      const othersCount = sortedEntries.slice(2).reduce((acc, curr) => acc + curr[1], 0);
+      cards.push({
+        label: 'Outros Cargos',
+        count: othersCount,
+        icon: Filter,
+        color: 'text-muted-foreground',
+        bg: 'bg-muted/50 border-border/60',
+        shadow: 'shadow-sm'
+      });
+    } else if (cards.length < 4) {
+      // Filler if we want exactly 4 cards as requested
+      // If we only have 1 or 2 roles total, we can show "Outros" as 0 or just show fewer cards.
+      // The user requested 4 cards specifically.
+      cards.push({
+        label: 'Outros Cargos',
+        count: 0,
+        icon: Filter,
+        color: 'text-muted-foreground',
+        bg: 'bg-muted/50 border-border/60',
+        shadow: 'shadow-sm'
+      });
+    }
+
+    return cards;
+  })();
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-3 gap-3">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-40" />
+            <Skeleton className="h-4 w-60" />
+          </div>
+          <Skeleton className="h-10 w-32 rounded-xl" />
         </div>
-        {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-28 rounded-2xl" />)}
+        </div>
+        <div className="space-y-3">
+          <Skeleton className="h-12 w-full rounded-xl" />
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
+        </div>
       </div>
     );
   }
 
+  const filteredUsers = users.filter(u => {
+    const matchesSearch = 
+      u.name.toLowerCase().includes(search.toLowerCase()) || 
+      (u.email?.toLowerCase().includes(search.toLowerCase()) ?? false);
+    const matchesRole = filterRole === 'all' || u.role === filterRole;
+    return matchesSearch && matchesRole;
+  });
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-bold text-foreground">Equipe</h2>
-          <p className="text-xs text-muted-foreground">Gerencie contas administrativas do sistema</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center">
+              <Users className="w-4 h-4 text-sky-500" />
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">Equipe</h2>
+          </div>
+          <p className="text-[13px] text-muted-foreground pl-10">
+            Gerencie as contas administrativas e níveis de acesso do sistema
+          </p>
         </div>
-        <Button onClick={() => setShowCreateDialog(true)} className="gap-2 rounded-xl shadow-sm h-10">
-          <Plus className="w-4 h-4" /> Novo Usuário
+        <Button 
+          onClick={() => setShowCreateDialog(true)} 
+          className="gap-2 rounded-xl shadow-lg shadow-sky-500/20 h-11 px-5 bg-sky-600 hover:bg-sky-500 transition-all duration-200"
+        >
+          <Plus className="w-4 h-4" />
+          <span className="font-semibold">Novo Usuário</span>
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: 'Administradores', count: counts.admin, ...ROLE_CONFIG.admin },
-          { label: 'Mídia Social', count: counts.midia, ...ROLE_CONFIG.midia },
-        ].map(s => {
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {statsCards.map((s, idx) => {
           const Icon = s.icon;
           return (
-            <Card key={s.label} className="border-border/60">
-              <CardContent className="p-4 text-center space-y-1">
-                <div className={`w-9 h-9 rounded-xl ${s.bg} flex items-center justify-center mx-auto`}>
-                  <Icon className={`w-4 h-4 ${s.color}`} />
-                </div>
-                <p className={`text-2xl font-bold ${s.color}`}>{s.count}</p>
-                <p className="text-[11px] text-muted-foreground leading-tight">{s.label}</p>
-              </CardContent>
-            </Card>
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05 }}
+            >
+              <Card className={`border-border/60 overflow-hidden relative group hover:border-border transition-colors duration-300 ${s.shadow}`}>
+                <div className={`absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 rounded-full opacity-[0.03] transition-transform duration-500 group-hover:scale-110 ${s.bg.split(' ')[0]}`} />
+                <CardContent className="p-5 flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-2xl ${s.bg} flex items-center justify-center shrink-0 border transition-transform duration-300 group-hover:scale-105`}>
+                    <Icon className={`w-6 h-6 ${s.color}`} />
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-2xl font-bold tracking-tight text-foreground">{s.count}</p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{s.label}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           );
         })}
       </div>
 
+      {/* Toolbar: Search & Filters */}
+      <div className="flex flex-col sm:flex-row gap-3 p-2 bg-muted/30 border border-border/40 rounded-2xl">
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Input 
+            placeholder="Buscar por nome ou email..." 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10 h-10 bg-background border-none shadow-none rounded-xl focus-visible:ring-1 focus-visible:ring-sky-500/50"
+          />
+        </div>
+        <div className="flex items-center gap-2 px-1">
+          <div className="flex items-center gap-1.5 bg-background border border-border/60 rounded-xl px-2 h-10">
+            <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+            <select 
+              value={filterRole}
+              onChange={(e) => setFilterRole(e.target.value as any)}
+              className="bg-transparent text-xs font-semibold outline-none border-none pr-4 cursor-pointer text-foreground"
+            >
+              <option value="all">Todos os Cargos</option>
+              <option value="admin">Administrador</option>
+              <option value="midia">Mídia Social</option>
+            </select>
+          </div>
+          {search || filterRole !== 'all' ? (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => { setSearch(''); setFilterRole('all'); }}
+              className="text-[11px] h-10 px-3 hover:bg-background rounded-xl text-muted-foreground"
+            >
+              Limpar
+            </Button>
+          ) : null}
+        </div>
+      </div>
+
       {/* Users list */}
-      {users.length === 0 ? (
-        <Card className="border-border/60">
-          <CardContent className="p-12 text-center">
-            <Users className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">Nenhum usuário administrativo encontrado.</p>
+      {filteredUsers.length === 0 ? (
+        <Card className="border-border/60 border-dashed bg-muted/10">
+          <CardContent className="p-16 text-center">
+            <div className="w-16 h-16 rounded-full bg-muted/40 flex items-center justify-center mx-auto mb-4 border border-border/20">
+              <Users className="w-8 h-8 text-muted-foreground/50" />
+            </div>
+            <p className="text-base font-semibold text-foreground">Nenhum membro encontrado</p>
+            <p className="text-sm text-muted-foreground max-w-xs mx-auto mt-1">
+              {search || filterRole !== 'all' 
+                ? "Tente ajustar seus filtros de busca para encontrar o que procura."
+                : "Comece adicionando novos membros à sua equipe administrativa."}
+            </p>
+            {(search || filterRole !== 'all') && (
+              <Button 
+                variant="outline" 
+                onClick={() => { setSearch(''); setFilterRole('all'); }}
+                className="mt-6 rounded-xl"
+              >
+                Limpar filtros
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
         <motion.div
-          className="space-y-2.5"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-3.5"
           initial="hidden"
           animate="visible"
           variants={staggerContainer}
         >
-          {users.map(u => (
+          {filteredUsers.map(u => (
             <UserCard
               key={u.user_id}
               user={u}
               onEdit={() => setEditUser(u)}
               onViewAccount={() => { setViewUser(u); setTempPassword(null); setCopied(false); }}
-              onTogglePro={() => toggleProStatus(u.user_id, u.is_pro)}
               onChangeRole={(role) => updateUserRole(u.user_id, role)}
               onDelete={() => deleteUser(u.user_id)}
             />
@@ -372,118 +521,131 @@ export function DevToolsUsuarios() {
 
       {/* ─── Create Dialog ─── */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-lg">Criar Novo Usuário</DialogTitle>
-            <DialogDescription className="text-xs">Preencha os dados para criar uma conta administrativa.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-5 pt-2">
+        <DialogContent className="sm:max-w-md border-none shadow-2xl bg-card/95 backdrop-blur-md p-0 overflow-hidden">
+          <div className="bg-gradient-to-r from-sky-600 to-indigo-600 p-6 text-white">
+            <DialogTitle className="text-xl font-bold">Criar Novo Membro</DialogTitle>
+            <DialogDescription className="text-sky-100/80 text-xs mt-1">
+              Adicione um novo administrador ou gestor de mídia à equipe.
+            </DialogDescription>
+          </div>
+          
+          <div className="p-6 space-y-5">
             <div className="space-y-2">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Nome completo</Label>
-              <Input
-                value={createForm.name}
-                onChange={e => setCreateForm(p => ({ ...p, name: e.target.value }))}
-                placeholder="Nome do usuário"
-                className="h-11 rounded-xl text-base"
-              />
+              <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pl-1">Nome completo</Label>
+              <div className="relative group">
+                <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-sky-500 transition-colors" />
+                <Input
+                  value={createForm.name}
+                  onChange={e => setCreateForm(p => ({ ...p, name: e.target.value }))}
+                  placeholder="Ex: João Silva"
+                  className="h-11 rounded-xl bg-muted/30 border-border/40 pl-10 focus-visible:ring-sky-500/30 transition-all"
+                />
+              </div>
             </div>
+
             <div className="space-y-2">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">E-mail</Label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pl-1">E-mail Corporativo</Label>
+              <div className="relative group">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-sky-500 transition-colors" />
                 <Input
                   type="email"
                   value={createForm.email}
                   onChange={e => setCreateForm(p => ({ ...p, email: e.target.value }))}
-                  placeholder="email@dominio.com"
-                  className="h-11 rounded-xl text-base pl-10"
+                  placeholder="joao@empresa.com"
+                  className="h-11 rounded-xl bg-muted/30 border-border/40 pl-10 focus-visible:ring-sky-500/30 transition-all"
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Senha inicial</Label>
-              <Input
-                type="password"
-                value={createForm.password}
-                onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))}
-                placeholder="Mínimo 6 caracteres"
-                className="h-11 rounded-xl text-base"
-              />
-            </div>
 
-            {/* Role selection */}
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Cargo</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {(['admin', 'midia'] as const).map(role => {
-                  const cfg = ROLE_CONFIG[role];
-                  const Icon = cfg.icon;
-                  const isSelected = createForm.role === role;
-                  return (
-                    <button
-                      key={role}
-                      type="button"
-                      onClick={() => setCreateForm(p => ({ ...p, role }))}
-                      className={`flex items-center gap-2.5 p-3 rounded-xl border-2 transition-all duration-150 ${
-                        isSelected
-                          ? `${cfg.bg} border-current ${cfg.color} shadow-sm`
-                          : 'border-border/60 hover:border-border text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      <span className="text-sm font-semibold">{cfg.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* PRO toggle */}
-            <div className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-150 ${
-              createForm.is_pro ? 'border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-orange-500/5' : 'border-border/60 bg-muted/20'
-            }`}>
-              <div className="flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${createForm.is_pro ? 'bg-amber-500/15' : 'bg-muted'}`}>
-                  <Crown className={`w-4 h-4 ${createForm.is_pro ? 'text-amber-500' : 'text-muted-foreground'}`} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">Plano PRO</p>
-                  <p className="text-[11px] text-muted-foreground">Acesso a recursos avançados</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pl-1">Senha de Acesso</Label>
+                <div className="relative group">
+                  <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-sky-500 transition-colors" />
+                  <Input
+                    type="password"
+                    value={createForm.password}
+                    onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))}
+                    placeholder="••••••••"
+                    className="h-11 rounded-xl bg-muted/30 border-border/40 pl-10 focus-visible:ring-sky-500/30 transition-all"
+                  />
                 </div>
               </div>
-              <Switch checked={createForm.is_pro} onCheckedChange={v => setCreateForm(p => ({ ...p, is_pro: v }))} />
+              
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pl-1">Cargo / Nível</Label>
+                <Select value={createForm.role} onValueChange={(v) => setCreateForm(p => ({ ...p, role: v as AppRole }))}>
+                  <SelectTrigger className="h-11 rounded-xl bg-muted/30 border-border/40 focus:ring-sky-500/30">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">ADMINISTRADOR</SelectItem>
+                    <SelectItem value="midia">MÍDIA SOCIAL</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
-          <DialogFooter className="pt-2 gap-2">
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)} className="rounded-xl">Cancelar</Button>
-            <Button onClick={handleCreate} disabled={creating} className="rounded-xl gap-2 min-w-[100px]">
-              {creating ? <><Loader2 className="w-4 h-4 animate-spin" /> Criando...</> : 'Criar Usuário'}
+
+          <div className="p-6 bg-muted/30 border-t border-border/40 flex flex-col-reverse sm:flex-row gap-3">
+            <Button variant="ghost" onClick={() => setShowCreateDialog(false)} className="flex-1 h-11 rounded-xl font-semibold">
+              Cancelar
             </Button>
-          </DialogFooter>
+            <Button 
+              onClick={handleCreate} 
+              disabled={creating} 
+              className="flex-1 h-11 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold shadow-lg shadow-sky-500/20 gap-2 transition-all active:scale-95"
+            >
+              {creating ? <><Loader2 className="w-4 h-4 animate-spin" /> Processando</> : 'Criar Conta'}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* ─── Edit Dialog ─── */}
       {editUser && (
         <Dialog open={!!editUser} onOpenChange={() => setEditUser(null)}>
-          <DialogContent className="sm:max-w-sm">
-            <DialogHeader>
-              <DialogTitle>Editar Usuário</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 pt-2">
+          <DialogContent className="sm:max-w-md border-none shadow-2xl p-0 overflow-hidden bg-card/95 backdrop-blur-md">
+            <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-6 text-white">
+              <DialogTitle className="text-xl font-bold">Editar Perfil</DialogTitle>
+              <DialogDescription className="text-amber-100/80 text-xs mt-1">
+                Atualize as informações básicas do membro da equipe.
+              </DialogDescription>
+            </div>
+            
+            <div className="p-6 space-y-4">
               <div className="space-y-2">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Nome</Label>
-                <Input
-                  value={editUser.name}
-                  onChange={e => setEditUser({ ...editUser, name: e.target.value })}
-                  className="h-11 rounded-xl text-base"
-                />
+                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pl-1">Nome de Exibição</Label>
+                <div className="relative group">
+                  <Pencil className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-amber-500 transition-colors" />
+                  <Input
+                    value={editUser.name}
+                    onChange={e => setEditUser({ ...editUser, name: e.target.value })}
+                    placeholder="Nome do usuário"
+                    className="h-11 rounded-xl bg-muted/30 border-border/40 pl-10 focus-visible:ring-amber-500/30 transition-all"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-2 bg-muted/40 p-3 rounded-lg border border-border/40">
+                <Shield className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                <p className="text-[10px] text-muted-foreground leading-tight">
+                  Apenas o nome pode ser editado diretamente. Para alterar o e-mail ou cargo, considere remover e criar um novo perfil ou contate o administrador master.
+                </p>
               </div>
             </div>
-            <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={() => setEditUser(null)} className="rounded-xl">Cancelar</Button>
-              <Button onClick={() => { updateUserName(editUser.user_id, editUser.name); setEditUser(null); }} className="rounded-xl">Salvar</Button>
-            </DialogFooter>
+
+            <div className="p-6 bg-muted/30 border-t border-border/40 flex gap-3">
+              <Button variant="ghost" onClick={() => setEditUser(null)} className="flex-1 h-11 rounded-xl font-semibold">
+                Cancelar
+              </Button>
+              <Button 
+                onClick={() => { updateUserName(editUser.user_id, editUser.name); setEditUser(null); }} 
+                className="flex-1 h-11 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold shadow-lg shadow-sky-500/20 transition-all active:scale-95"
+              >
+                Salvar Alterações
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
       )}
@@ -491,86 +653,115 @@ export function DevToolsUsuarios() {
       {/* ─── View Account Dialog ─── */}
       {viewUser && (
         <Dialog open={!!viewUser} onOpenChange={() => { setViewUser(null); setTempPassword(null); }}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-lg">Informações da Conta</DialogTitle>
-              <DialogDescription className="text-xs">Dados detalhados do usuário.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-5 pt-2">
-              {/* User header */}
-              <div className="flex items-center gap-3.5 p-4 rounded-xl bg-muted/30 border border-border/40">
-                <div className={`w-12 h-12 rounded-xl ${ROLE_CONFIG[viewUser.role]?.bg || 'bg-muted'} flex items-center justify-center ring-1 ring-border/30`}>
-                  {(() => { const Icon = ROLE_CONFIG[viewUser.role]?.icon || Shield; return <Icon className={`w-6 h-6 ${ROLE_CONFIG[viewUser.role]?.color || 'text-foreground'}`} />; })()}
+          <DialogContent className="sm:max-w-md border-none shadow-2xl p-0 overflow-hidden bg-card/95 backdrop-blur-md">
+            <div className={`p-8 ${ROLE_CONFIG[viewUser.role]?.bg || 'bg-muted'} border-b border-border/20 relative overflow-hidden`}>
+               {/* Decorative background icon */}
+               {(() => { 
+                 const Icon = ROLE_CONFIG[viewUser.role]?.icon || Shield; 
+                 return <Icon className={`absolute -right-8 -bottom-8 w-40 h-40 opacity-[0.05] ${ROLE_CONFIG[viewUser.role]?.color}`} />;
+               })()}
+
+              <div className="flex flex-col items-center text-center space-y-4 relative z-10">
+                <div className={`w-20 h-20 rounded-3xl ${ROLE_CONFIG[viewUser.role]?.bg} flex items-center justify-center ring-4 ring-background shadow-xl`}>
+                  {(() => { 
+                    const Icon = ROLE_CONFIG[viewUser.role]?.icon || Shield; 
+                    return <Icon className={`w-10 h-10 ${ROLE_CONFIG[viewUser.role]?.color}`} />; 
+                  })()}
                 </div>
                 <div>
-                  <p className="font-bold text-foreground">{viewUser.name}</p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <Badge variant="outline" className={`text-[10px] px-2 py-0 h-5 ${ROLE_CONFIG[viewUser.role]?.bg} ${ROLE_CONFIG[viewUser.role]?.color}`}>
+                  <h3 className="text-2xl font-black tracking-tight text-foreground">{viewUser.name}</h3>
+                  <div className="flex items-center justify-center gap-2 mt-2">
+                    <Badge variant="outline" className={`font-bold tracking-widest text-[10px] ${ROLE_CONFIG[viewUser.role]?.bg} ${ROLE_CONFIG[viewUser.role]?.color} border-current/20`}>
                       {ROLE_CONFIG[viewUser.role]?.label || viewUser.role}
                     </Badge>
-                    <Badge variant="outline" className={`text-[10px] px-2 py-0 h-5 ${viewUser.is_pro ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' : ''}`}>
-                      {viewUser.is_pro ? '⭐ PRO' : 'Comum'}
-                    </Badge>
                   </div>
                 </div>
-              </div>
-
-              {/* Details */}
-              <div className="space-y-3">
-                {[
-                  { label: 'E-mail', value: viewUser.email || '—' },
-                  { label: 'Telefone', value: viewUser.phone || '—' },
-                  { label: 'Status', value: viewUser.active ? 'Ativo' : 'Inativo' },
-                  { label: 'Criado em', value: viewUser.created_at ? formatDistanceToNow(new Date(viewUser.created_at), { addSuffix: true, locale: ptBR }) : '—' },
-                  { label: 'ID', value: viewUser.user_id },
-                ].map(item => (
-                  <div key={item.label} className="flex items-start justify-between gap-2 py-2 border-b border-border/30 last:border-0">
-                    <span className="text-xs font-medium text-muted-foreground shrink-0">{item.label}</span>
-                    <span className={`text-xs text-foreground text-right truncate max-w-[220px] ${item.label === 'ID' ? 'font-mono text-[10px]' : ''}`}>
-                      {item.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Password reset section */}
-              <div className="p-4 rounded-xl border-2 border-dashed border-border/50 space-y-3">
-                <div className="flex items-center gap-2">
-                  <KeyRound className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-semibold text-foreground">Recuperação de senha</span>
-                </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Gera uma senha temporária segura. O usuário será obrigado a criar uma nova senha no próximo login.
-                </p>
-
-                {tempPassword ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border/40">
-                      <code className="text-sm font-mono text-foreground flex-1 select-all">{tempPassword}</code>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleCopyPassword}>
-                        {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                      </Button>
-                    </div>
-                    <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
-                      ⚠ Copie agora. Essa senha não será exibida novamente.
-                    </p>
-                  </div>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full rounded-lg gap-2"
-                    onClick={() => handleResetPassword(viewUser.user_id)}
-                    disabled={resetLoading}
-                  >
-                    {resetLoading ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Gerando...</> : <><KeyRound className="w-3.5 h-3.5" /> Gerar senha temporária</>}
-                  </Button>
-                )}
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => { setViewUser(null); setTempPassword(null); }} className="rounded-xl w-full">Fechar</Button>
-            </DialogFooter>
+
+            <div className="p-6 space-y-6">
+              {/* Details Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { label: 'E-mail', value: viewUser.email || '—', icon: Mail },
+                  { label: 'Status', value: viewUser.active ? 'Ativo' : 'Inativo', icon: Check },
+                  { label: 'Membro desde', value: viewUser.created_at ? formatDistanceToNow(new Date(viewUser.created_at), { addSuffix: true, locale: ptBR }) : '—', icon: Users },
+                ].map(item => (
+                  <div key={item.label} className="space-y-1">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{item.label}</span>
+                    <p className="text-sm font-semibold text-foreground truncate">{item.value}</p>
+                  </div>
+                ))}
+                <div className="space-y-1 col-span-2">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Identificador Único (ID)</span>
+                  <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg border border-border/40">
+                    <code className="text-[10px] font-mono text-muted-foreground flex-1 truncate">{viewUser.user_id}</code>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6" 
+                      onClick={() => { navigator.clipboard.writeText(viewUser.user_id); toast({ title: 'ID copiado' }); }}
+                    >
+                      <Copy className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Password Recovery Section */}
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 rounded-2xl border border-amber-500/20" />
+                <div className="relative p-5 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                      <KeyRound className="w-5 h-5 text-amber-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">Gerenciar Acesso</p>
+                      <p className="text-[11px] text-muted-foreground">Segurança e recuperação de conta</p>
+                    </div>
+                  </div>
+
+                  {tempPassword ? (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="space-y-3"
+                    >
+                      <div className="flex items-center gap-2 p-4 rounded-xl bg-white dark:bg-slate-900 border-2 border-amber-500/30 shadow-inner">
+                        <code className="text-lg font-mono font-bold text-amber-600 dark:text-amber-400 flex-1 text-center tracking-wider select-all">
+                          {tempPassword}
+                        </code>
+                        <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0 hover:bg-amber-500/10" onClick={handleCopyPassword}>
+                          {copied ? <Check className="w-5 h-5 text-emerald-500" /> : <Copy className="w-5 h-5 text-amber-500" />}
+                        </Button>
+                      </div>
+                      <div className="flex items-start gap-2 text-amber-600 dark:text-amber-400 bg-amber-500/5 p-3 rounded-lg border border-amber-500/10">
+                        <Shield className="w-4 h-4 shrink-0 mt-0.5" />
+                        <p className="text-[10px] font-medium leading-tight">
+                          Esta senha é temporária e será invalidada após o primeiro uso. O usuário deverá definir uma nova senha imediatamente.
+                        </p>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="w-full h-11 rounded-xl border-amber-500/30 hover:bg-amber-500 hover:text-white transition-all duration-300 font-bold text-xs gap-2"
+                      onClick={() => handleResetPassword(viewUser.user_id)}
+                      disabled={resetLoading}
+                    >
+                      {resetLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando...</> : <><KeyRound className="w-4 h-4" /> Gerar Senha Temporária</>}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-muted/30 border-t border-border/40">
+              <Button variant="ghost" onClick={() => { setViewUser(null); setTempPassword(null); }} className="w-full h-11 rounded-xl font-bold">
+                Fechar Visualização
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
       )}

@@ -20,7 +20,6 @@ const NAV_ITEMS: { key: DevSection; label: string; icon: typeof LayoutDashboard;
   { key: 'overview', label: 'Visão Geral', icon: LayoutDashboard, color: 'text-sky-500' },
   { key: 'environment', label: 'Ambiente', icon: FlaskConical, color: 'text-emerald-500' },
   { key: 'permissions', label: 'Cargos e Acessos', icon: Shield, color: 'text-violet-500' },
-  { key: 'logs', label: 'Logs', icon: ScrollText, color: 'text-rose-500' },
   { key: 'tools', label: 'Ferramentas', icon: Wrench, color: 'text-orange-500' },
   { key: 'usuarios', label: 'Usuários', icon: Users, color: 'text-cyan-500' },
 ];
