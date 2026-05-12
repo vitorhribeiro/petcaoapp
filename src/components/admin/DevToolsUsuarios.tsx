@@ -72,8 +72,8 @@ const UserCard = memo(function UserCard({
   const isDev = user.role === 'dev';
 
   return (
-    <motion.div variants={staggerItem} whileHover={{ y: -2 }} transition={{ duration: 0.2 }}>
-      <Card className="group transition-all duration-300 border-border/50 hover:border-sky-500/30 hover:shadow-lg hover:shadow-sky-500/5 bg-card/50 backdrop-blur-sm overflow-hidden relative">
+    <motion.div variants={staggerItem} whileHover={{ y: -2 }} transition={{ duration: 0.2 }} className="h-full">
+      <Card className="h-full group transition-all duration-300 border-border/50 hover:border-sky-500/30 hover:shadow-lg hover:shadow-sky-500/5 bg-card/50 backdrop-blur-sm overflow-hidden relative">
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-4">
             {/* Left Section: Info */}
@@ -420,8 +420,9 @@ export function DevToolsUsuarios() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
+              className="h-full"
             >
-              <Card className={`border-border/60 overflow-hidden relative group hover:border-border transition-colors duration-300 ${s.shadow}`}>
+              <Card className={`h-full border-border/60 overflow-hidden relative group hover:border-border transition-colors duration-300 ${s.shadow}`}>
                 <div className={`absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 rounded-full opacity-[0.03] transition-transform duration-500 group-hover:scale-110 ${s.bg.split(' ')[0]}`} />
                 <CardContent className="p-5 flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-2xl ${s.bg} flex items-center justify-center shrink-0 border transition-transform duration-300 group-hover:scale-105`}>

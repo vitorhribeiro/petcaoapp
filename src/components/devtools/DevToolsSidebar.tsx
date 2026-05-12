@@ -18,10 +18,10 @@ interface Props {
 
 const NAV_ITEMS: { key: DevSection; label: string; icon: typeof LayoutDashboard; color: string }[] = [
   { key: 'overview', label: 'Visão Geral', icon: LayoutDashboard, color: 'text-sky-500' },
-  { key: 'environment', label: 'Ambiente', icon: FlaskConical, color: 'text-emerald-500' },
   { key: 'permissions', label: 'Cargos e Acessos', icon: Shield, color: 'text-violet-500' },
-  { key: 'tools', label: 'Ferramentas', icon: Wrench, color: 'text-orange-500' },
   { key: 'usuarios', label: 'Usuários', icon: Users, color: 'text-cyan-500' },
+  { key: 'environment', label: 'Ambiente', icon: FlaskConical, color: 'text-emerald-500' },
+  { key: 'tools', label: 'Ferramentas', icon: Wrench, color: 'text-orange-500' },
 ];
 
 export function DevToolsSidebar({ active, onNavigate, collapsed, onToggle, mobile }: Props) {
@@ -63,8 +63,8 @@ export function DevToolsSidebar({ active, onNavigate, collapsed, onToggle, mobil
         
         {(!collapsed || mobile) && (
           <div className="min-w-0 flex-1">
-            <h1 className="text-sm font-black text-foreground tracking-tight whitespace-nowrap overflow-hidden">DEV CONSOLE</h1>
-            <p className="text-[10px] font-bold text-muted-foreground/50 tracking-wider">PETCÃO V2.5</p>
+            <h1 className="text-sm font-black text-foreground tracking-tight whitespace-nowrap overflow-hidden">CONSOLE</h1>
+            <p className="text-[10px] font-bold text-sky-500 tracking-wider">DE DESENVOLVEDOR</p>
           </div>
         )}
 
