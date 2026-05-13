@@ -1,7 +1,7 @@
 import { Heart, Instagram, Facebook, Youtube, Globe, MessageCircle, Music2, MapPin, Phone, Clock, ArrowUpRight, ChevronUp } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import logoPetDefault from '@/assets/logopet.webp';
-import otixLogo from '@/assets/otix-logo.png';
+import otixLogo from '@/assets/otix-logo.jpeg';
 import { useBranding } from '@/contexts/BrandingContext';
 import { useConfig } from '@/hooks/useConfig';
 import { usePetshop } from '@/contexts/PetshopContext';
