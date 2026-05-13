@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useConfig } from '@/hooks/useConfig';
 import * as galleryService from '@/services/galleryService';
@@ -202,122 +202,146 @@ export default function Moderacao() {
     </div>
   );
 
-  // ─── Photo Card ───
-  const PhotoCard = ({ img, showActions, showCategoryEdit }: { img: galleryService.GalleryPhotoRow; showActions: boolean; showCategoryEdit?: boolean }) => (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.2 }}
-      className="relative group"
-    >
-      <div className="aspect-square bg-muted rounded-2xl overflow-hidden border border-border/40 relative shadow-sm group-hover:shadow-md transition-all duration-300">
-        <OptimizedImage 
-          src={img.url} 
-          alt={img.alt || ''} 
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
-          aspectRatio="square" 
-        />
-        
-        {/* Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        
-        <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
-          <Badge className={cn('text-[10px] font-bold border-none backdrop-blur-md px-2 py-0.5 shadow-sm', 
-            img.moderation_status === 'aprovado' ? 'bg-emerald-500/90 text-white' : 
-            img.moderation_status === 'pendente' ? 'bg-amber-500/90 text-white' : 
-            'bg-destructive/90 text-white'
-          )}>
-            {STATUS_LABELS[img.moderation_status as ModerationStatus] || img.moderation_status}
+// ─── Photo Card ───
+const PhotoCard = React.memo(({ 
+  img, 
+  showActions, 
+  showCategoryEdit,
+  onView,
+  onEdit,
+  onDelete,
+  onApprove,
+  onReject,
+  onUpdateCategory,
+  categorySelection,
+  onCategorySelectionChange
+}: { 
+  img: galleryService.GalleryPhotoRow; 
+  showActions: boolean; 
+  showCategoryEdit?: boolean;
+  onView: (id: string) => void;
+  onEdit: (img: galleryService.GalleryPhotoRow) => void;
+  onDelete: (img: galleryService.GalleryPhotoRow) => void;
+  onApprove: (id: string, cat: string) => void;
+  onReject: (id: string) => void;
+  onUpdateCategory: (id: string, cat: string) => void;
+  categorySelection: string;
+  onCategorySelectionChange: (v: string) => void;
+}) => (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.95 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ duration: 0.2 }}
+    className="relative group"
+  >
+    <div className="aspect-square bg-muted rounded-2xl overflow-hidden border border-border/40 relative shadow-sm group-hover:shadow-md transition-all duration-300">
+      <OptimizedImage 
+        src={img.url} 
+        alt={img.alt || ''} 
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+        aspectRatio="square" 
+      />
+      
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+        <Badge className={cn('text-[10px] font-bold border-none backdrop-blur-md px-2 py-0.5 shadow-sm', 
+          img.moderation_status === 'aprovado' ? 'bg-emerald-500/90 text-white' : 
+          img.moderation_status === 'pendente' ? 'bg-amber-500/90 text-white' : 
+          'bg-destructive/90 text-white'
+        )}>
+          {STATUS_LABELS[img.moderation_status as ModerationStatus] || img.moderation_status}
+        </Badge>
+        {img.category && (
+          <Badge variant="secondary" className="text-[9px] bg-background/80 backdrop-blur-md border-none text-foreground/70 px-1.5 py-0">
+            {img.category === 'ambiente' ? '🏠 Ambiente' : 
+             img.category === 'antes-depois' ? '✨ Antes/Depois' : 
+             img.category === 'pets' ? '🐶 Pets' : '📌 Outro'}
           </Badge>
-          {img.category && (
-            <Badge variant="secondary" className="text-[9px] bg-background/80 backdrop-blur-md border-none text-foreground/70 px-1.5 py-0">
-              {img.category === 'ambiente' ? '🏠 Ambiente' : 
-               img.category === 'antes-depois' ? '✨ Antes/Depois' : 
-               img.category === 'pets' ? '🐶 Pets' : '📌 Outro'}
-            </Badge>
-          )}
-        </div>
-
-        <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0 flex gap-2">
-            <Button 
-              size="sm" 
-              className="h-10 px-4 text-xs flex-1 bg-white hover:bg-white/90 text-black font-bold rounded-xl shadow-xl border-none" 
-              onClick={() => openViewer(img.id)}
-            >
-              <Eye className="w-4 h-4 mr-2" /> Ver
-            </Button>
-            <Button 
-              size="sm" 
-              className="h-10 w-10 p-0 bg-white hover:bg-white/90 text-black font-bold rounded-xl shadow-xl border-none" 
-              onClick={() => setEditPhotoTarget(img)}
-            >
-              <Edit2 className="w-4 h-4" />
-            </Button>
-            <Button 
-              size="sm" 
-              className="h-10 w-10 p-0 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-xl border-none"
-              onClick={() => setPhotoToDelete(img)}
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-        </div>
+        )}
       </div>
 
-      {showActions && img.moderation_status === 'pendente' && (
-        <div className="mt-2 flex gap-2">
-          <Select
-            value={photoCategorySelections[img.id] || ''}
-            onValueChange={(v) => setPhotoCategorySelections(prev => ({ ...prev, [img.id]: v }))}
+      <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0 flex gap-2">
+          <Button 
+            size="sm" 
+            className="h-10 px-4 text-xs flex-1 bg-white hover:bg-white/90 text-black font-bold rounded-xl shadow-xl border-none" 
+            onClick={() => onView(img.id)}
           >
-            <SelectTrigger className="h-8 text-[11px] rounded-xl flex-1 bg-card">
-              <SelectValue placeholder="Tipo..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ambiente">🏠 Ambiente</SelectItem>
-              <SelectItem value="antes-depois">✨ Antes/Depois</SelectItem>
-              <SelectItem value="pets">🐶 Pets</SelectItem>
-              <SelectItem value="outro">📌 Outro</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            size="sm"
-            className="h-8 w-8 p-0 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shrink-0"
-            disabled={!photoCategorySelections[img.id]}
-            onClick={() => approvePhoto(img.id, photoCategorySelections[img.id])}
-          >
-            <CheckCircle2 className="w-4 h-4" />
+            <Eye className="w-4 h-4 mr-2" /> Ver
           </Button>
           <Button 
             size="sm" 
-            variant="outline" 
-            className="h-8 w-8 p-0 rounded-xl text-destructive border-destructive/20 hover:bg-destructive/10 shrink-0" 
-            onClick={() => rejectPhoto(img.id)}
+            className="h-10 w-10 p-0 bg-white hover:bg-white/90 text-black font-bold rounded-xl shadow-xl border-none" 
+            onClick={() => onEdit(img)}
           >
-            <XCircle className="w-4 h-4" />
+            <Edit2 className="w-4 h-4" />
           </Button>
-        </div>
-      )}
-      
-      {showCategoryEdit && img.moderation_status === 'aprovado' && (
-        <div className="mt-2">
-          <Select
-            value={img.category || ''}
-            onValueChange={(v) => updatePhotoCategory(img.id, v)}
+          <Button 
+            size="sm" 
+            className="h-10 w-10 p-0 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-xl border-none"
+            onClick={() => onDelete(img)}
           >
-            <SelectTrigger className="h-8 text-[10px] rounded-xl w-full bg-muted/40 border-none hover:bg-muted/60 transition-colors">
-              <SelectValue placeholder="Alterar categoria..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ambiente">🏠 Ambiente</SelectItem>
-              <SelectItem value="antes-depois">✨ Antes/Depois</SelectItem>
-              <SelectItem value="pets">🐶 Pets</SelectItem>
-              <SelectItem value="outro">📌 Outro</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-    </motion.div>
-  );
+            <Trash2 className="w-4 h-4" />
+          </Button>
+      </div>
+    </div>
+
+    {showActions && img.moderation_status === 'pendente' && (
+      <div className="mt-2 flex gap-2">
+        <Select
+          value={categorySelection}
+          onValueChange={onCategorySelectionChange}
+        >
+          <SelectTrigger className="h-8 text-[11px] rounded-xl flex-1 bg-card">
+            <SelectValue placeholder="Tipo..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ambiente">🏠 Ambiente</SelectItem>
+            <SelectItem value="antes-depois">✨ Antes/Depois</SelectItem>
+            <SelectItem value="pets">🐶 Pets</SelectItem>
+            <SelectItem value="outro">📌 Outro</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button
+          size="sm"
+          className="h-8 w-8 p-0 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shrink-0"
+          disabled={!categorySelection}
+          onClick={() => onApprove(img.id, categorySelection)}
+        >
+          <CheckCircle2 className="w-4 h-4" />
+        </Button>
+        <Button 
+          size="sm" 
+          variant="outline" 
+          className="h-8 w-8 p-0 rounded-xl text-destructive border-destructive/20 hover:bg-destructive/10 shrink-0" 
+          onClick={() => onReject(img.id)}
+        >
+          <XCircle className="w-4 h-4" />
+        </Button>
+      </div>
+    )}
+    
+    {showCategoryEdit && img.moderation_status === 'aprovado' && (
+      <div className="mt-2">
+        <Select
+          value={img.category || ''}
+          onValueChange={(v) => onUpdateCategory(img.id, v)}
+        >
+          <SelectTrigger className="h-8 text-[10px] rounded-xl w-full bg-muted/40 border-none hover:bg-muted/60 transition-colors">
+            <SelectValue placeholder="Alterar categoria..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ambiente">🏠 Ambiente</SelectItem>
+            <SelectItem value="antes-depois">✨ Antes/Depois</SelectItem>
+            <SelectItem value="pets">🐶 Pets</SelectItem>
+            <SelectItem value="outro">📌 Outro</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    )}
+  </motion.div>
+));
+PhotoCard.displayName = 'PhotoCard';
 
   // ─── Review Card ───
   const ReviewCard = ({ review, showActions }: { review: reviewsService.ReviewRow; showActions: boolean }) => (
@@ -598,7 +622,20 @@ export default function Moderacao() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {pagedPhotos.map((img) => (
-                <PhotoCard key={img.id} img={img} showActions={img.moderation_status === 'pendente'} showCategoryEdit={img.moderation_status !== 'pendente'} />
+                <PhotoCard 
+                  key={img.id} 
+                  img={img} 
+                  showActions={img.moderation_status === 'pendente'} 
+                  showCategoryEdit={img.moderation_status !== 'pendente'}
+                  onView={openViewer}
+                  onEdit={setEditPhotoTarget}
+                  onDelete={setPhotoToDelete}
+                  onApprove={approvePhoto}
+                  onReject={rejectPhoto}
+                  onUpdateCategory={updatePhotoCategory}
+                  categorySelection={photoCategorySelections[img.id] || ''}
+                  onCategorySelectionChange={(v) => setPhotoCategorySelections(prev => ({ ...prev, [img.id]: v }))}
+                />
               ))}
             </div>
           )}

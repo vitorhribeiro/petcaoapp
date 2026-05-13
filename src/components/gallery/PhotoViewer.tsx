@@ -231,7 +231,7 @@ export function PhotoViewer({ images, initialIndex, open, onClose, showAdminActi
               {showAdminActions && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onEdit?.(image)} className="cursor-pointer">Editar post</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onEdit?.(image)} className="cursor-pointer">Editar Foto</DropdownMenuItem>
                 </>
               )}
               <DropdownMenuSeparator />

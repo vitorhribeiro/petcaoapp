@@ -14,12 +14,18 @@ import { GallerySkeleton } from '@/components/skeletons/SectionSkeletons';
 import { PhotoViewer } from '@/components/gallery/PhotoViewer';
 import { GalleryUploadModal } from '@/components/gallery/GalleryUploadModal';
 import { ModerationSuccessModal } from '@/components/modals/ModerationSuccessModal';
+import { ResponsiveModal } from '@/components/modals/ResponsiveModal';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CheckCircle2 } from 'lucide-react';
 import React from 'react';
 
 const ITEMS_PER_PAGE = 12;
 
 export function GallerySection() {
-  const { galleryImages, addPhoto, galleryLoading } = useAdmin();
+  const { galleryImages, addPhoto, updatePhoto, galleryLoading } = useAdmin();
   const { isDev, isAdmin, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const { homeContent } = useHomeContent();
@@ -31,6 +37,7 @@ export function GallerySection() {
   const [categories, setCategories] = useState<GalleryCategoryRow[]>([]);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [editPhotoTarget, setEditPhotoTarget] = useState<any | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const showAdmin = isDev() || isAdmin();
 
@@ -199,7 +206,97 @@ export function GallerySection() {
           open={viewerIndex >= 0}
           onClose={() => setViewerIndex(-1)}
           showAdminActions={showAdmin}
+          onEdit={(img) => {
+            setEditPhotoTarget(img);
+            setViewerIndex(-1);
+          }}
         />
+
+        {/* ── Edit Photo Modal ── */}
+        <ResponsiveModal 
+          open={!!editPhotoTarget} 
+          onOpenChange={(v) => !v && setEditPhotoTarget(null)} 
+          title="Editar Foto"
+          stickyFooter={
+            <Button 
+              className="w-full h-12 rounded-xl font-bold bg-primary text-primary-foreground shadow-lg" 
+              onClick={async () => {
+                if (!editPhotoTarget) return;
+                try {
+                  await updatePhoto(editPhotoTarget.id, editPhotoTarget);
+                  toast.success('Foto atualizada!');
+                  setEditPhotoTarget(null);
+                } catch (error) {
+                  toast.error('Erro ao salvar.');
+                }
+              }}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Salvar Alterações
+            </Button>
+          }
+        >
+          {editPhotoTarget && (
+            <div className="space-y-4 pt-2">
+              <div className="aspect-video relative rounded-xl overflow-hidden bg-muted border border-border/20">
+                <img src={editPhotoTarget.url} className="w-full h-full object-cover" alt="" />
+              </div>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-muted-foreground">Pet</Label>
+                    <Input 
+                      value={editPhotoTarget.pet_name || ''} 
+                      onChange={(e) => setEditPhotoTarget({...editPhotoTarget, pet_name: e.target.value})}
+                      className="h-11 text-base rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-muted-foreground">Dono</Label>
+                    <Input 
+                      value={editPhotoTarget.owner_name || ''} 
+                      onChange={(e) => setEditPhotoTarget({...editPhotoTarget, owner_name: e.target.value})}
+                      className="h-11 text-base rounded-xl"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground">Título / Alt Text</Label>
+                  <Input 
+                    value={editPhotoTarget.alt || ''} 
+                    onChange={(e) => setEditPhotoTarget({...editPhotoTarget, alt: e.target.value})}
+                    className="h-11 text-base rounded-xl"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground">Legenda</Label>
+                  <Textarea 
+                    value={editPhotoTarget.caption || ''} 
+                    onChange={(e) => setEditPhotoTarget({...editPhotoTarget, caption: e.target.value})}
+                    className="min-h-[80px] text-base rounded-xl resize-none"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-muted-foreground">Categoria</Label>
+                  <Select 
+                    value={editPhotoTarget.category || ''} 
+                    onValueChange={(v) => setEditPhotoTarget({...editPhotoTarget, category: v})}
+                  >
+                    <SelectTrigger className="h-11 rounded-xl text-base">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ambiente">🏠 Ambientes</SelectItem>
+                      <SelectItem value="antes-depois">✨ Antes e Depois</SelectItem>
+                      <SelectItem value="pets">🐶 Pets</SelectItem>
+                      <SelectItem value="outro">📌 Outro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
+        </ResponsiveModal>
 
         <GalleryUploadModal
           open={uploadOpen}
