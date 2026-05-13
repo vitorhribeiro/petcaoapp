@@ -154,53 +154,54 @@ export default function Moderacao() {
 
   // ─── Shared Sub-Components ───
 
-  const FilterChips = ({ value, onChange, options }: { value: string; onChange: (v: any) => void; options: { label: string; value: string }[] }) => (
-    <div className="flex flex-wrap gap-1.5">
-      {options.map(o => (
-        <button
-          key={o.value}
-          onClick={() => onChange(o.value)}
-          className={cn(
-            'px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold border transition-all duration-200',
-            value === o.value
-              ? 'bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20'
-              : 'bg-muted/50 backdrop-blur-sm text-muted-foreground border-border/30 hover:border-primary/40 hover:text-foreground'
-          )}
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
-  );
+// ─── Shared Sub-Components ───
+const FilterChips = ({ value, onChange, options }: { value: string; onChange: (v: any) => void; options: { label: string; value: string }[] }) => (
+  <div className="flex flex-wrap gap-1.5">
+    {options.map(o => (
+      <button
+        key={o.value}
+        onClick={() => onChange(o.value)}
+        className={cn(
+          'px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold border transition-all duration-200',
+          value === o.value
+            ? 'bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20'
+            : 'bg-muted/50 backdrop-blur-sm text-muted-foreground border-border/30 hover:border-primary/40 hover:text-foreground'
+        )}
+      >
+        {o.label}
+      </button>
+    ))}
+  </div>
+);
 
-  const Pagination = ({ page, total, onPrev, onNext }: { page: number; total: number; onPrev: () => void; onNext: () => void }) => (
-    total > 1 ? (
-      <div className="flex items-center justify-center gap-3 mt-6">
-        <Button variant="outline" size="sm" onClick={onPrev} disabled={page === 0} className="rounded-full w-9 h-9 p-0">
-          <ChevronLeft className="w-4 h-4" />
-        </Button>
-        <span className="text-sm text-muted-foreground font-medium tabular-nums">
-          {page + 1} <span className="text-muted-foreground/50">de</span> {total}
-        </span>
-        <Button variant="outline" size="sm" onClick={onNext} disabled={page >= total - 1} className="rounded-full w-9 h-9 p-0">
-          <ChevronRight className="w-4 h-4" />
-        </Button>
-      </div>
-    ) : null
-  );
-
-  const EmptyState = ({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description?: string }) => (
-    <div className="flex flex-col items-center justify-center py-20 px-6 bg-card/40 border border-dashed border-border/60 rounded-3xl space-y-4">
-      <div className="w-20 h-20 rounded-full bg-muted/30 flex items-center justify-center relative border border-border/20 shadow-inner">
-        <Icon className="w-10 h-10 text-muted-foreground/30" />
-        <div className="absolute inset-0 rounded-full border border-primary/5 animate-pulse" />
-      </div>
-      <div className="text-center space-y-1">
-        <p className="text-lg font-bold text-foreground/80">{title}</p>
-        {description && <p className="text-sm text-muted-foreground/60 max-w-[280px] mx-auto leading-relaxed">{description}</p>}
-      </div>
+const Pagination = ({ page, total, onPrev, onNext }: { page: number; total: number; onPrev: () => void; onNext: () => void }) => (
+  total > 1 ? (
+    <div className="flex items-center justify-center gap-3 mt-6">
+      <Button variant="outline" size="sm" onClick={onPrev} disabled={page === 0} className="rounded-full w-9 h-9 p-0">
+        <ChevronLeft className="w-4 h-4" />
+      </Button>
+      <span className="text-sm text-muted-foreground font-medium tabular-nums">
+        {page + 1} <span className="text-muted-foreground/50">de</span> {total}
+      </span>
+      <Button variant="outline" size="sm" onClick={onNext} disabled={page >= total - 1} className="rounded-full w-9 h-9 p-0">
+        <ChevronRight className="w-4 h-4" />
+      </Button>
     </div>
-  );
+  ) : null
+);
+
+const EmptyState = ({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description?: string }) => (
+  <div className="flex flex-col items-center justify-center py-20 px-6 bg-card/40 border border-dashed border-border/60 rounded-3xl space-y-4">
+    <div className="w-20 h-20 rounded-full bg-muted/30 flex items-center justify-center relative border border-border/20 shadow-inner">
+      <Icon className="w-10 h-10 text-muted-foreground/30" />
+      <div className="absolute inset-0 rounded-full border border-primary/5 animate-pulse" />
+    </div>
+    <div className="text-center space-y-1">
+      <p className="text-lg font-bold text-foreground/80">{title}</p>
+      {description && <p className="text-sm text-muted-foreground/60 max-w-[280px] mx-auto leading-relaxed">{description}</p>}
+    </div>
+  </div>
+);
 
 // ─── Photo Card ───
 const PhotoCard = React.memo(({ 
@@ -343,167 +344,184 @@ const PhotoCard = React.memo(({
 ));
 PhotoCard.displayName = 'PhotoCard';
 
-  // ─── Review Card ───
-  const ReviewCard = ({ review, showActions }: { review: reviewsService.ReviewRow; showActions: boolean }) => (
-    <motion.div
-      initial={{ opacity: 0, x: -12 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <Card className="border-border/40 bg-card/60 backdrop-blur-sm hover:shadow-md transition-all duration-300 rounded-3xl overflow-hidden relative group">
-        <CardContent className="p-5 sm:p-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Review Visual Column (if has photo) */}
-            {review.photos && review.photos.length > 0 && (
-              <div className="w-24 h-24 md:w-32 md:h-32 shrink-0 rounded-2xl overflow-hidden border border-border/40 shadow-sm relative group/review-photo">
-                <OptimizedImage src={review.photos[0]} alt="Foto da avaliação" className="w-full h-full object-cover" aspectRatio="square" />
-                <button 
-                  className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/review-photo:opacity-100 transition-opacity"
-                  onClick={() => {
-                    // This is a simple shortcut to view the photo
-                    const win = window.open(review.photos![0], '_blank');
-                    win?.focus();
-                  }}
-                >
-                  <Plus className="w-5 h-5 text-white" />
-                </button>
+// ─── Review Card ───
+const ReviewCard = React.memo(({ 
+  review, 
+  showActions, 
+  responseText, 
+  onResponseChange, 
+  onSaveResponse, 
+  onEdit, 
+  onApprove, 
+  onReject, 
+  refreshReviews 
+}: { 
+  review: reviewsService.ReviewRow; 
+  showActions: boolean;
+  responseText: string;
+  onResponseChange: (v: string) => void;
+  onSaveResponse: (id: string) => void;
+  onEdit: (r: reviewsService.ReviewRow) => void;
+  onApprove: (id: string) => void;
+  onReject: (id: string) => void;
+  refreshReviews: () => void;
+}) => (
+  <motion.div
+    initial={{ opacity: 0, x: -12 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ duration: 0.3 }}
+  >
+    <Card className="border-border/40 bg-card/60 backdrop-blur-sm hover:shadow-md transition-all duration-300 rounded-3xl overflow-hidden relative group">
+      <CardContent className="p-5 sm:p-6">
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Review Visual Column (if has photo) */}
+          {review.photos && review.photos.length > 0 && (
+            <div className="w-24 h-24 md:w-32 md:h-32 shrink-0 rounded-2xl overflow-hidden border border-border/40 shadow-sm relative group/review-photo">
+              <OptimizedImage src={review.photos[0]} alt="Foto da avaliação" className="w-full h-full object-cover" aspectRatio="square" />
+              <button 
+                className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/review-photo:opacity-100 transition-opacity"
+                onClick={() => {
+                  const win = window.open(review.photos![0], '_blank');
+                  win?.focus();
+                }}
+              >
+                <Plus className="w-5 h-5 text-white" />
+              </button>
+            </div>
+          )}
+
+          {/* Review Content Column */}
+          <div className="flex-1 space-y-4 min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 shadow-inner">
+                  <span className="text-lg font-bold text-primary">{review.name?.charAt(0)?.toUpperCase()}</span>
+                </div>
+                <div>
+                  <h4 className="font-bold text-foreground flex items-center gap-2">
+                    {review.name}
+                    <Badge className={cn('text-[10px] font-bold px-2 py-0 border-none', 
+                      review.moderation_status === 'aprovado' ? 'bg-emerald-500/10 text-emerald-600' : 
+                      review.moderation_status === 'pendente' ? 'bg-amber-500/10 text-amber-600' : 
+                      'bg-destructive/10 text-destructive'
+                    )}>
+                      {STATUS_LABELS[review.moderation_status as ModerationStatus] || review.moderation_status}
+                    </Badge>
+                  </h4>
+                  {review.pet_name && <p className="text-xs text-muted-foreground flex items-center gap-1.5"><Sparkles className="w-3 h-3 text-primary/60" /> {review.pet_name}</p>}
+                </div>
+              </div>
+
+              <div className="flex flex-col items-end gap-1">
+                <div className="flex gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className={cn('w-4 h-4', i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/20')} />
+                  ))}
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{review.created_at?.split('T')[0]}</span>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute -left-3 top-0 bottom-0 w-1 bg-primary/20 rounded-full" />
+              <p className="text-sm text-foreground/90 leading-relaxed italic pl-2">
+                "{review.comment}"
+              </p>
+            </div>
+
+            {review.shop_response && (
+              <div className="p-3 bg-primary/5 rounded-2xl border border-primary/10 relative overflow-hidden group/response">
+                <div className="absolute top-0 right-0 p-2 opacity-0 group-hover/response:opacity-100 transition-opacity">
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground" onClick={() => onResponseChange(review.shop_response!)}>
+                    <Edit2 className="w-3 h-3" />
+                  </Button>
+                </div>
+                <p className="text-[11px] font-bold text-primary mb-1 flex items-center gap-1.5 uppercase tracking-wide">
+                  <Store className="w-3 h-3" /> Resposta da Loja
+                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{review.shop_response}</p>
               </div>
             )}
 
-            {/* Review Content Column */}
-            <div className="flex-1 space-y-4 min-w-0">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 shadow-inner">
-                    <span className="text-lg font-bold text-primary">{review.name?.charAt(0)?.toUpperCase()}</span>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-foreground flex items-center gap-2">
-                      {review.name}
-                      <Badge className={cn('text-[10px] font-bold px-2 py-0 border-none', 
-                        review.moderation_status === 'aprovado' ? 'bg-emerald-500/10 text-emerald-600' : 
-                        review.moderation_status === 'pendente' ? 'bg-amber-500/10 text-amber-600' : 
-                        'bg-destructive/10 text-destructive'
-                      )}>
-                        {STATUS_LABELS[review.moderation_status as ModerationStatus] || review.moderation_status}
-                      </Badge>
-                    </h4>
-                    {review.pet_name && <p className="text-xs text-muted-foreground flex items-center gap-1.5"><Sparkles className="w-3 h-3 text-primary/60" /> {review.pet_name}</p>}
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-end gap-1">
-                  <div className="flex gap-0.5">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} className={cn('w-4 h-4', i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/20')} />
-                    ))}
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{review.created_at?.split('T')[0]}</span>
-                </div>
-              </div>
-
-              <div className="relative">
-                <div className="absolute -left-3 top-0 bottom-0 w-1 bg-primary/20 rounded-full" />
-                <p className="text-sm text-foreground/90 leading-relaxed italic pl-2">
-                  "{review.comment}"
-                </p>
-              </div>
-
-              {review.shop_response && (
-                <div className="p-3 bg-primary/5 rounded-2xl border border-primary/10 relative overflow-hidden group/response">
-                  <div className="absolute top-0 right-0 p-2 opacity-0 group-hover/response:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground" onClick={() => setResponseTexts(prev => ({ ...prev, [review.id]: review.shop_response! }))}>
-                      <Edit2 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                  <p className="text-[11px] font-bold text-primary mb-1 flex items-center gap-1.5 uppercase tracking-wide">
-                    <Store className="w-3 h-3" /> Resposta da Loja
-                  </p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{review.shop_response}</p>
-                </div>
-              )}
-
-              {/* Response Input */}
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Responder como PetCão..."
-                  value={responseTexts[review.id] ?? ''}
-                  onChange={(e) => setResponseTexts(prev => ({ ...prev, [review.id]: e.target.value }))}
-                  className="h-9 text-xs rounded-xl bg-muted/40 border-border/30 focus:bg-background transition-all"
-                />
-                <Button 
-                  size="sm" 
-                  variant={responseTexts[review.id] ? "default" : "outline"} 
-                  className="h-9 px-4 rounded-xl gap-2 font-semibold"
-                  disabled={!responseTexts[review.id]?.trim()}
-                  onClick={() => handleSaveResponse(review.id)}
-                >
-                  <MessageSquare className="w-3.5 h-3.5" /> 
-                  <span className="hidden sm:inline">Responder</span>
-                </Button>
-              </div>
-            </div>
-
-            {/* Admin Actions */}
-            <div className="flex md:flex-col gap-2 shrink-0 md:border-l md:border-border/20 md:pl-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Responder como PetCão..."
+                value={responseText}
+                onChange={(e) => onResponseChange(e.target.value)}
+                className="h-9 text-xs rounded-xl bg-muted/40 border-border/30 focus:bg-background transition-all"
+              />
               <Button 
-                variant="ghost" 
                 size="sm" 
-                className="flex-1 md:flex-none h-10 rounded-xl gap-2 text-muted-foreground hover:text-primary hover:bg-primary/5"
-                onClick={() => setEditReviewTarget(review)}
+                variant={responseText ? "default" : "outline"} 
+                className="h-9 px-4 rounded-xl gap-2 font-semibold"
+                disabled={!responseText?.trim()}
+                onClick={() => onSaveResponse(review.id)}
               >
-                <Edit2 className="w-4 h-4" /> <span className="md:hidden">Editar</span>
+                <MessageSquare className="w-3.5 h-3.5" /> 
+                <span className="hidden sm:inline">Responder</span>
               </Button>
-              
-              {showActions && review.moderation_status === 'pendente' ? (
-                <>
-                  <Button size="sm" className="flex-1 md:flex-none h-10 rounded-xl gap-2 bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm" onClick={() => approveReview(review.id)}>
-                    <CheckCircle2 className="w-4 h-4" /> Aprovar
-                  </Button>
-                  <Button size="sm" variant="outline" className="flex-1 md:flex-none h-10 rounded-xl gap-2 text-destructive border-destructive/20 hover:bg-destructive/5" onClick={() => rejectReview(review.id)}>
-                    <XCircle className="w-4 h-4" /> Rejeitar
-                  </Button>
-                </>
-              ) : (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="flex-1 md:flex-none h-10 rounded-xl gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/5">
-                      <Trash2 className="w-4 h-4" /> <span className="md:hidden">Excluir</span>
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent className="rounded-3xl border-border/40 bg-card/95 backdrop-blur-xl">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Excluir avaliação?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Esta ação removerá permanentemente a avaliação do cliente e não poderá ser desfeita.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className="gap-2">
-                      <AlertDialogCancel className="rounded-2xl border-border/40">Voltar</AlertDialogCancel>
-                      <AlertDialogAction
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-2xl"
-                        onClick={() => {
-                          // Note: Need to implement deleteReview in AdminContext or use updateReview to 'deleted'
-                          toast.promise(reviewsService.updateReview(review.id, { moderation_status: 'rejeitado' }), {
-                            loading: 'Excluindo...',
-                            success: 'Avaliação removida!',
-                            error: 'Erro ao remover.'
-                          });
-                          refreshReviews();
-                        }}
-                      >
-                        Confirmar Exclusão
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
+
+          <div className="flex md:flex-col gap-2 shrink-0 md:border-l md:border-border/20 md:pl-4">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="flex-1 md:flex-none h-10 rounded-xl gap-2 text-muted-foreground hover:text-primary hover:bg-primary/5"
+              onClick={() => onEdit(review)}
+            >
+              <Edit2 className="w-4 h-4" /> <span className="md:hidden">Editar</span>
+            </Button>
+            
+            {showActions && review.moderation_status === 'pendente' ? (
+              <>
+                <Button size="sm" className="flex-1 md:flex-none h-10 rounded-xl gap-2 bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm" onClick={() => onApprove(review.id)}>
+                  <CheckCircle2 className="w-4 h-4" /> Aprovar
+                </Button>
+                <Button size="sm" variant="outline" className="flex-1 md:flex-none h-10 rounded-xl gap-2 text-destructive border-destructive/20 hover:bg-destructive/5" onClick={() => onReject(review.id)}>
+                  <XCircle className="w-4 h-4" /> Rejeitar
+                </Button>
+              </>
+            ) : (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="flex-1 md:flex-none h-10 rounded-xl gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/5">
+                    <Trash2 className="w-4 h-4" /> <span className="md:hidden">Excluir</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="rounded-3xl border-border/40 bg-card/95 backdrop-blur-xl">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir avaliação?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação removerá permanentemente a avaliação do cliente e não poderá ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="gap-2">
+                    <AlertDialogCancel className="rounded-2xl border-border/40">Voltar</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-2xl"
+                      onClick={() => {
+                        toast.promise(reviewsService.updateReview(review.id, { moderation_status: 'rejeitado' }), {
+                          loading: 'Excluindo...',
+                          success: 'Avaliação removida!',
+                          error: 'Erro ao remover.'
+                        });
+                        refreshReviews();
+                      }}
+                    >
+                      Confirmar Exclusão
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  </motion.div>
+));
+ReviewCard.displayName = 'ReviewCard';
 
   // ─── Stats ───
   const stats = [
@@ -678,7 +696,18 @@ PhotoCard.displayName = 'PhotoCard';
           ) : (
             <div className="grid grid-cols-1 gap-4">
               {pagedReviews.map((review) => (
-                <ReviewCard key={review.id} review={review} showActions={review.moderation_status === 'pendente'} />
+                <ReviewCard 
+                  key={review.id} 
+                  review={review} 
+                  showActions={review.moderation_status === 'pendente'} 
+                  responseText={responseTexts[review.id] ?? ''}
+                  onResponseChange={(v) => setResponseTexts(prev => ({ ...prev, [review.id]: v }))}
+                  onSaveResponse={handleSaveResponse}
+                  onEdit={setEditReviewTarget}
+                  onApprove={approveReview}
+                  onReject={rejectReview}
+                  refreshReviews={refreshReviews}
+                />
               ))}
             </div>
           )}
