@@ -1,6 +1,7 @@
 import { Heart, Instagram, Facebook, Youtube, Globe, MessageCircle, Music2, MapPin, Phone, Clock, ArrowUpRight, ChevronUp } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import logoPetDefault from '@/assets/logopet.webp';
+import otixLogo from '@/assets/otix-logo.png';
 import { useBranding } from '@/contexts/BrandingContext';
 import { useConfig } from '@/hooks/useConfig';
 import { usePetshop } from '@/contexts/PetshopContext';
@@ -194,11 +195,12 @@ export function Footer() {
         {/* ── Bottom bar ── */}
         <div className="border-t border-border/50 dark:border-white/[0.06] py-6 pb-24 lg:pb-6 flex flex-col md:flex-row items-center justify-between gap-3">
           <p className="text-[12px] text-muted-foreground/50 tracking-wide">
-            © {currentYear} {branding.shopName}. Todos os direitos reservados.
+            © {currentYear} Otix Landing. Todos os direitos reservados.
           </p>
-          <p className="text-[12px] text-muted-foreground/50 flex items-center gap-1.5 tracking-wide">
-            Feito com <Heart className="w-3 h-3 text-secondary/70" /> em Cajamar
-          </p>
+          <div className="text-[12px] text-muted-foreground/50 flex items-center gap-2 tracking-wide">
+            <span>Design by</span>
+            <img src={otixLogo} alt="Otix Logo" className="h-4 w-auto brightness-0 invert opacity-50 hover:opacity-100 transition-opacity duration-300" />
+          </div>
         </div>
       </div>
     </footer>
