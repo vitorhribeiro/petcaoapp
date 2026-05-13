@@ -42,7 +42,9 @@ interface TestModesContextType {
   appPlan: 'basic' | 'pro';
   setAppPlan: (plan: 'basic' | 'pro') => void;
   proModeActive: boolean;
+  toggleProMode: () => void;
   basicModeActive: boolean;
+  toggleBasicMode: () => void;
   clientModeActive: boolean;
   toggleClientMode: () => void;
   demoModeActive: boolean;
@@ -54,6 +56,7 @@ interface TestModesContextType {
   regenerateDemoData: () => void;
   anyModeActive: boolean;
   activeModes: string[];
+  isPro: boolean;
 }
 
 const TestModesContext = createContext<TestModesContextType | undefined>(undefined);
