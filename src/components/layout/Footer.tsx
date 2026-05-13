@@ -1,7 +1,7 @@
 import { Heart, Instagram, Facebook, Youtube, Globe, MessageCircle, Music2, MapPin, Phone, Clock, ArrowUpRight, ChevronUp } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import logoPetDefault from '@/assets/logopet.webp';
-import otixLogo from '@/assets/otix-logo.jpeg';
+import otixLogo from '@/assets/otix-logo.webp';
 import { useBranding } from '@/contexts/BrandingContext';
 import { useConfig } from '@/hooks/useConfig';
 import { usePetshop } from '@/contexts/PetshopContext';
@@ -199,7 +199,7 @@ export function Footer() {
           </p>
           <div className="text-[12px] text-muted-foreground/50 flex items-center gap-2 tracking-wide">
             <span>Design by</span>
-            <img src={otixLogo} alt="Otix Logo" className="h-4 w-auto brightness-0 invert opacity-50 hover:opacity-100 transition-opacity duration-300" />
+            <img src={otixLogo} alt="Otix Logo" className="h-7 w-auto opacity-80 hover:opacity-100 transition-opacity duration-300" />
           </div>
         </div>
       </div>
