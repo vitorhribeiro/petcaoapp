@@ -343,36 +343,42 @@ export function DevToolsEnvironment() {
 function HoldToConfirmButton({ onConfirm, variant }: { onConfirm: () => void, variant: 'pro' | 'basic' }) {
   const [progress, setProgress] = useState(0);
   const [isHolding, setIsHolding] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const requestRef = useRef<number>();
   const startTimeRef = useRef<number>(0);
+
+  const animate = useCallback((time: number) => {
+    if (startTimeRef.current === 0) startTimeRef.current = time;
+    const elapsed = time - startTimeRef.current;
+    const duration = 2000;
+    
+    const newProgress = Math.min((elapsed / duration) * 100, 100);
+    setProgress(newProgress);
+
+    if (elapsed < duration) {
+      requestRef.current = requestAnimationFrame(animate);
+    } else {
+      onConfirm();
+      setIsHolding(false);
+      setProgress(0);
+    }
+  }, [onConfirm]);
 
   const startHolding = () => {
     setIsHolding(true);
-    startTimeRef.current = Date.now();
+    startTimeRef.current = 0;
     setProgress(0);
-    
-    timerRef.current = setInterval(() => {
-      const elapsed = Date.now() - startTimeRef.current;
-      const newProgress = Math.min((elapsed / 2000) * 100, 100);
-      setProgress(newProgress);
-      
-      if (elapsed >= 2000) {
-        if (timerRef.current) clearInterval(timerRef.current);
-        onConfirm();
-        setIsHolding(false);
-        setProgress(0);
-      }
-    }, 10);
+    requestRef.current = requestAnimationFrame(animate);
   };
 
   const stopHolding = () => {
     setIsHolding(false);
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (requestRef.current) cancelAnimationFrame(requestRef.current);
     setProgress(0);
+    startTimeRef.current = 0;
   };
 
   useEffect(() => {
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    return () => { if (requestRef.current) cancelAnimationFrame(requestRef.current); };
   }, []);
 
   return (
@@ -390,18 +396,17 @@ function HoldToConfirmButton({ onConfirm, variant }: { onConfirm: () => void, va
         isHolding && "scale-[1.02]"
       )}
     >
-      {/* Progress Background */}
       <div 
         className={cn(
-          "absolute inset-0 left-0 bg-white/20 transition-all duration-100 ease-linear pointer-events-none",
+          "absolute inset-0 left-0 bg-white/30 pointer-events-none",
           progress === 0 && "opacity-0"
         )}
         style={{ width: `${progress}%` }}
       />
       
-      <span className="relative z-10 flex items-center justify-center gap-2">
+      <span className="relative z-10 flex items-center justify-center gap-2 drop-shadow-sm">
         {isHolding ? (
-          <>Processando... {Math.round(progress)}%</>
+          <>Confirmando... {Math.round(progress)}%</>
         ) : (
           <>Segure para Confirmar {variant.toUpperCase()}</>
         )}
