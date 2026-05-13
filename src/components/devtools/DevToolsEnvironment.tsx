@@ -8,6 +8,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { InfoTip } from '@/components/dashboard/InfoTip';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useState, useRef, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 export function DevToolsEnvironment() {
   const {
@@ -18,6 +21,23 @@ export function DevToolsEnvironment() {
     anyModeActive
   } = useTestModes();
   const navigate = useNavigate();
+  const [pendingPlan, setPendingPlan] = useState<'basic' | 'pro' | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  const handlePlanClick = (planId: 'basic' | 'pro') => {
+    if (planId === appPlan) return;
+    setPendingPlan(planId);
+    setShowConfirmModal(true);
+  };
+
+  const confirmPlanChange = () => {
+    if (pendingPlan) {
+      setAppPlan(pendingPlan);
+      toast.success(`Plano alterado para ${pendingPlan.toUpperCase()} com sucesso!`);
+      setShowConfirmModal(false);
+      setPendingPlan(null);
+    }
+  };
 
   const plans = [
     {
@@ -84,7 +104,7 @@ export function DevToolsEnvironment() {
               key={plan.id}
               whileHover={{ y: -4 }}
               className="relative"
-              onClick={() => setAppPlan(plan.id as 'basic' | 'pro')}
+              onClick={() => handlePlanClick(plan.id as 'basic' | 'pro')}
             >
               <Card className={cn(
                 "h-full cursor-pointer border-border/40 bg-card/40 backdrop-blur-md transition-all duration-500 overflow-hidden",
@@ -284,7 +304,109 @@ export function DevToolsEnvironment() {
           </div>
         </div>
       </div>
+      {/* Confirmation Modal */}
+      <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+        <DialogContent className="sm:max-w-[425px] border-none shadow-2xl bg-card/95 backdrop-blur-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+              {pendingPlan === 'pro' ? (
+                <><Crown className="w-6 h-6 text-amber-500" /> Confirmar Upgrade PRO</>
+              ) : (
+                <><Zap className="w-6 h-6 text-blue-500" /> Confirmar Downgrade</>
+              )}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground pt-3 leading-relaxed">
+              {pendingPlan === 'pro' ? (
+                "Você está prestes a ativar o Plano PRO. Isso liberará todas as funcionalidades premium para este ambiente, incluindo analytics avançado e automação."
+              ) : (
+                "Atenção: Ao mudar para o Plano Básico, algumas funcionalidades premium ficarão indisponíveis para os administradores e mídia."
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-6 flex flex-col items-center justify-center gap-4">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Segure o botão para confirmar</p>
+            <HoldToConfirmButton onConfirm={confirmPlanChange} variant={pendingPlan === 'pro' ? 'pro' : 'basic'} />
+          </div>
+
+          <DialogFooter className="sm:justify-center">
+            <Button variant="ghost" size="sm" onClick={() => setShowConfirmModal(false)} className="text-muted-foreground hover:text-foreground">
+              Cancelar e manter {appPlan.toUpperCase()}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+function HoldToConfirmButton({ onConfirm, variant }: { onConfirm: () => void, variant: 'pro' | 'basic' }) {
+  const [progress, setProgress] = useState(0);
+  const [isHolding, setIsHolding] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<number>(0);
+
+  const startHolding = () => {
+    setIsHolding(true);
+    startTimeRef.current = Date.now();
+    setProgress(0);
+    
+    timerRef.current = setInterval(() => {
+      const elapsed = Date.now() - startTimeRef.current;
+      const newProgress = Math.min((elapsed / 2000) * 100, 100);
+      setProgress(newProgress);
+      
+      if (elapsed >= 2000) {
+        if (timerRef.current) clearInterval(timerRef.current);
+        onConfirm();
+        setIsHolding(false);
+        setProgress(0);
+      }
+    }, 10);
+  };
+
+  const stopHolding = () => {
+    setIsHolding(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+    setProgress(0);
+  };
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
+
+  return (
+    <button
+      onMouseDown={startHolding}
+      onMouseUp={stopHolding}
+      onMouseLeave={stopHolding}
+      onTouchStart={startHolding}
+      onTouchEnd={stopHolding}
+      className={cn(
+        "relative w-full h-14 rounded-2xl overflow-hidden font-bold transition-all duration-300 active:scale-95 shadow-lg",
+        variant === 'pro' 
+          ? "bg-amber-500 text-white shadow-amber-500/20" 
+          : "bg-blue-600 text-white shadow-blue-600/20",
+        isHolding && "scale-[1.02]"
+      )}
+    >
+      {/* Progress Background */}
+      <div 
+        className={cn(
+          "absolute inset-0 left-0 bg-white/20 transition-all duration-100 ease-linear pointer-events-none",
+          progress === 0 && "opacity-0"
+        )}
+        style={{ width: `${progress}%` }}
+      />
+      
+      <span className="relative z-10 flex items-center justify-center gap-2">
+        {isHolding ? (
+          <>Processando... {Math.round(progress)}%</>
+        ) : (
+          <>Segure para Confirmar {variant.toUpperCase()}</>
+        )}
+      </span>
+    </button>
   );
 }
 

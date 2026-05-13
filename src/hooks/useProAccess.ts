@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export function useProAccess() {
   const { user } = useAuth();
-  const { proModeActive, basicModeActive } = useTestModes();
+  const { proModeActive, basicModeActive, appPlan } = useTestModes();
   const [dbIsPro, setDbIsPro] = useState<boolean | null>(null);
   const [simulatedPlan, setSimulatedPlan] = useState<'pro' | 'basic' | null>(null);
 
@@ -40,17 +40,21 @@ export function useProAccess() {
   }, [user?.id]);
 
   const isProActive = useMemo(() => {
-    // DEV test mode overrides
-    if (basicModeActive && user?.role === 'dev') return false;
-    if (proModeActive && user?.role === 'dev') return true;
+    // 1. Simulação e Overrides de Teste
+    if (basicModeActive) return false;
+    if (proModeActive) return true;
     if (simulatedPlan === 'basic') return false;
     if (simulatedPlan === 'pro') return true;
+    
     if (!user) return false;
-    // DEV always has access
+
+    // 2. Desenvolvedor sempre tem acesso total
     if (user.role === 'dev') return true;
-    // For admin/midia: use real DB value
-    return dbIsPro === true;
-  }, [user, dbIsPro, simulatedPlan, proModeActive, basicModeActive]);
+
+    // 3. Respeita o plano global definido no Gerenciamento de Ambiente
+    // Se o ambiente estiver em PRO, todos os membros da equipe (admin/midia) herdam o acesso PRO.
+    return appPlan === 'pro';
+  }, [user, appPlan, simulatedPlan, proModeActive, basicModeActive]);
 
   const simulatePlan = useCallback((plan: 'pro' | 'basic' | null) => {
     setSimulatedPlan(plan);
