@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { InfoTip } from '@/components/dashboard/InfoTip';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 
