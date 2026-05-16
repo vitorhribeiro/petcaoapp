@@ -54,16 +54,22 @@ interface AdminContextType {
   updateService: (id: string, data: Partial<servicesService.ServiceRow>) => Promise<void>;
   deleteService: (id: string) => Promise<void>;
 
+  // Package Types (Plans)
+  packageTypes: packagesService.PackageRow[];
+  refreshPackageTypes: () => Promise<void>;
+  addPackageType: (data: Omit<packagesService.PackageRow, 'id' | 'petshop_id'>) => Promise<void>;
+  updatePackageType: (id: string, data: Partial<packagesService.PackageRow>) => Promise<void>;
+  deletePackageType: (id: string) => Promise<void>;
+
   // Customer Packages
   customerPackages: packagesService.CustomerPackageRow[];
-  packageTypes: packagesService.PackageRow[];
   packagesLoading: boolean;
   refreshPackages: () => Promise<void>;
   createCustomerPackage: (data: Parameters<typeof packagesService.createCustomerPackage>[0]) => Promise<void>;
   toggleCustomerPackageStatus: (id: string) => Promise<void>;
   updateCustomerPackage: (id: string, data: Partial<packagesService.CustomerPackageRow>) => Promise<void>;
   
-  // Aliases for compatibility
+  // Compatibility aliases
   adminPackages: packagesService.CustomerPackageRow[]; 
   addAdminPackage: (data: any) => Promise<void>;
   toggleAdminPackageStatus: (id: string) => Promise<void>;
@@ -162,7 +168,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       refreshGallery(),
       refreshReviews(),
       refreshServices(),
-      refreshPublicPackages(),
+      refreshPackageTypes(),
     ]);
   }, []);
 
@@ -210,7 +216,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     setServicesLoading(false);
   }, []);
 
-  const refreshPublicPackages = useCallback(async () => {
+  const refreshPackageTypes = useCallback(async () => {
     const types = await packagesService.getPackages();
     setPackageTypes(types);
   }, []);
@@ -223,11 +229,11 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshPackages = useCallback(async () => {
-    await refreshPublicPackages();
+    await refreshPackageTypes();
     if (isAuthenticated) {
       await refreshCustomerPackages();
     }
-  }, [isAuthenticated, refreshPublicPackages, refreshCustomerPackages]);
+  }, [isAuthenticated, refreshPackageTypes, refreshCustomerPackages]);
 
   const refreshClients = useCallback(async () => {
     setClientsLoading(true);
@@ -426,6 +432,19 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       addService, updateService: handleUpdateService, deleteService: handleDeleteService,
 
       customerPackages, packageTypes, packagesLoading, refreshPackages,
+      refreshPackageTypes,
+      addPackageType: async (data) => {
+        await packagesService.createPackage(data);
+        await refreshPackageTypes();
+      },
+      updatePackageType: async (id, data) => {
+        await packagesService.updatePackage(id, data);
+        await refreshPackageTypes();
+      },
+      deletePackageType: async (id) => {
+        await packagesService.deletePackage(id);
+        await refreshPackageTypes();
+      },
       createCustomerPackage: handleCreateCustomerPackage,
       toggleCustomerPackageStatus: handleToggleCustomerPackageStatus,
       updateCustomerPackage: handleUpdateCustomerPackage,

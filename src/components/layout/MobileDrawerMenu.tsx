@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, Home, Scissors, DollarSign, CalendarDays, PawPrint, Star, MapPin, User, Settings, ChevronRight, LogOut, Sun, Moon, Camera, Clock, Wrench } from 'lucide-react';
+import { X, Home, Scissors, DollarSign, CalendarDays, PawPrint, Star, MapPin, User, Settings, ChevronRight, LogOut, Sun, Moon, Camera, Clock, Wrench, Package } from 'lucide-react';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,7 +19,7 @@ interface MobileDrawerMenuProps {
 
 const exploreItems = [
   { id: 'servicos', icon: Scissors, label: 'Serviços' },
-  { id: 'valores', icon: DollarSign, label: 'Valores' },
+  { id: 'pacotes', icon: Package, label: 'Pacotes' },
   { id: 'fotos', icon: Camera, label: 'Galeria' },
   { id: 'avaliacoes', icon: Star, label: 'Depoimentos' },
   { id: 'localizacao', icon: MapPin, label: 'Localização' },

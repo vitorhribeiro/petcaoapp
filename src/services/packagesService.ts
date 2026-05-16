@@ -113,3 +113,22 @@ export async function toggleCustomerPackageStatus(id: string): Promise<boolean> 
   const { error } = await supabase.from('customer_packages').update({ status: newStatus }).eq('id', id);
   return !error;
 }
+export async function createPackage(data: Omit<PackageRow, 'id' | 'petshop_id'>): Promise<PackageRow | null> {
+  const { data: row, error } = await supabase
+    .from('packages')
+    .insert({ ...data, petshop_id: PETSHOP_ID } as any)
+    .select()
+    .single();
+  if (error) { console.error('createPackage error:', error); return null; }
+  return row as PackageRow;
+}
+
+export async function updatePackage(id: string, data: Partial<PackageRow>): Promise<boolean> {
+  const { error } = await supabase.from('packages').update(data as any).eq('id', id);
+  return !error;
+}
+
+export async function deletePackage(id: string): Promise<boolean> {
+  const { error } = await supabase.from('packages').delete().eq('id', id);
+  return !error;
+}

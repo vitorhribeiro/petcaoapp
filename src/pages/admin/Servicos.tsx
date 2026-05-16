@@ -16,7 +16,7 @@ import { ScrollableTabs, premiumTabClass, premiumTabListClass } from '@/componen
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import {
   Plus, Trash2, Edit2, Scissors, GripVertical, Eye, Clock, DollarSign,
-  Sparkles, Bath, Dog, Star, Copy, Save, CheckCircle2, Loader2,
+  Sparkles, Copy, Save, CheckCircle2, Loader2,
   TrendingUp, Package, AlertCircle, ChevronRight, FolderOpen
 } from 'lucide-react';
 import { ServiceRow } from '@/services/servicesService';
@@ -41,9 +41,11 @@ const sizeLabels: { key: SizeKey; label: string; emoji: string }[] = [
 ];
 
 // ─── Sortable Service Card ───
-function SortableServiceCard({ service, categories, onEdit, onDelete, onToggleActive, onPreview, onDuplicate, priceDraft, onPriceChange, isDirty }: {
+function SortableServiceCard({ service, categories, isPopular, onTogglePopular, onEdit, onDelete, onToggleActive, onPreview, onDuplicate, priceDraft, onPriceChange, isDirty, customColor }: {
   service: ServiceRow;
   categories: ServiceCategory[];
+  isPopular: boolean;
+  onTogglePopular: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onToggleActive: () => void;
@@ -52,6 +54,7 @@ function SortableServiceCard({ service, categories, onEdit, onDelete, onToggleAc
   priceDraft: { price_pequeno: number; price_medio: number; price_grande: number };
   onPriceChange: (size: SizeKey, value: string) => void;
   isDirty: boolean;
+  customColor?: string;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: service.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
@@ -81,13 +84,17 @@ function SortableServiceCard({ service, categories, onEdit, onDelete, onToggleAc
               {/* ── Top row: icon + name + toggle/edit ── */}
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
-                  <div className={cn("p-2 rounded-xl shrink-0", `bg-gradient-to-br ${catInfo.gradient}`)}>
-                    <Icon className="w-4 h-4 text-white" />
+                  <div 
+                    className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 shadow-md relative overflow-hidden")}
+                    style={{ backgroundColor: isPopular ? 'hsl(var(--secondary))' : (customColor || 'hsl(var(--primary))') }}
+                  >
+                    <Icon className="w-5 h-5 text-white relative z-10" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="font-semibold text-foreground text-sm sm:text-base truncate leading-tight">{service.name}</h3>
                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                       <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", catInfo.bgBadge)}>{catInfo.label}</Badge>
+                      {isPopular && <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/30 text-amber-600 bg-amber-500/5 gap-1"><Sparkles className="w-2.5 h-2.5" />Popular</Badge>}
                       {!service.active && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Inativo</Badge>}
                       {isDirty && <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-amber-500 border-amber-500/30 bg-amber-500/10">Alterado</Badge>}
                     </div>
@@ -96,6 +103,15 @@ function SortableServiceCard({ service, categories, onEdit, onDelete, onToggleAc
 
                 {/* Desktop actions */}
                 <div className="hidden sm:flex items-center gap-1 shrink-0">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className={cn("h-8 w-8", isPopular ? "text-amber-500 hover:text-amber-600 bg-amber-500/10" : "text-muted-foreground")} 
+                    onClick={onTogglePopular} 
+                    title="Popular"
+                  >
+                    <Sparkles className={cn("w-4 h-4", isPopular && "fill-current")} />
+                  </Button>
                   <Switch checked={service.active !== false} onCheckedChange={onToggleActive} className="data-[state=checked]:bg-green-500" />
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onPreview} title="Visualizar"><Eye className="w-4 h-4" /></Button>
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onDuplicate} title="Duplicar"><Copy className="w-4 h-4" /></Button>
@@ -104,6 +120,14 @@ function SortableServiceCard({ service, categories, onEdit, onDelete, onToggleAc
                 </div>
                 {/* Mobile: only toggle + edit */}
                 <div className="flex sm:hidden items-center gap-0.5 shrink-0">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className={cn("h-7 w-7", isPopular ? "text-amber-500" : "text-muted-foreground")} 
+                    onClick={onTogglePopular}
+                  >
+                    <Sparkles className={cn("w-3.5 h-3.5", isPopular && "fill-current")} />
+                  </Button>
                   <Switch checked={service.active !== false} onCheckedChange={onToggleActive} className="data-[state=checked]:bg-green-500 scale-90" />
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit}><Edit2 className="w-3.5 h-3.5" /></Button>
                 </div>
@@ -231,6 +255,7 @@ export default function Servicos() {
   const [previewService, setPreviewService] = useState<ServiceRow | null>(null);
   const [saving, setSaving] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [tempColor, setTempColor] = useState<string>('#0A7AE6');
 
   // Category management
   const [catDialogOpen, setCatDialogOpen] = useState(false);
@@ -287,9 +312,13 @@ export default function Servicos() {
   );
 
   const filteredServices = useMemo(() => {
-    if (activeCategory === 'all') return servicesList;
-    if (activeCategory === '__inactive') return servicesList.filter(s => s.active === false);
-    return servicesList.filter(s => s.category === activeCategory);
+    let list = [...servicesList];
+    // Always sort by sort_order
+    list.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
+    if (activeCategory === 'all') return list;
+    if (activeCategory === '__inactive') return list.filter(s => s.active === false);
+    return list.filter(s => s.category === activeCategory);
   }, [servicesList, activeCategory]);
 
   const stats = useMemo(() => {
@@ -307,6 +336,7 @@ export default function Servicos() {
       price_pequeno: 0, price_medio: 0, price_grande: 0,
       duration_minutes: 60, active: true, sort_order: servicesList.length
     });
+    setTempColor('#0A7AE6');
     setEditOpen(true);
   };
 
@@ -318,6 +348,7 @@ export default function Servicos() {
       price_grande: s.price_grande || 0, duration_minutes: s.duration_minutes || 60,
       active: s.active ?? true, sort_order: s.sort_order || 0
     });
+    setTempColor(settings.service_colors?.[s.id] || '#0A7AE6');
     setEditOpen(true);
   };
 
@@ -351,9 +382,19 @@ export default function Servicos() {
           sort_order: form.sort_order,
         };
         await updateService(editingId, payload);
+        
+        // Update color in settings
+        const newColors = { ...(settings.service_colors || {}), [editingId]: tempColor };
+        await updateSettings({ service_colors: newColors });
+        
         toast.success('Serviço atualizado com sucesso!');
       } else {
-        await addService(form);
+        const newService = await addService(form);
+        if (newService) {
+          // Update color for new service
+          const newColors = { ...(settings.service_colors || {}), [newService.id]: tempColor };
+          await updateSettings({ service_colors: newColors });
+        }
         toast.success('Serviço criado! Já disponível no site.');
       }
       setEditOpen(false);
@@ -381,6 +422,21 @@ export default function Servicos() {
       await updateService(service.id, { active: !service.active });
       toast.success(service.active ? 'Desativado — removido do site' : 'Ativado — visível no site');
     } catch { toast.error('Erro ao alterar status'); }
+  };
+
+  const handleTogglePopular = async (serviceId: string) => {
+    const current = settings.popular_service_ids || [];
+    const isPopular = current.includes(serviceId);
+    const updated = isPopular 
+      ? current.filter(id => id !== serviceId)
+      : [...current, serviceId];
+    
+    try {
+      await updateSettings({ popular_service_ids: updated });
+      toast.success(isPopular ? 'Destaque removido' : 'Definido como popular! ✨');
+    } catch {
+      toast.error('Erro ao atualizar destaque');
+    }
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -523,6 +579,8 @@ export default function Servicos() {
                   key={service.id}
                   service={service}
                   categories={customCategories}
+                  isPopular={(settings.popular_service_ids || []).includes(service.id)}
+                  onTogglePopular={() => handleTogglePopular(service.id)}
                   onEdit={() => openEdit(service)}
                   onDelete={() => setDeleteId(service.id)}
                   onToggleActive={() => handleToggleActive(service)}
@@ -531,6 +589,7 @@ export default function Servicos() {
                   priceDraft={drafts[service.id] || { price_pequeno: 0, price_medio: 0, price_grande: 0 }}
                   onPriceChange={(size, val) => handlePriceChange(service.id, size, val)}
                   isDirty={dirtyPrices.has(service.id)}
+                  customColor={settings.service_colors?.[service.id]}
                 />
               ))}
             </AnimatePresence>
@@ -646,13 +705,43 @@ export default function Servicos() {
             </div>
           </div>
 
-          {/* Icon picker */}
-          <IconPicker
-            value={form.icon || 'scissors'}
-            onChange={icon => setForm({ ...form, icon })}
-            label="Ícone do serviço"
-            compact
-          />
+          {/* Icon Picker & Color Picker */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
+            <IconPicker
+              value={form.icon || 'scissors'}
+              onChange={icon => setForm({ ...form, icon })}
+              label="Ícone do serviço"
+              compact
+            />
+            
+            <div className="space-y-2.5">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tempColor }} />
+                Cor do serviço
+              </Label>
+              <div className="flex flex-wrap gap-2 p-3 rounded-xl bg-muted/30 border border-border/30">
+                {['#0A7AE6', '#E63946', '#2A9D8F', '#F4A261', '#9C27B0', '#607D8B', '#000000', '#795548'].map(color => (
+                  <button
+                    key={color}
+                    onClick={() => setTempColor(color)}
+                    className={cn(
+                      "w-7 h-7 rounded-lg border-2 transition-all duration-200",
+                      tempColor === color ? "border-primary scale-110 shadow-sm" : "border-transparent hover:scale-105"
+                    )}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+                <div className="relative w-full mt-1">
+                  <Input 
+                    type="color" 
+                    value={tempColor} 
+                    onChange={e => setTempColor(e.target.value)}
+                    className="h-9 w-full p-1 rounded-lg border-muted cursor-pointer"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Prices */}
           <div className="space-y-2">

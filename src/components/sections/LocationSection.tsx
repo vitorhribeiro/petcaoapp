@@ -26,8 +26,10 @@ export function LocationSection() {
 
   const openDays = settings.openDaysDefault || [];
   const hoursLabel = openDays.length > 0
-    ? `${openDays[0].charAt(0).toUpperCase() + openDays[0].slice(1)} - ${openDays[openDays.length - 1].charAt(0).toUpperCase() + openDays[openDays.length - 1].slice(1)}: ${settings.openTimeDefault.replace(':', 'h')} às ${settings.closeTimeDefault.replace(':', 'h')}`
+    ? `${openDays[0].charAt(0).toUpperCase() + openDays[0].slice(1)} - ${openDays[openDays.length - 1].charAt(0).toUpperCase() + openDays[openDays.length - 1].slice(1)}`
     : 'Horário não configurado';
+  
+  const timeRange = `${settings.openTimeDefault.replace(':', 'h')} às ${settings.closeTimeDefault.replace(':', 'h')}`;
 
   const closedDays = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab']
     .filter(d => !openDays.includes(d))
@@ -39,103 +41,138 @@ export function LocationSection() {
     : '';
 
   return (
-    <section id="localizacao" className="py-20 md:py-28 scroll-mt-20 relative overflow-hidden">
-      {/* Lightweight background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/30 to-background" />
+    <section id="localizacao" className="py-24 md:py-32 scroll-mt-20 relative overflow-hidden">
+      {/* ── Background Elements ── */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/20 to-background" />
+      <div className="absolute -top-[10%] -left-[10%] w-[500px] h-[500px] rounded-full bg-primary/[0.03] blur-[120px] pointer-events-none" />
+      <div className="absolute -bottom-[10%] -right-[10%] w-[400px] h-[400px] rounded-full bg-primary/[0.02] blur-[100px] pointer-events-none" />
 
       <div className="container mx-auto px-4 relative z-10">
+        {/* ── Header ── */}
         <motion.div
-          className="text-center mb-14 relative"
-          initial={{ opacity: 0, y: 8 }}
+          className="text-center mb-16 md:mb-24"
+          initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-40px' }}
-          transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
         >
-          <span className="inline-block text-xs font-semibold tracking-widest uppercase text-primary mb-3">Onde estamos</span>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">Localização</h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">{homeContent.location.description}</p>
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/[0.08] dark:bg-primary/[0.12] border border-primary/15 rounded-full text-primary text-[11px] font-black tracking-[0.2em] uppercase mb-8">
+            <MapPin className="w-3.5 h-3.5" />
+            Nossa Localização
+          </span>
+
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-foreground leading-[1] tracking-tighter max-w-3xl mx-auto mb-6">
+            Venha nos{' '}
+            <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+              Visitar
+            </span>
+          </h2>
+          <p className="text-lg md:text-xl text-muted-foreground/70 max-w-2xl mx-auto leading-relaxed">
+            Estamos localizados no coração de Cajamar, prontos para receber você e seu pet com todo carinho.
+          </p>
+
           {showAdmin && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button onClick={() => navigate('/admin/configuracoes#endereco')} className="absolute top-0 right-0 p-2 text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-muted">
-                    <Settings className="w-4 h-4" />
+                  <button 
+                    onClick={() => navigate('/admin/configuracoes#endereco')} 
+                    className="absolute top-0 right-0 p-3 text-muted-foreground hover:text-primary transition-all rounded-2xl hover:bg-primary/10 border border-transparent hover:border-primary/20"
+                  >
+                    <Settings className="w-5 h-5" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Atalho para configurações (Admin)</TooltipContent>
+                <TooltipContent>Configurar endereço</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           )}
         </motion.div>
 
-        <div className="max-w-5xl mx-auto">
-          {/* Map */}
-          <motion.div
-            className="relative rounded-2xl overflow-hidden shadow-lg ring-1 ring-border/50"
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
+        <div className="grid lg:grid-cols-5 gap-8 lg:gap-12 max-w-6xl mx-auto items-stretch">
+          {/* ── Info Panel (2/5) ── */}
+          <motion.div 
+            className="lg:col-span-2 flex flex-col gap-6"
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <div className="aspect-[16/9] md:aspect-[21/9] bg-muted relative">
-              {hasCoords ? (
-                <iframe src={embedUrl} className="absolute inset-0 w-full h-full" style={{ border: 0 }} allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <p className="text-muted-foreground text-sm">Localização não configurada.</p>
-                </div>
+            {/* Address Card */}
+            <div className="flex-1 p-8 rounded-[2rem] bg-white/40 dark:bg-card/40 backdrop-blur-md border border-border/40 shadow-xl shadow-black/[0.02] flex flex-col justify-center group hover:border-primary/30 transition-all duration-500">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                <MapPin className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground mb-3">Endereço</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                {address || 'Avenida Tenente Marques, Cajamar - SP'}
+              </p>
+            </div>
+
+            {/* Hours Card */}
+            <div className="flex-1 p-8 rounded-[2rem] bg-white/40 dark:bg-card/40 backdrop-blur-md border border-border/40 shadow-xl shadow-black/[0.02] flex flex-col justify-center group hover:border-primary/30 transition-all duration-500">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                <Clock className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground mb-3">Funcionamento</h3>
+              <p className="text-muted-foreground font-medium">{hoursLabel}</p>
+              <p className="text-primary font-bold text-lg">{timeRange}</p>
+              {closedDays.length > 0 && (
+                <p className="text-xs text-muted-foreground/50 mt-2 italic">
+                  {closedDays.join(', ')}: Fechado
+                </p>
               )}
             </div>
-          </motion.div>
 
-          {/* Info cards row */}
-          <div className="grid sm:grid-cols-3 gap-4 mt-6">
-            {[
-              { icon: MapPin, title: 'Endereço', content: address || 'Não configurado' },
-              { icon: Clock, title: 'Horário', content: hoursLabel, extra: closedDays.length > 0 ? `${closedDays.join(', ')}: Fechado` : null },
-              { icon: Phone, title: 'Contato', content: phone || 'Não configurado' },
-            ].map((card, i) => (
-              <motion.div
-                key={card.title}
-                className="group relative rounded-2xl bg-card border border-border/60 p-5 transition-shadow duration-200 hover:shadow-md hover:border-primary/30"
-                variants={cardVariants}
-                custom={i}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: '-40px' }}
-              >
-                <div className="flex items-start gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-                    <card.icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-foreground mb-0.5">{card.title}</p>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{card.content}</p>
-                    {card.extra && <p className="text-xs text-muted-foreground/70 mt-0.5">{card.extra}</p>}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* CTA Button */}
-          <motion.div
-            className="mt-6 flex justify-center"
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.22 }}
-          >
+            {/* CTA Button */}
             <Button
               size="lg"
-              className="rounded-xl px-8 shadow-lg shadow-primary/20 transition-shadow duration-200"
+              className="h-16 rounded-2xl bg-primary text-primary-foreground font-black uppercase tracking-widest gap-3 shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1 transition-all duration-500"
               onClick={() => hasCoords && window.open(mapsUrl, '_blank')}
               disabled={!hasCoords}
             >
-              <Navigation className="w-5 h-5 mr-2" />
-              Como Chegar
-              <ExternalLink className="w-4 h-4 ml-2 opacity-60" />
+              <Navigation className="w-5 h-5" />
+              Traçar Rota
+              <ExternalLink className="w-4 h-4 opacity-40" />
             </Button>
+          </motion.div>
+
+          {/* ── Map Panel (3/5) ── */}
+          <motion.div 
+            className="lg:col-span-3 relative rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/10 border-[6px] border-white/50 dark:border-white/5 min-h-[400px]"
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <div className="absolute inset-0 bg-muted flex items-center justify-center">
+              {hasCoords ? (
+                <iframe 
+                  src={embedUrl} 
+                  className="w-full h-full grayscale-[0.2] contrast-[1.1]" 
+                  style={{ border: 0 }} 
+                  allowFullScreen 
+                  loading="lazy" 
+                  referrerPolicy="no-referrer-when-downgrade" 
+                />
+              ) : (
+                <div className="text-center p-8">
+                  <div className="w-16 h-16 rounded-full bg-muted-foreground/10 flex items-center justify-center mx-auto mb-4">
+                    <MapPin className="w-8 h-8 text-muted-foreground/30" />
+                  </div>
+                  <p className="text-muted-foreground font-medium">Localização não configurada no painel.</p>
+                </div>
+              )}
+            </div>
+            
+            {/* Map Overlay Button (Mobile) */}
+            <div className="absolute bottom-6 left-6 right-6 lg:hidden">
+              <Button
+                className="w-full bg-background/80 backdrop-blur-md text-foreground border border-border/50 rounded-xl"
+                onClick={() => hasCoords && window.open(mapsUrl, '_blank')}
+              >
+                Abrir no Google Maps
+              </Button>
+            </div>
           </motion.div>
         </div>
       </div>

@@ -82,6 +82,21 @@ export interface PetshopSettings {
   // Home CMS content
   homeContent: HomeContent;
 
+  // Popular services IDs
+  popular_service_ids?: string[];
+
+  // Custom service colors (ID -> Hex)
+  service_colors?: Record<string, string>;
+
+  // Package pricing (PackageID -> Sizes)
+  package_prices?: Record<string, { pequeno: number; medio: number; grande: number }>;
+  
+  // Package features (PackageID -> string[])
+  package_features?: Record<string, string[]>;
+
+  // Popular/Featured packages
+  package_destaque_ids?: string[];
+
   // Notification settings
   notification_settings: NotificationSettingsConfig;
 
@@ -153,7 +168,11 @@ export const DEFAULT_SETTINGS: PetshopSettings = {
   templateSelected: 'modern',
 
   homeContent: DEFAULT_HOME_CONTENT,
-
+  popular_service_ids: [],
+  service_colors: {},
+  package_prices: {},
+  package_features: {},
+  package_destaque_ids: [],
   notification_settings: DEFAULT_NOTIFICATION_SETTINGS_CONFIG,
 
   inauguratedAt: '2023-05-13',

@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Home, Scissors, CalendarPlus, Image, MapPin } from 'lucide-react';
+import { Home, Scissors, CalendarPlus, Package, MapPin } from 'lucide-react';
 
 const sideItems = [
   { id: 'inicio', icon: Home, label: 'Home' },
   { id: 'servicos', icon: Scissors, label: 'Serviços' },
-  { id: 'fotos', icon: Image, label: 'Fotos' },
+  { id: 'pacotes', icon: Package, label: 'Pacotes' },
   { id: 'localizacao', icon: MapPin, label: 'Local' },
 ];
 
-const sectionIds = ['inicio', 'servicos', 'agenda', 'fotos', 'localizacao'];
+const sectionIds = ['inicio', 'servicos', 'pacotes', 'agenda', 'fotos', 'localizacao'];
 
 export function BottomNav() {
   const [activeId, setActiveId] = useState('inicio');

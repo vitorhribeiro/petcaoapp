@@ -6,8 +6,8 @@ import { Footer } from '@/components/layout/Footer';
 import { HeroSection } from '@/components/sections/HeroSection';
 import { ProblemSolutionSection } from '@/components/sections/ProblemSolutionSection';
 import { ServicesSection } from '@/components/sections/ServicesSection';
-import { PricingSection } from '@/components/sections/PricingSection';
 import { PackagesSection } from '@/components/sections/PackagesSection';
+import { PricingSection } from '@/components/sections/PricingSection';
 import { CalendarSection } from '@/components/sections/CalendarSection';
 import { WhatsAppSection } from '@/components/sections/WhatsAppSection';
 import { GallerySection } from '@/components/sections/GallerySection';
@@ -27,7 +27,6 @@ function IndexContent() {
         <HeroSection />
         <ProblemSolutionSection />
         <ServicesSection />
-        <PricingSection />
         <PackagesSection />
         <CalendarSection onOpenLogin={() => navigate('/auth/login')} />
         <WhatsAppSection />

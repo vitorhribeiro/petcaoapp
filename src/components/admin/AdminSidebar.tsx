@@ -325,12 +325,19 @@ export function AdminSidebar({ collapsed, onToggle, mobile = false }: AdminSideb
             </div>
           )}
 
-          {!mobile && !isCollapsed && (
+          {!mobile && (
             <button
               onClick={onToggle}
-              className="h-8 w-8 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-primary hover:bg-primary/10 transition-all group"
+              className={cn(
+                "h-8 w-8 rounded-xl flex items-center justify-center text-muted-foreground/40 hover:text-primary hover:bg-primary/10 transition-all group",
+                isCollapsed && "mx-auto"
+              )}
             >
-              <ChevronsLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+              {isCollapsed ? (
+                <ChevronsRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              ) : (
+                <ChevronsLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+              )}
             </button>
           )}
         </div>

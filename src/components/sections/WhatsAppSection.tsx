@@ -2,12 +2,14 @@ import { MessageCircle, Phone, ExternalLink, Clock, Sparkles } from 'lucide-reac
 import petTextureGray from '@/assets/pet-texture-gray.webp';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { getPetshopWhatsAppPhone, openWhatsAppConversation } from '@/lib/whatsapp';
+import { getPetshopWhatsAppPhone, openWhatsAppConversation, buildWhatsAppUrl } from '@/lib/whatsapp';
 import { usePetshop } from '@/contexts/PetshopContext';
+import { useHeroGalleryImages } from '@/hooks/useHeroGalleryImages';
 import { sectionAnim } from '@/lib/animations';
 
 export function WhatsAppSection() {
   const { petshop, settings } = usePetshop();
+  const { urls: galleryUrls } = useHeroGalleryImages(3);
   const phone = petshop?.phone || '';
   const hoursLabel = petshop?.hours || '';
   const petshopWhatsAppPhone = getPetshopWhatsAppPhone({
@@ -15,110 +17,135 @@ export function WhatsAppSection() {
     whatsappUrl: settings?.social_links?.links?.whatsapp_url,
   });
 
+  const whatsappUrl = buildWhatsAppUrl(
+    petshopWhatsAppPhone,
+    'Olá! Gostaria de agendar um horário para meu pet.'
+  ) || '#';
+
   return (
-    <section className="py-24 md:py-32 relative overflow-hidden">
-      {/* Lightweight background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/20 to-background" />
+    <section className="py-24 md:py-40 relative overflow-hidden">
+      {/* Clean Background */}
+      <div className="absolute inset-0 bg-background" />
 
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
           className="text-center mb-12"
-          initial={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-40px' }}
-          transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
         >
-          <span className="inline-block text-xs font-semibold tracking-widest uppercase text-success mb-3">Atendimento rápido</span>
-          <h2 className="text-3xl md:text-5xl font-bold mb-4 text-foreground">
-            Agende pelo WhatsApp
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/10 border border-success/20 text-success text-[10px] font-bold uppercase tracking-widest mb-6">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success"></span>
+            </span>
+            Atendimento Prioritário
+          </div>
+          <h2 className="text-3xl md:text-5xl font-black mb-4 text-foreground tracking-tight">
+            Agende pelo <span className="text-success">WhatsApp</span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Prefere falar diretamente conosco? Mande uma mensagem e respondemos em minutos!
+          <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
+            Nossa equipe está pronta para te atender. Mande uma mensagem agora e garanta a vaga do seu melhor amigo!
           </p>
         </motion.div>
 
         <div className="max-w-5xl mx-auto">
           <motion.div
-            className="relative rounded-3xl bg-card border border-border/60 overflow-hidden shadow-lg ring-1 ring-border/30"
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
+            className="relative rounded-[2rem] bg-card/60 backdrop-blur-2xl border border-white/[0.08] dark:border-white/[0.05] overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.15)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.4)]"
+            initial={{ opacity: 0, scale: 0.98 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
           >
-            {/* Top gradient accent */}
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-success/40 via-success to-success/40" />
-
-            <div className="grid md:grid-cols-5 gap-0">
+            <div className="grid md:grid-cols-12 gap-0">
               {/* Left side - CTA */}
-              <div className="md:col-span-3 p-8 md:p-12 flex flex-col justify-center">
-                <div className="w-16 h-16 rounded-2xl bg-success/10 flex items-center justify-center mb-6">
-                  <MessageCircle className="w-8 h-8 text-success" />
-                </div>
+              <div className="md:col-span-7 p-8 md:p-12 flex flex-col justify-center relative overflow-hidden">
+                {/* Decorative glow */}
+                <div className="absolute -top-24 -left-24 w-48 h-48 bg-success/10 blur-[60px] rounded-full" />
+                
+                <div className="relative z-10">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-success to-emerald-600 flex items-center justify-center mb-6 shadow-xl shadow-success/20 transition-transform duration-500">
+                    <MessageCircle className="w-8 h-8 text-white" />
+                  </div>
 
-                <h3 className="text-xl md:text-2xl font-bold text-foreground mb-3">
-                  Fale conosco agora mesmo
-                </h3>
-                <p className="text-muted-foreground mb-8 max-w-lg leading-relaxed">
-                  Tire dúvidas, agende serviços ou peça informações sobre pacotes. Estamos prontos para atender você e seu pet!
-                </p>
+                  <h3 className="text-xl md:text-3xl font-bold text-foreground mb-3">
+                    Fale com nossos especialistas
+                  </h3>
+                  <p className="text-base text-muted-foreground mb-8 max-w-lg leading-relaxed">
+                    Tire dúvidas sobre serviços, pacotes ou agende um banho relaxante em poucos segundos.
+                  </p>
 
-                <div className="flex flex-col sm:flex-row gap-4 items-start">
-                  <Button
-                    size="lg"
-                    className="bg-success hover:bg-success/90 text-success-foreground rounded-xl px-8 shadow-lg shadow-success/20 hover:shadow-xl hover:shadow-success/30 transition-shadow duration-200"
-                    onClick={() => {
-                      openWhatsAppConversation({
-                        phone: petshopWhatsAppPhone,
-                        message: 'Olá! Gostaria de agendar um horário para meu pet.',
-                      });
-                    }}
-                  >
-                    <MessageCircle className="w-5 h-5 mr-2" />
-                    Abrir WhatsApp
-                    <ExternalLink className="w-4 h-4 ml-2 opacity-60" />
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+                    <Button
+                      asChild
+                      size="lg"
+                      className="h-12 px-8 bg-success hover:bg-success/90 text-white rounded-xl text-base font-bold shadow-[0_15px_30px_-10px_rgba(34,197,94,0.3)] hover:shadow-[0_15px_30px_-10px_rgba(34,197,94,0.5)] transition-all hover:-translate-y-0.5 active:scale-95"
+                    >
+                      <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                        <MessageCircle className="w-5 h-5" />
+                        Abrir WhatsApp
+                        <ExternalLink className="w-3.5 h-3.5 opacity-50" />
+                      </a>
+                    </Button>
+                    <div className="flex items-center gap-3 px-2 py-1">
+                      <div className="flex -space-x-2.5">
+                        {(galleryUrls.length > 0 ? galleryUrls : [
+                          "https://images.unsplash.com/photo-1517849845537-4d257902454a?w=100&h=100&fit=crop",
+                          "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=100&h=100&fit=crop",
+                          "https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?w=100&h=100&fit=crop"
+                        ]).map((url, i) => (
+                          <div key={i} className="w-8 h-8 rounded-full border-2 border-card bg-muted flex items-center justify-center overflow-hidden">
+                            <img 
+                              src={url} 
+                              alt="Pet da galeria" 
+                              className="w-full h-full object-cover" 
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground">+2.4k atendidos</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Right side - Info cards */}
-              <div className="md:col-span-2 relative bg-muted/30 p-8 md:p-10 flex flex-col justify-center gap-6 border-t md:border-t-0 md:border-l border-border/60 overflow-hidden">
-                {/* Pet texture overlay */}
-                <div className="absolute inset-0 opacity-[0.05] dark:opacity-[0.03]" style={{
-                  backgroundImage: `url(${petTextureGray})`,
-                  backgroundSize: '350px 350px',
-                  backgroundRepeat: 'repeat',
-                }} />
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-5 h-5 text-success" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground text-sm">Resposta rápida</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Respondemos em poucos minutos</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                    <Phone className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground text-sm">Atendimento humano</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Sem robôs, fale com a gente</p>
-                  </div>
-                </div>
-
-                {hoursLabel && (
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
-                      <Clock className="w-5 h-5 text-secondary" />
+              <div className="md:col-span-5 relative p-8 md:p-10 flex flex-col justify-center gap-6 bg-white/[0.02] dark:bg-black/[0.05] border-t md:border-t-0 md:border-l border-white/10 overflow-hidden">
+                
+                <div className="space-y-6 relative z-10">
+                  <div className="group flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-success/10 border border-success/20 flex items-center justify-center shrink-0 group-hover:bg-success/20 transition-colors duration-300">
+                      <Sparkles className="w-6 h-6 text-success" />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground text-sm">Horário</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{hoursLabel}</p>
+                      <p className="font-bold text-foreground text-base">Resposta Imediata</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">Nossa equipe está online agora para te responder em minutos.</p>
                     </div>
                   </div>
-                )}
+
+                  <div className="group flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors duration-300">
+                      <Phone className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-foreground text-base">Atendimento Humano</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">Fale diretamente com quem cuida do seu pet, sem robôs.</p>
+                    </div>
+                  </div>
+
+                  {hoursLabel && (
+                    <div className="group flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-secondary/10 border border-secondary/20 flex items-center justify-center shrink-0 group-hover:bg-secondary/20 transition-colors duration-300">
+                        <Clock className="w-6 h-6 text-secondary" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-foreground text-base">Sempre Disponíveis</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{hoursLabel}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </motion.div>

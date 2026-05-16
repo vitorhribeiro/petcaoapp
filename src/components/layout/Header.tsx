@@ -20,7 +20,7 @@ interface HeaderProps {
 const navLinks = [
   { href: '#inicio', label: 'Início' },
   { href: '#servicos', label: 'Serviços' },
-  { href: '#valores', label: 'Valores' },
+  { href: '#pacotes', label: 'Pacotes' },
   { href: '#agenda', label: 'Agenda' },
   { href: '#fotos', label: 'Fotos' },
   { href: '#avaliacoes', label: 'Avaliações' },
@@ -62,7 +62,7 @@ export function Header({ onOpenLogin, onOpenRegister }: HeaderProps) {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <a href="#inicio" className="flex items-center gap-2" onClick={() => scrollToSection('#inicio')}>
-              <OptimizedImage src={logoSrc} alt={shopName} className="h-7 w-auto max-w-[120px] max-h-7 object-contain" showSkeleton={false} />
+              <OptimizedImage src={logoSrc} alt={shopName} className="h-10 w-auto max-w-[150px] max-h-10 object-contain" showSkeleton={false} />
             </a>
 
             {/* Desktop nav */}
