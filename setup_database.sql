@@ -1330,13 +1330,14 @@ DROP FUNCTION IF EXISTS public.lookup_account_by_phone(text);
 DROP FUNCTION IF EXISTS public.lookup_account_by_email(text);
 
 CREATE FUNCTION public.lookup_account_by_phone(phone_input text)
- RETURNS TABLE(auth_provider text, has_password boolean)
+ RETURNS TABLE(auth_provider text, has_password boolean, email text)
  LANGUAGE sql
  SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
-  SELECT ua.auth_provider, false AS has_password
+  SELECT ua.auth_provider, COALESCE(p.profile_completed, false) AS has_password, ua.email
   FROM public.user_accounts ua
+  LEFT JOIN public.profiles p ON p.user_id = ua.id
   WHERE ua.phone_e164 = public.to_br_e164(phone_input)
   LIMIT 1;
 $function$;

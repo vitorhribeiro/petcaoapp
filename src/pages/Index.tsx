@@ -9,7 +9,6 @@ import { ServicesSection } from '@/components/sections/ServicesSection';
 import { PackagesSection } from '@/components/sections/PackagesSection';
 import { PricingSection } from '@/components/sections/PricingSection';
 import { CalendarSection } from '@/components/sections/CalendarSection';
-import { WhatsAppSection } from '@/components/sections/WhatsAppSection';
 import { GallerySection } from '@/components/sections/GallerySection';
 import { ReviewsSection } from '@/components/sections/ReviewsSection';
 import { LocationSection } from '@/components/sections/LocationSection';
@@ -29,7 +28,6 @@ function IndexContent() {
         <ServicesSection />
         <PackagesSection />
         <CalendarSection onOpenLogin={() => navigate('/auth/login')} />
-        <WhatsAppSection />
         <GallerySection />
         <ReviewsSection />
         <LocationSection />

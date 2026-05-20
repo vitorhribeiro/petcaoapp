@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { OptimizedImage } from '@/components/ui/OptimizedImage';
-import { Settings, Plus, Loader2 } from 'lucide-react';
+import { Settings, Plus, Loader2, Sparkles } from 'lucide-react';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConfig } from '@/hooks/useConfig';
@@ -143,16 +143,29 @@ export function GallerySection() {
   if (galleryLoading && approvedImages.length === 0) return <GallerySkeleton />;
 
   return (
-    <section id="fotos" className="py-20 scroll-mt-20">
-      <div className="container mx-auto px-4">
+    <section id="fotos" className="py-24 scroll-mt-20 relative overflow-hidden bg-glow">
+      <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-12 relative">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-primary">{homeContent.gallery.title}</h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Conheça nosso espaço e veja alguns dos pets que já passaram por aqui</p>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[100px] bg-gradient-to-r from-primary/10 via-primary-light/5 to-transparent rounded-full blur-[80px] pointer-events-none -z-10" />
+
+          <span className="relative inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-[0.2em] bg-gradient-to-r from-primary/12 to-primary/8 backdrop-blur-md border border-primary/20 text-primary shadow-sm shadow-primary/5 mb-4 overflow-hidden animate-pulse-glow">
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            Galeria
+          </span>
+
+          <h2 className="text-3xl md:text-5xl font-black mb-4 text-foreground tracking-tight leading-none">
+            Galeria de <span className="bg-gradient-to-r from-primary via-blue-600 to-secondary bg-clip-text text-transparent">Fotos</span>
+          </h2>
+
+          <p className="text-xs sm:text-sm text-muted-foreground/90 max-w-xl mx-auto leading-relaxed">
+            Conheça nosso espaço e veja alguns dos pets que já passaram por aqui
+          </p>
+
           {showAdmin && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button onClick={() => navigate('/admin/moderacao')} className="absolute top-0 right-0 p-2 text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-muted">
+                  <button onClick={() => navigate('/admin/moderacao')} className="absolute top-0 right-0 p-2.5 text-muted-foreground hover:text-primary transition-all rounded-xl hover:bg-muted border border-transparent hover:border-border/60">
                     <Settings className="w-4 h-4" />
                   </button>
                 </TooltipTrigger>
@@ -162,28 +175,45 @@ export function GallerySection() {
           )}
         </div>
 
-        <div className="flex justify-center gap-2 mb-8 flex-wrap">
-          {categoryTabs.map(cat => (
-            <button key={cat.slug} onClick={() => setSelectedCategory(cat.slug)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-150 ${selectedCategory === cat.slug ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}>
-              {cat.name}
-            </button>
-          ))}
+        {/* Tab switcher design */}
+        <div className="flex justify-center mb-8">
+          <div className="inline-flex p-1 bg-muted/65 dark:bg-muted/30 backdrop-blur-md rounded-2xl border border-border/40 gap-1 max-w-full overflow-x-auto scrollbar-hide">
+            {categoryTabs.map(cat => {
+              const isActive = selectedCategory === cat.slug;
+              return (
+                <button
+                  key={cat.slug}
+                  onClick={() => setSelectedCategory(cat.slug)}
+                  className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 whitespace-nowrap ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground shadow-md shadow-primary/10'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-card/45'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {isAuthenticated && (
-          <div className="flex justify-center mb-6">
-            <Button variant="outline" className="gap-2" onClick={() => {
-              if (!canUpload) { toast.error('Você já atingiu o limite diário de envio de fotos.'); return; }
-              setUploadOpen(true);
-            }}>
-              <Plus className="w-4 h-4" /> Enviar foto
+          <div className="flex justify-center mb-8">
+            <Button 
+              variant="outline" 
+              className="gap-2 h-11 px-5 border-primary/20 hover:border-primary/50 rounded-xl text-xs font-semibold shadow-sm transition-all duration-300 hover:shadow-primary/5 hover:-translate-y-0.5 active:translate-y-0" 
+              onClick={() => {
+                if (!canUpload) { toast.error('Você já atingiu o limite diário de envio de fotos.'); return; }
+                setUploadOpen(true);
+              }}
+            >
+              <Plus className="w-4 h-4 text-primary" /> Enviar foto
             </Button>
           </div>
         )}
 
         {/* Gallery grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           {displayedImages.map((image, idx) => (
             <LazyGalleryCard key={image.id} image={image} onClick={() => setViewerIndex(idx)} />
           ))}
@@ -197,7 +227,7 @@ export function GallerySection() {
         )}
 
         {displayedImages.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">Nenhuma foto encontrada nesta categoria.</div>
+          <div className="text-center py-16 text-muted-foreground text-sm font-medium bg-card/40 border border-border/40 rounded-3xl max-w-lg mx-auto">Nenhuma foto encontrada nesta categoria.</div>
         )}
 
         <PhotoViewer
@@ -318,14 +348,25 @@ export function GallerySection() {
 /* Memoized gallery card */
 const LazyGalleryCard = React.memo(function LazyGalleryCard({ image, onClick }: { image: any; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="aspect-square bg-muted rounded-xl overflow-hidden group relative">
-      <OptimizedImage
-        src={image.url}
-        alt={image.alt || ''}
-        aspectRatio="square"
-        className="rounded-xl"
-      />
-      <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors duration-150" />
+    <button 
+      onClick={onClick} 
+      className="aspect-square bg-muted rounded-2xl overflow-hidden group relative border border-border/40 shadow-sm hover:border-primary/30 hover:shadow-lg hover:shadow-primary/[0.03] transition-all duration-500 hover:-translate-y-1"
+    >
+      <div className="w-full h-full transition-transform duration-700 ease-out group-hover:scale-105">
+        <OptimizedImage
+          src={image.url}
+          alt={image.alt || ''}
+          aspectRatio="square"
+          className="w-full h-full object-cover"
+        />
+      </div>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+        {image.pet_name && (
+          <p className="text-white text-xs font-bold truncate tracking-wide">
+            🐾 {image.pet_name}
+          </p>
+        )}
+      </div>
     </button>
   );
 });

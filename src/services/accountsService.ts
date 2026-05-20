@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface AccountLookup {
   auth_provider: string;
   has_password: boolean;
+  email?: string;
 }
 
 export async function lookupByPhone(phone: string): Promise<AccountLookup | null> {

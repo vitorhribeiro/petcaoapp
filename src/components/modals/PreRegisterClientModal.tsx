@@ -60,46 +60,21 @@ export function PreRegisterClientModal({ open, onOpenChange, onCreated }: Props)
 
     setLoading(true);
     try {
-      // Create a virtual email for pre-registration
-      const digits = e164.replace(/\D/g, '');
-      const virtualEmail = `${digits}@phone.petcao.app`;
+      const finalBreed = petBreed === 'Outros' ? petCustomBreed : petBreed;
 
-      // Create auth user with a random password (they'll set their own later)
-      const tempPw = crypto.randomUUID().slice(0, 16) + 'Aa1!';
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: virtualEmail,
-        password: tempPw,
-        options: {
-          data: { name: name.trim(), phone_e164: e164 },
-        },
+      const { data, error: fnError } = await supabase.functions.invoke('pre-register-client', {
+        body: {
+          name: name.trim(),
+          phone_e164: e164,
+          pet_name: petName.trim() || undefined,
+          pet_breed: finalBreed || undefined,
+          pet_size: petSize || undefined,
+          notes: notes.trim() || undefined
+        }
       });
 
-      if (authError) throw authError;
-
-      if (authData.user) {
-        // Update profile as pre-registered (not complete)
-        await supabase.from('profiles').update({
-          profile_completed: false,
-          phone: e164,
-          name: name.trim(),
-        } as any).eq('user_id', authData.user.id);
-
-        // Create pet if provided
-        if (petName.trim()) {
-          const finalBreed = petBreed === 'Outros' ? petCustomBreed : petBreed;
-          await supabase.from('pets').insert({
-            owner_id: authData.user.id,
-            petshop_id: PETSHOP_ID,
-            name: petName.trim(),
-            size: petSize || 'Médio',
-            breed: finalBreed || '',
-          } as any);
-        }
-
-        // Sign out the pre-registered user (admin shouldn't stay logged in as them)
-        // We need to restore admin session, so we sign out and the onAuthStateChange will handle it
-        // Actually, signUp might auto-confirm, we need to handle this carefully
-        // The admin is already logged in, signUp creates user but doesn't switch session
+      if (fnError || (data && data.error)) {
+        throw new Error(data?.error || fnError?.message || 'Erro ao comunicar com o servidor.');
       }
 
       toast({ title: 'Cliente pré-cadastrado com sucesso!' });

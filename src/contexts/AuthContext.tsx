@@ -217,7 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Login by phone: lookup account first, then sign in with virtual email
+  // Login by phone: lookup account first, then sign in with their registered auth email
   const loginByPhone = useCallback(async (phone: string, password: string) => {
     const e164 = toE164(phone);
     if (!e164) {
@@ -235,17 +235,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, error: 'Sua conta foi criada com Google. Entre com Google ou cadastre uma senha.' };
     }
 
-    // Phone login: always use virtual email since we no longer get email from lookup
-    const authEmail = phoneToVirtualEmail(phone);
+    // Phone login: use the email registered in their account, fallback to virtual email
+    const authEmail = account.email || phoneToVirtualEmail(phone);
     const { error } = await supabase.auth.signInWithPassword({ email: authEmail, password });
     if (error) {
       if (error.message.includes('Invalid login')) {
-        // Fallback: try virtual email in case account.email is the real one but auth uses virtual
-        const virtualEmail = phoneToVirtualEmail(phone);
-        if (virtualEmail !== authEmail) {
-          const { error: err2 } = await supabase.auth.signInWithPassword({ email: virtualEmail, password });
-          if (!err2) return { success: true };
-        }
         return { success: false, error: 'Senha incorreta. Tente novamente.' };
       }
       return { success: false, error: error.message };

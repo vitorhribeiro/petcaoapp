@@ -161,6 +161,7 @@ Deno.serve(async (req) => {
     await supabaseAdmin.from("audit_log").insert({
       actor_id: caller.id,
       action: "delete_client",
+      entity: "client",
       target_id: target_user_id,
       details: {
         target_name: targetProfile?.name || "desconhecido",

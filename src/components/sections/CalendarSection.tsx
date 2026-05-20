@@ -35,6 +35,25 @@ function formatBRL(value: number): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+function formatPhoneForDisplay(phone: string | null | undefined): string {
+  if (!phone) return '(11) 98690-7487';
+  const clean = phone.replace(/\D/g, '');
+  let local = clean;
+  if (clean.startsWith('55')) {
+    local = clean.slice(2);
+  }
+  if (local.length === 11) {
+    return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`;
+  }
+  if (local.length === 10) {
+    return `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`;
+  }
+  if (local.length > 2) {
+    return `(${local.slice(0, 2)}) ${local.slice(2)}`;
+  }
+  return phone;
+}
+
 export function CalendarSection({ onOpenLogin }: CalendarSectionProps) {
   const { isAuthenticated, user, addPet, refreshAppointments: refreshClientAppointments } = useAuth();
   const { appointments: adminAppointments, refreshAppointments: refreshAdminAppointments } = useAdmin();
@@ -59,6 +78,12 @@ export function CalendarSection({ onOpenLogin }: CalendarSectionProps) {
   const [isGuest, setIsGuest] = useState(false);
   const [guestName, setGuestName] = useState('');
   const [guestPets, setGuestPets] = useState<Array<{ id: string; name: string; size: string; breed?: string }>>([]);
+
+  const phoneRaw = getPetshopWhatsAppPhone({
+    phone: petshopData?.phone,
+    whatsappUrl: settings?.social_links?.links?.whatsapp_url,
+  });
+  const formattedPhone = formatPhoneForDisplay(phoneRaw);
 
   const isSchedulingActive = ONLINE_SCHEDULING_ENABLED;
 
@@ -387,6 +412,19 @@ export function CalendarSection({ onOpenLogin }: CalendarSectionProps) {
             animation: shimmer 2.5s infinite;
             content: '';
           }
+          @keyframes pulse-glow {
+            0%, 100% {
+              box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+              transform: scale(1);
+            }
+            50% {
+              box-shadow: 0 0 16px 4px rgba(16, 185, 129, 0.2);
+              transform: scale(1.02);
+            }
+          }
+          .animate-pulse-glow {
+            animation: pulse-glow 2s infinite ease-in-out;
+          }
           @keyframes flow {
             from {
               stroke-dashoffset: 2000;
@@ -488,7 +526,7 @@ export function CalendarSection({ onOpenLogin }: CalendarSectionProps) {
             </span>
 
             <h2 className="text-3xl md:text-5xl font-black mb-4 text-foreground tracking-tight leading-none">
-              Agendamento <span className="bg-gradient-to-r from-primary via-primary-light to-secondary bg-clip-text text-transparent">Inteligente</span>
+              Agendamento <span className="bg-gradient-to-r from-primary via-blue-600 to-secondary bg-clip-text text-transparent">Inteligente</span>
             </h2>
 
             <p className="text-xs sm:text-sm text-muted-foreground/90 max-w-xl mx-auto leading-relaxed">
@@ -498,11 +536,11 @@ export function CalendarSection({ onOpenLogin }: CalendarSectionProps) {
 
           <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
             {/* Left Column: Premium Teaser Card */}
-            <div className="lg:col-span-5 flex flex-col justify-between p-8 bg-gradient-to-br from-card/90 to-card/50 backdrop-blur-xl border border-border/80 dark:border-white/10 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.03)] relative overflow-hidden group hover:border-primary/30 transition-all duration-500 hover:shadow-primary/5">
+            <div className="lg:col-span-5 flex flex-col justify-between p-8 bg-gradient-to-br from-card/95 to-card/70 backdrop-blur-xl border border-border/80 dark:border-white/10 rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.04)] relative overflow-hidden group hover:border-primary/25 transition-all duration-500 hover:shadow-primary/5">
               <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-br from-primary/10 to-secondary/5 rounded-full blur-3xl pointer-events-none group-hover:scale-125 transition-transform duration-750" />
               
               <div className="space-y-6">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
@@ -511,62 +549,64 @@ export function CalendarSection({ onOpenLogin }: CalendarSectionProps) {
                 </div>
                 
                 <div className="space-y-3">
-                  <h3 className="text-xl font-bold text-foreground leading-tight tracking-tight">
+                  <h3 className="text-2xl font-black text-foreground leading-tight tracking-tight">
                     Agendamento Automático
                   </h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Estamos lapidando os últimos detalhes do nosso sistema de agendamento online. Em breve você poderá gerenciar tudo sozinho! Enquanto isso, garanta seu horário falando direto com a gente.
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                    Estamos lapidando os últimos detalhes do nosso sistema de agendamento online. Em breve você poderá gerenciar tudo sozinho!
                   </p>
                 </div>
               </div>
 
-              <div className="mt-8 pt-6 border-t border-border/40 space-y-4">
+              {/* WhatsApp Card Box (No login gating for WhatsApp!) */}
+              <div className="mt-8 p-6 bg-gradient-to-br from-emerald-500/[0.06] to-teal-500/[0.02] dark:from-emerald-500/[0.04] dark:to-transparent border border-emerald-500/20 rounded-2xl space-y-4 relative overflow-hidden">
+                <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+                
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-emerald-500/15 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                    <MessageCircle className="w-6 h-6 fill-current" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Agende Agora</p>
+                    <p className="text-sm font-bold text-foreground">{formattedPhone}</p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Enquanto finalizamos o sistema automático, você pode garantir o horário do seu pet falando diretamente com a nossa equipe no WhatsApp!
+                </p>
+
+                <Button
+                  asChild
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-success to-emerald-500 hover:from-success/95 hover:to-emerald-600 text-white gap-2 h-12 rounded-xl text-xs font-bold shadow-lg shadow-success/15 transition-all duration-300 animate-pulse-glow hover:scale-[1.03] active:scale-[0.98]"
+                >
+                  <a
+                    href={buildWhatsAppUrl(
+                      phoneRaw,
+                      `Olá! Gostaria de agendar um serviço especial para meu pet no PetCão!`
+                    ) || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageCircle className="w-4 h-4 fill-white" />
+                    Enviar Mensagem no WhatsApp
+                  </a>
+                </Button>
+              </div>
+
+              {/* Login / Preview Area (Secondary) */}
+              <div className="mt-6 pt-4 border-t border-border/40 flex items-center justify-between text-xs">
+                <span className="text-muted-foreground/70">Deseja conhecer a plataforma?</span>
                 {isAuthenticated ? (
-                  <>
-                    <p className="text-xs text-muted-foreground/80 font-medium">
-                      Tudo pronto! Fale com nossa equipe agora mesmo:
-                    </p>
-                    
-                    <Button
-                      asChild
-                      size="lg"
-                      className="w-full bg-gradient-to-r from-success to-emerald-500 hover:from-success/95 hover:to-emerald-600 text-white gap-2 h-12 rounded-2xl text-xs font-semibold shadow-lg shadow-success/15 animate-shimmer transition-transform hover:-translate-y-0.5 active:translate-y-0"
-                    >
-                      <a
-                        href={buildWhatsAppUrl(
-                          getPetshopWhatsAppPhone({
-                            phone: petshopData?.phone,
-                            whatsappUrl: settings?.social_links?.links?.whatsapp_url,
-                          }),
-                          `Olá! Sou o(a) ${user?.name || 'cliente'} do Petcão e gostaria de agendar um serviço especial para meu pet!`
-                        ) || '#'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <MessageCircle className="w-5 h-5 fill-white" />
-                        Agendar via WhatsApp
-                      </a>
-                    </Button>
-                  </>
+                  <span className="text-primary font-semibold">Logado como {user?.name?.split(' ')[0]}</span>
                 ) : (
-                  <>
-                    <div className="p-3 bg-amber-500/[0.04] dark:bg-amber-500/[0.02] border border-amber-500/15 rounded-2xl flex items-start gap-3">
-                      <Lock className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                      <div className="space-y-0.5">
-                        <p className="text-xs font-bold text-amber-600 dark:text-amber-400">Acesso Restrito</p>
-                        <p className="text-[10px] text-muted-foreground/80 leading-relaxed">Faça login para liberar o botão de agendamento via WhatsApp.</p>
-                      </div>
-                    </div>
-                    
-                    <Button
-                      onClick={onOpenLogin}
-                      size="lg"
-                      className="w-full bg-gradient-to-r from-primary to-primary/95 text-primary-foreground gap-2 h-12 rounded-2xl text-xs font-semibold shadow-lg shadow-primary/10 transition-transform hover:-translate-y-0.5 active:translate-y-0"
-                    >
-                      <Lock className="w-4 h-4" />
-                      Entrar e Agendar
-                    </Button>
-                  </>
+                  <button 
+                    onClick={onOpenLogin} 
+                    className="text-primary hover:text-primary-light font-bold transition-colors underline underline-offset-4"
+                  >
+                    Entrar / Criar Conta
+                  </button>
                 )}
               </div>
             </div>
