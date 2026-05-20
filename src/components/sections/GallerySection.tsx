@@ -154,7 +154,7 @@ export function GallerySection() {
           </span>
 
           <h2 className="text-3xl md:text-5xl font-black mb-4 text-foreground tracking-tight leading-none">
-            Galeria de <span className="bg-gradient-to-r from-primary via-blue-600 to-secondary bg-clip-text text-transparent">Fotos</span>
+            Galeria de <span className="bg-gradient-to-r from-[#1A73E8] via-[#4285F4] to-[#FBBC04] bg-clip-text text-transparent">Fotos</span>
           </h2>
 
           <p className="text-xs sm:text-sm text-muted-foreground/90 max-w-xl mx-auto leading-relaxed">

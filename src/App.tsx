@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AdminProvider } from "@/contexts/AdminContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 import { PetshopProvider } from "@/contexts/PetshopContext";
 import { TestModesProvider } from "@/contexts/TestModesContext";
@@ -103,8 +104,8 @@ const App = () => (
                       <Route path="/auth/login" element={<AuthPage />} />
                       <Route path="/auth/register" element={<AuthPage />} />
                       <Route path="/auth/forgot" element={<ForgotPasswordPage />} />
-                      <Route path="/cliente" element={<ProfilePage />} />
-                      <Route path="/perfil" element={<ProfilePage />} />
+                      <Route path="/cliente" element={<ErrorBoundary><ProfilePage /></ErrorBoundary>} />
+                      <Route path="/perfil" element={<ErrorBoundary><ProfilePage /></ErrorBoundary>} />
                       {/* Admin routes */}
                       <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
                       <Route path="/admin" element={

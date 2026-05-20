@@ -159,7 +159,7 @@ export function PackagesSection() {
             
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 text-foreground tracking-tight leading-none">
               Pacotes{' '}
-              <span className="bg-gradient-to-r from-secondary via-secondary/80 to-secondary/60 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#1A73E8] via-[#4285F4] to-[#FBBC04] bg-clip-text text-transparent">
                 Premium
               </span>
             </h2>
@@ -208,7 +208,7 @@ export function PackagesSection() {
 
           <h2 className="text-4xl md:text-5xl lg:text-[4rem] font-black text-foreground leading-[1] tracking-tighter max-w-3xl mx-auto mb-6">
             Escolha o{' '}
-            <span className="bg-gradient-to-r from-secondary via-secondary/80 to-secondary/60 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#1A73E8] via-[#4285F4] to-[#FBBC04] bg-clip-text text-transparent">
               Pacote Premium
             </span>
           </h2>

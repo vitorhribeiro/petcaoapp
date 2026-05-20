@@ -408,9 +408,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       name: pet.name,
       size: pet.size,
       breed: pet.breed,
+      photo_url: pet.photo_url,
     });
     if (created) {
-      setUser(prev => prev ? { ...prev, pets: [...prev.pets, { id: created.id, name: created.name, size: created.size, breed: created.breed || '' }] } : null);
+      setUser(prev => prev ? { ...prev, pets: [...prev.pets, { id: created.id, name: created.name, size: created.size, breed: created.breed || '', photo_url: created.photo_url || undefined }] } : null);
     }
   }, [user]);
 

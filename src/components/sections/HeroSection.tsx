@@ -135,9 +135,7 @@ export function HeroSection() {
                 <>
                   <span className="text-foreground">Seu pet merece</span>
                   <br className="sm:hidden" />
-                  {' '}<span className="text-primary">carinho</span>
-                  {' '}<span className="text-foreground">e</span>
-                  {' '}<span className="text-primary">cuidado</span>
+                  {' '}<span className="bg-gradient-to-r from-[#1A73E8] via-[#4285F4] to-[#FBBC04] bg-clip-text text-transparent">carinho e cuidado</span>
                 </>
               ) : (
                 homeContent.hero.title

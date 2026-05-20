@@ -231,7 +231,7 @@ export function ServicesSection() {
 
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] font-extrabold text-foreground leading-[1.1] tracking-tight max-w-3xl mx-auto mb-5">
             Tudo que seu pet precisa{' '}
-            <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#1A73E8] via-[#4285F4] to-[#FBBC04] bg-clip-text text-transparent">
               em um só lugar
             </span>
           </h2>

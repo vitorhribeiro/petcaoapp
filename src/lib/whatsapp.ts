@@ -56,10 +56,6 @@ export function openWhatsAppConversation(options: {
   const url = buildWhatsAppUrl(options.phone, options.message);
   if (!url) return false;
 
-  const openedWindow = window.open(url, '_blank', 'noopener,noreferrer');
-  if (!openedWindow) {
-    window.location.assign(url);
-  }
-
+  window.open(url, '_blank', 'noopener,noreferrer');
   return true;
 }

@@ -526,7 +526,7 @@ export function CalendarSection({ onOpenLogin }: CalendarSectionProps) {
             </span>
 
             <h2 className="text-3xl md:text-5xl font-black mb-4 text-foreground tracking-tight leading-none">
-              Agendamento <span className="bg-gradient-to-r from-primary via-blue-600 to-secondary bg-clip-text text-transparent">Inteligente</span>
+              Agendamento <span className="bg-gradient-to-r from-[#1A73E8] via-[#4285F4] to-[#FBBC04] bg-clip-text text-transparent">Inteligente</span>
             </h2>
 
             <p className="text-xs sm:text-sm text-muted-foreground/90 max-w-xl mx-auto leading-relaxed">
@@ -596,19 +596,17 @@ export function CalendarSection({ onOpenLogin }: CalendarSectionProps) {
               </div>
 
               {/* Login / Preview Area (Secondary) */}
-              <div className="mt-6 pt-4 border-t border-border/40 flex items-center justify-between text-xs">
-                <span className="text-muted-foreground/70">Deseja conhecer a plataforma?</span>
-                {isAuthenticated ? (
-                  <span className="text-primary font-semibold">Logado como {user?.name?.split(' ')[0]}</span>
-                ) : (
+              {!isAuthenticated && (
+                <div className="mt-6 pt-4 border-t border-border/40 flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground/70">Deseja conhecer a plataforma?</span>
                   <button 
                     onClick={onOpenLogin} 
                     className="text-primary hover:text-primary-light font-bold transition-colors underline underline-offset-4"
                   >
                     Entrar / Criar Conta
                   </button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Right Column: Key Features Showcase */}
