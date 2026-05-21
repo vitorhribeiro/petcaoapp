@@ -86,6 +86,30 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Action: fully delete a user account from auth.users
+    if (action === "delete") {
+      const { userId } = body;
+      if (!userId) {
+        return new Response(
+          JSON.stringify({ error: "Missing userId" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // We manually clean up profile and roles first just in case cascades aren't fully set up
+      await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
+      await supabaseAdmin.from("profiles").delete().eq("user_id", userId);
+
+      const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+
+      if (deleteError) throw deleteError;
+
+      return new Response(
+        JSON.stringify({ message: "User completely deleted from auth.users" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Default action: seed the dev user
     const email = "dev@petcao.com";
     const password = Deno.env.get("DEV_SEED_PASSWORD");

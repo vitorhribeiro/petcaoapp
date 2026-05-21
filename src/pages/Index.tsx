@@ -10,6 +10,7 @@ import { PackagesSection } from '@/components/sections/PackagesSection';
 import { PricingSection } from '@/components/sections/PricingSection';
 import { CalendarSection } from '@/components/sections/CalendarSection';
 import { GallerySection } from '@/components/sections/GallerySection';
+import { StickerAlbumSection } from '@/components/sections/StickerAlbumSection';
 import { ReviewsSection } from '@/components/sections/ReviewsSection';
 import { LocationSection } from '@/components/sections/LocationSection';
 import { CTASection } from '@/components/sections/CTASection';
@@ -24,6 +25,7 @@ function IndexContent() {
 
       <main>
         <HeroSection />
+        <StickerAlbumSection />
         <ProblemSolutionSection />
         <ServicesSection />
         <PackagesSection />

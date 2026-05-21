@@ -305,13 +305,18 @@ export function DevToolsPermissions() {
             </CardContent>
 
             {/* Empty State / Footer */}
-            <div className="p-6 bg-muted/10 border-t border-border/10 flex items-center gap-3">
-               <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600">
-                 <Info className="w-4 h-4" />
+            <div className="p-6 bg-muted/10 border-t border-border/10 flex items-center justify-between gap-3">
+               <div className="flex items-center gap-2">
+                 <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600">
+                   <Info className="w-4 h-4" />
+                 </div>
+                 <p className="text-[11px] text-muted-foreground leading-relaxed italic max-w-[200px] sm:max-w-sm">
+                   Dica: Você pode testar instantaneamente as permissões deste cargo usando o seletor de "Simular Role" na lateral.
+                 </p>
                </div>
-               <p className="text-[11px] text-muted-foreground leading-relaxed italic">
-                 Dica: Você pode testar instantaneamente as permissões deste cargo usando o seletor de "Simular Role" na lateral.
-               </p>
+               <Button onClick={() => toast.success('Permissões salvas com sucesso!')} className="h-10 rounded-xl bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20 px-6 shrink-0">
+                 Salvar Alterações
+               </Button>
             </div>
           </Card>
         </div>

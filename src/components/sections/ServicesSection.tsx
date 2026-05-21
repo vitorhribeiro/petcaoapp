@@ -79,7 +79,7 @@ function SizeModal({ service, open, onClose, customCategories }: SizeModalProps)
       open={open}
       onOpenChange={handleOpenChange}
       title={service.name}
-      description={service.description || 'Selecione o porte do seu pet para ver o valor'}
+      description="Consulte nossa equipe para mais detalhes sobre os valores e disponibilidade."
       icon={
         catInfo ? (
           <div className={cn("p-2.5 rounded-xl bg-gradient-to-br shadow-md", catInfo.gradient)}>
@@ -118,45 +118,14 @@ function SizeModal({ service, open, onClose, customCategories }: SizeModalProps)
           </div>
         )}
 
-        {/* Size selection */}
-        <div>
-          <span className="text-xs font-semibold text-muted-foreground/60 tracking-wide uppercase mb-3 block">
-            Selecione o porte
+        {/* Included features */}
+        <div className="bg-muted/20 dark:bg-muted/10 p-4 rounded-xl border border-border/40">
+          <span className="text-[10px] font-bold text-muted-foreground/60 tracking-wider uppercase mb-2.5 block">
+            O que está incluso?
           </span>
-          <RadioGroup value={selectedSize} onValueChange={setSelectedSize} className="grid gap-3">
-            {SIZE_OPTIONS.map(opt => {
-              const price = getPrice(opt.value);
-              if (price == null || price <= 0) return null;
-              const isSelected = selectedSize === opt.value;
-              return (
-                <Label
-                  key={opt.value}
-                  htmlFor={`size-${opt.value}`}
-                  className={cn(
-                    "flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all duration-200",
-                    isSelected
-                      ? 'border-primary bg-primary/[0.04] dark:bg-primary/[0.08] shadow-[0_2px_12px_-4px_hsl(var(--primary)/0.15)]'
-                      : 'border-border/50 hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-sm'
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <RadioGroupItem value={opt.value} id={`size-${opt.value}`} className="shrink-0" />
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-xl leading-none">{opt.emoji}</span>
-                      <div>
-                        <span className="font-semibold text-foreground text-[15px]">{opt.label}</span>
-                        <span className="block text-xs text-muted-foreground/60">{opt.desc}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <span className={cn(
-                    "text-lg font-extrabold tracking-tight transition-colors",
-                    isSelected ? "text-primary" : "text-foreground/80"
-                  )}>{fmtPrice(price)}</span>
-                </Label>
-              );
-            })}
-          </RadioGroup>
+          <p className="text-sm text-foreground/80 leading-relaxed font-medium">
+            {service.description || 'Este serviço é realizado com muito carinho e com produtos premium, garantindo o conforto, a saúde e a beleza do seu pet.'}
+          </p>
         </div>
 
         {/* Trust indicators */}
@@ -335,17 +304,10 @@ export function ServicesSection() {
                     {/* Footer / Action Area */}
                     <div className="px-7 lg:px-8 pb-8 pt-0">
                       <div className="flex items-end justify-between gap-4">
-                        {/* Price Info */}
                         <div className="space-y-0.5">
-                          <p className="text-[9px] font-black text-muted-foreground/30 uppercase tracking-[0.2em]">A partir de</p>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-xs font-bold" style={{ color: accentColor }}>R$</span>
-                            <span 
-                              className="text-2xl font-black tracking-tighter leading-none transition-colors duration-700"
-                              style={{ color: accentColor }}
-                            >
-                              {service.price_pequeno}
-                            </span>
+                          <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider">Disponível para</p>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-semibold text-foreground">Todos os portes</span>
                           </div>
                         </div>
 
@@ -364,7 +326,7 @@ export function ServicesSection() {
                           {/* Button Hover Shine */}
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite] pointer-events-none" />
                           
-                          <span className="text-[10px] font-black uppercase tracking-wider whitespace-nowrap">Ver preços</span>
+                          <span className="text-[10px] font-black uppercase tracking-wider whitespace-nowrap">Consultar</span>
                           <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover/btn:translate-x-1" />
                         </button>
                       </div>

@@ -1,0 +1,103 @@
+# Dependências
+node_modules/
+.pnpm-store/
+.yarn/
+.npm/
+
+# Builds e outputs
+dist/
+build/
+.next/
+out/
+.vercel/
+.netlify/
+coverage/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Ambiente / segredos
+.env
+.env.*
+!.env.example
+
+# Git
+.git/
+.gitignore
+
+# Cache
+.cache/
+.parcel-cache/
+.turbo/
+.eslintcache
+.stylelintcache
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Banco local / Prisma / Supabase temporários
+*.sqlite
+*.sqlite3
+*.db
+prisma/dev.db
+supabase/.branches/
+supabase/.temp/
+
+# Uploads e mídias pesadas
+uploads/
+public/uploads/
+storage/
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.mp3
+*.wav
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+
+# Imagens grandes / assets exportados
+*.psd
+*.ai
+*.fig
+*.sketch
+
+# Arquivos gerados
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Testes gerados / snapshots
+__snapshots__/
+*.snap
+
+# Documentações muito grandes
+docs/old/
+docs/archive/
+README.old.md
+
+# Relatórios
+reports/
+*.report.json
+lighthouse-report.html
+
+# Arquivos temporários
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp

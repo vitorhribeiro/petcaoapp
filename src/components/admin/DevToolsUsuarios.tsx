@@ -16,6 +16,7 @@ import { motion } from 'framer-motion';
 import { staggerItem, staggerContainer, cardAnimProps } from '@/lib/animations';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { usePageAccess } from '@/hooks/usePageAccess';
 
 interface ProfileWithRole {
   user_id: string;
@@ -60,12 +61,14 @@ const UserCard = memo(function UserCard({
   onViewAccount,
   onChangeRole,
   onDelete,
+  availableRoles,
 }: {
   user: ProfileWithRole;
   onEdit: () => void;
   onViewAccount: () => void;
   onChangeRole: (role: AppRole) => void;
   onDelete: () => void;
+  availableRoles: string[];
 }) {
   const cfg = ROLE_CONFIG[user.role] || ROLE_CONFIG.admin;
   const RoleIcon = cfg.icon;
@@ -149,8 +152,9 @@ const UserCard = memo(function UserCard({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="admin">ADMIN</SelectItem>
-                      <SelectItem value="midia">MÍDIA</SelectItem>
+                      {availableRoles.map(r => (
+                        <SelectItem key={r} value={r}>{r.toUpperCase()}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -173,6 +177,8 @@ export function DevToolsUsuarios() {
   const [viewUser, setViewUser] = useState<ProfileWithRole | null>(null);
   const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', role: 'admin' as AppRole });
   const [creating, setCreating] = useState(false);
+  const { matrix } = usePageAccess();
+  const availableRoles = Object.keys(matrix).length > 0 ? Object.keys(matrix) : ['admin', 'midia'];
 
   const [resetLoading, setResetLoading] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
@@ -198,9 +204,9 @@ export function DevToolsUsuarios() {
     ]);
 
     if (profiles) {
-      const merged: ProfileWithRole[] = profiles.map((p: any) => {
-        const userRole = roles.find((r: any) => r.user_id === p.user_id);
-        const account = accounts?.find((a: any) => a.id === p.user_id);
+      const merged: ProfileWithRole[] = profiles.map((p: { user_id: string; name: string; phone: string | null; avatar_url: string | null; active: boolean; created_at: string }) => {
+        const userRole = roles.find((r: { user_id: string; role: string }) => r.user_id === p.user_id);
+        const account = accounts?.find((a: { id: string; email: string }) => a.id === p.user_id);
         return {
           user_id: p.user_id,
           name: p.name,
@@ -253,7 +259,7 @@ export function DevToolsUsuarios() {
       toast({ title: 'Não é permitido definir role como DEV', variant: 'destructive' });
       return;
     }
-    await supabase.from('user_roles').update({ role: newRole as any }).eq('user_id', userId);
+    await supabase.from('user_roles').update({ role: newRole as string }).eq('user_id', userId);
     toast({ title: `Role alterado para ${newRole.toUpperCase()}` });
     fetchUsers();
   };
@@ -265,9 +271,16 @@ export function DevToolsUsuarios() {
   };
 
   const deleteUser = async (userId: string) => {
-    await supabase.from('user_roles').delete().eq('user_id', userId);
-    await supabase.from('profiles').delete().eq('user_id', userId);
-    toast({ title: 'Usuário removido' });
+    const { error } = await supabase.functions.invoke('seed-dev-user', {
+      body: { action: 'delete', userId },
+    });
+
+    if (error) {
+      toast({ title: 'Erro ao remover usuário', description: error.message, variant: 'destructive' });
+      return;
+    }
+
+    toast({ title: 'Usuário removido completamente' });
     fetchUsers();
   };
 
@@ -324,9 +337,16 @@ export function DevToolsUsuarios() {
         icon: Shield, 
         color: 'text-slate-500', 
         bg: 'bg-slate-500/10 border-slate-500/20',
-        shadow: 'shadow-slate-500/5'
+        glow: 'shadow-slate-500/5'
       };
-      cards.push({ ...cfg, count, label: cfg.label });
+      cards.push({ 
+        label: cfg.label,
+        count,
+        icon: cfg.icon,
+        color: cfg.color,
+        bg: cfg.bg,
+        shadow: cfg.glow || 'shadow-sm'
+      });
     });
 
     // Add "Others" if more than 2 roles exist
@@ -455,12 +475,13 @@ export function DevToolsUsuarios() {
             <Filter className="w-3.5 h-3.5 text-muted-foreground" />
             <select 
               value={filterRole}
-              onChange={(e) => setFilterRole(e.target.value as any)}
+              onChange={(e) => setFilterRole(e.target.value as AppRole | 'all')}
               className="bg-transparent text-xs font-semibold outline-none border-none pr-4 cursor-pointer text-foreground"
             >
               <option value="all">Todos os Cargos</option>
-              <option value="admin">Administrador</option>
-              <option value="midia">Mídia Social</option>
+              {availableRoles.map(r => (
+                 <option key={r} value={r}>{r.toUpperCase()}</option>
+              ))}
             </select>
           </div>
           {search || filterRole !== 'all' ? (
@@ -515,6 +536,7 @@ export function DevToolsUsuarios() {
               onViewAccount={() => { setViewUser(u); setTempPassword(null); setCopied(false); }}
               onChangeRole={(role) => updateUserRole(u.user_id, role)}
               onDelete={() => deleteUser(u.user_id)}
+              availableRoles={availableRoles}
             />
           ))}
         </motion.div>
@@ -580,8 +602,9 @@ export function DevToolsUsuarios() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="admin">ADMINISTRADOR</SelectItem>
-                    <SelectItem value="midia">MÍDIA SOCIAL</SelectItem>
+                    {availableRoles.map(r => (
+                      <SelectItem key={r} value={r}>{r.toUpperCase()}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
