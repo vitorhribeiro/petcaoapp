@@ -627,39 +627,80 @@ export function StickerAlbumSection() {
           <div style={{ background: 'linear-gradient(180deg, #f0f4f8 0%, #e1e8f0 100%)', borderTop: '2px solid #FFDF00' }}>
 
             {/* Sub-header strip */}
-            <div className="flex items-center justify-between px-4 md:px-6 py-3 bg-white"
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-4 md:px-6 py-3.5 bg-white"
               style={{ borderBottom: '1px solid rgba(0,0,0,0.1)' }}
             >
-              <div className="flex items-center gap-2.5">
-                <span className="text-xl">🏆</span>
-                <span className="hidden sm:inline" style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#002776' }}>
-                  Comissão Técnica: Lucianinha
-                </span>
-              </div>
-              <div className="flex items-center gap-3 md:gap-4">
+              <div className="flex items-center justify-between w-full md:w-auto">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <span className="text-lg md:text-xl drop-shadow-sm shrink-0">🏆</span>
+                  <span className="truncate" style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#002776' }}>
+                    Comissão Técnica: Lucianinha
+                  </span>
+                </div>
                 {loading && (
-                  <span style={{ fontSize: 10, color: '#666' }} className="animate-pulse">
+                  <span style={{ fontSize: 10, color: '#666' }} className="animate-pulse md:hidden shrink-0 ml-2">
+                    ...
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                {loading && (
+                  <span style={{ fontSize: 10, color: '#666' }} className="animate-pulse hidden md:inline">
                     Carregando...
                   </span>
                 )}
-                <div className="flex items-center gap-2 md:gap-3">
-                  <span style={{ fontSize: 12, fontWeight: 800, color: '#002776' }}>
-                    {filledCount}/{TOTAL_SLOTS}
-                  </span>
-                  <div className="relative w-24 md:w-32 h-2.5 rounded-full overflow-hidden bg-gray-200" style={{ boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)' }}>
+                
+                {/* Score/Slots */}
+                <div className="flex items-center justify-center bg-gradient-to-br from-[#002776] to-[#001D5E] text-white px-2.5 py-1 rounded-md shadow-sm border border-[#FFDF00]/30 shrink-0" style={{ minWidth: 48 }}>
+                  <span style={{ fontSize: 14, fontWeight: 900, lineHeight: 1 }}>{filledCount}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.7, marginLeft: 2, lineHeight: 1 }}>/{TOTAL_SLOTS}</span>
+                </div>
+                
+                {/* Thematic Progress Bar Wrapper */}
+                <div className="relative flex-1 md:w-64 h-5 mx-1.5">
+                  {/* Track */}
+                  <div className="absolute inset-0 rounded-full overflow-hidden bg-[#e1e8f0] border border-black/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)]">
+                    {/* Background Field Stripes */}
+                    <div className="absolute inset-0 opacity-[0.06]" style={{
+                      background: 'repeating-linear-gradient(90deg, #000 0px, #000 12px, transparent 12px, transparent 24px)'
+                    }} />
+                    
+                    {/* Fill */}
                     <motion.div
-                      className="h-full rounded-full"
-                      style={{ background: `linear-gradient(90deg, ${BR.green} 0%, #3dba6b 45%, ${BR.yellow} 100%)` }}
+                      className="absolute top-0 bottom-0 left-0 rounded-full"
+                      style={{ 
+                        background: `linear-gradient(90deg, ${BR.green} 0%, #3dba6b 50%, ${BR.yellow} 100%)`,
+                        boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.4)'
+                      }}
                       initial={{ width: 0 }}
                       whileInView={{ width: `${progressPct}%` }}
                       viewport={{ once: true }}
-                      transition={{ duration: 1, ease: 'easeOut' }}
-                    />
+                      transition={{ duration: 1.2, type: "spring", bounce: 0.2 }}
+                    >
+                      {/* Shine effect at the end of the bar */}
+                      <div className="absolute top-0 bottom-0 right-0 w-8" style={{
+                         background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6) 50%, transparent)'
+                      }} />
+                    </motion.div>
                   </div>
-                  <span style={{ fontSize: 11, fontWeight: 900, color: BR.green }}>
-                    {progressPct}%
-                  </span>
+
+                  {/* Tracking Icon */}
+                  <motion.div
+                     className="absolute top-1/2 -translate-y-1/2 flex items-center justify-center z-10"
+                     style={{ width: 24, height: 24, marginLeft: -12 }}
+                     initial={{ left: '0%' }}
+                     whileInView={{ left: `${progressPct}%` }}
+                     viewport={{ once: true }}
+                     transition={{ duration: 1.2, type: "spring", bounce: 0.2 }}
+                  >
+                     <span style={{ fontSize: 18, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }}>⚽</span>
+                  </motion.div>
                 </div>
+                
+                <span className="text-right shrink-0" style={{ minWidth: 36, fontSize: 14, fontWeight: 900, color: BR.green }}>
+                  {progressPct}%
+                </span>
               </div>
             </div>
             {/* Rainbow underline */}

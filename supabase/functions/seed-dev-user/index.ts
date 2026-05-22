@@ -32,12 +32,12 @@ Deno.serve(async (req) => {
       .from("user_roles")
       .select("role")
       .eq("user_id", caller.id)
-      .eq("role", "dev")
+      .in("role", ["dev", "admin"])
       .maybeSingle();
 
     if (!callerRole) {
       return new Response(
-        JSON.stringify({ error: "Permissão negada. Somente DEV." }),
+        JSON.stringify({ error: "Permissão negada. Somente DEV ou ADMIN." }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

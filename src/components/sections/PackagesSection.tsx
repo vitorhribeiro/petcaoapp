@@ -47,297 +47,267 @@ function getIntervalDesc(days: number): string {
   return `Agendamento a cada ${days} dias`;
 }
 
-function InterestModal({ pkg, open, onClose }: { pkg: PackageRow | null; open: boolean; onClose: () => void }) {
-  const [selectedSize, setSelectedSize] = useState<string>('');
-  const petshopWhatsAppPhone = getPetshopWhatsAppPhone();
-
-  const handleWhatsApp = () => {
-    if (!pkg || !selectedSize) return;
-    const sizeLabel = SIZE_OPTIONS.find(s => s.value === selectedSize)?.label || selectedSize;
-    const message = `Olá! Tenho interesse no pacote *${pkg.name}* (${getIntervalLabel(pkg.interval_days)}) para um cachorro de porte *${sizeLabel}*.\nGostaria de mais informações!`;
-    openWhatsAppConversation({ phone: petshopWhatsAppPhone, message });
-    onClose();
-    setSelectedSize('');
-  };
-
-  if (!pkg) return null;
-
-  return (
-    <ResponsiveModal
-      open={open}
-      onOpenChange={() => { onClose(); setSelectedSize(''); }}
-      title={`Pacote ${pkg.name}`}
-      description={pkg.description || `${getIntervalLabel(pkg.interval_days)} — agendamentos regulares com desconto`}
-      icon={
-        <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary to-primary/70 shadow-md">
-          <Repeat className="w-5 h-5 text-white" />
-        </div>
-      }
-      maxWidth="max-w-md"
-      stickyFooter={
-        <Button
-          size="lg"
-          className={cn(
-            "w-full h-12 text-base font-semibold rounded-xl gap-2",
-            "bg-[#25D366] hover:bg-[#25D366]/90 text-white",
-            "shadow-[0_4px_16px_-3px_rgba(37,211,102,0.3)]",
-            "hover:shadow-[0_6px_24px_-4px_rgba(37,211,102,0.35)]",
-            "transition-all duration-200",
-          )}
-          disabled={!selectedSize}
-          onClick={handleWhatsApp}
-        >
-          <MessageCircle className="w-5 h-5" />
-          Falar no WhatsApp
-        </Button>
-      }
-    >
-      <div className="space-y-5">
-        <div>
-          <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2 text-[15px]">
-            <Dog className="w-5 h-5 text-primary" />
-            Qual o porte do seu cachorro?
-          </h4>
-
-          <div className="grid grid-cols-3 gap-3">
-            {SIZE_OPTIONS.map((opt) => {
-              const isSelected = selectedSize === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  onClick={() => setSelectedSize(opt.value)}
-                  className={cn(
-                    "p-4 rounded-xl border-2 transition-all duration-200 text-center",
-                    isSelected
-                      ? 'border-primary bg-primary/[0.04] dark:bg-primary/[0.08] shadow-[0_2px_12px_-4px_hsl(var(--primary)/0.15)]'
-                      : 'border-border/50 hover:border-primary/30 hover:-translate-y-0.5 hover:shadow-sm'
-                  )}
-                >
-                  <span className="text-lg mb-1 block">{opt.emoji}</span>
-                  <p className="font-semibold text-foreground text-sm">{opt.label}</p>
-                  <p className="text-xs text-muted-foreground/60 mt-0.5">{opt.desc}</p>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </ResponsiveModal>
-  );
-}
 
 export function PackagesSection() {
   const { settings } = usePetshop();
   const [packages, setPackages] = useState<PackageRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPkg, setSelectedPkg] = useState<PackageRow | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string>('pequeno');
+  const [seedError, setSeedError] = useState<string | null>(null);
+
+  const handleWhatsApp = (pkg: PackageRow) => {
+    const petshopWhatsAppPhone = getPetshopWhatsAppPhone();
+    const sizeLabel = SIZE_OPTIONS.find(s => s.value === selectedSize)?.label || selectedSize;
+    const message = `Olá! Tenho interesse no pacote *${pkg.name}* (${getIntervalLabel(pkg.interval_days)}) para um cachorro de porte *${sizeLabel}*.\nGostaria de mais informações!`;
+    openWhatsAppConversation({ phone: petshopWhatsAppPhone, message });
+  };
 
   useEffect(() => {
-    getPackages().then((data) => {
-      setPackages(data.filter(p => p.active !== false));
+    getPackages().then(async (data) => {
+      let activePackages = data.filter(p => p.active !== false);
+      
+      // Auto-seed packages if they don't exist
+      if (activePackages.length === 0) {
+        try {
+          const { createPackage } = await import('@/services/packagesService');
+          await createPackage({
+            name: 'Quinzenal',
+            type: 'QUINZENAL',
+            description: 'Agendamento a cada 15 dias',
+            interval_days: 15,
+            active: true
+          });
+          await createPackage({
+            name: 'Semanal',
+            type: 'SEMANAL',
+            description: 'Agendamento toda semana',
+            interval_days: 7,
+            active: true
+          });
+          const newData = await getPackages();
+          activePackages = newData.filter(p => p.active !== false);
+        } catch (err: any) {
+          console.error("Auto-seed failed", err);
+          setSeedError(err.message || 'Unknown auto-seed error');
+        }
+      }
+      
+      setPackages(activePackages);
       setLoading(false);
     });
   }, []);
 
   if (loading) return null;
-  
-  if (packages.length === 0) {
-    return (
-      <section id="pacotes" className="py-24 md:py-32 scroll-mt-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/20 to-background" />
-        <div className="container mx-auto px-4 relative z-10 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-xl mx-auto"
-          >
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-secondary/[0.08] dark:bg-secondary/[0.12] border border-secondary/15 rounded-full text-secondary text-[11px] font-bold tracking-[0.2em] uppercase mb-8">
-              <Sparkles className="w-3.5 h-3.5" />
-              Exclusividade vindo aí
-            </span>
-            
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 text-foreground tracking-tight leading-none">
-              Pacotes{' '}
-              <span className="bg-gradient-to-r from-[#1A73E8] via-[#4285F4] to-[#FBBC04] bg-clip-text text-transparent">
-                Premium
-              </span>
-            </h2>
-            
-            <p className="text-base md:text-lg text-muted-foreground/70 mb-12 leading-relaxed">
-              Estamos desenhando pacotes personalizados para garantir o melhor cuidado para o seu melhor amigo.
-            </p>
-
-            <div className="relative p-12 rounded-[3rem] bg-white/40 dark:bg-card/40 backdrop-blur-md border border-dashed border-secondary/30 group">
-              <div className="absolute inset-0 bg-secondary/[0.02] rounded-[3rem] blur-2xl group-hover:bg-secondary/[0.05] transition-colors duration-700" />
-              <div className="relative">
-                <div className="w-20 h-20 rounded-3xl bg-secondary/10 flex items-center justify-center mx-auto mb-6 shadow-inner">
-                  <Package className="w-10 h-10 text-secondary/40" />
-                </div>
-                <h3 className="text-xl font-bold text-foreground mb-2">Em breve no Petcão</h3>
-                <p className="text-sm text-muted-foreground/60 max-w-[280px] mx-auto">
-                  Configurações de planos quinzenais e mensais estarão disponíveis em instantes.
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-    );
-  }
 
   return (
-    <section id="pacotes" className="py-24 md:py-32 scroll-mt-20 relative overflow-hidden">
+    <section id="pacotes" className="py-24 md:py-32 scroll-mt-20 relative overflow-hidden bg-background">
       {/* ── Background ── */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/20 to-background" />
-      <div className="absolute top-[5%] right-[10%] w-[600px] h-[600px] rounded-full bg-secondary/[0.03] dark:bg-secondary/[0.05] blur-[150px] pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/20 to-background pointer-events-none" />
 
-      <div className="container mx-auto px-4 relative z-10 max-w-6xl">
+      <div className="container mx-auto px-4 relative z-10 max-w-5xl">
         {/* ── Header ── */}
         <motion.div
-          className="text-center mb-20"
+          className="text-center mb-16"
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: EASE }}
         >
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-secondary/[0.08] dark:bg-secondary/[0.12] border border-secondary/15 rounded-full text-secondary text-[11px] font-black tracking-[0.2em] uppercase mb-8">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 border border-[#FBBF24]/30 rounded-full text-[10px] font-bold tracking-[0.2em] uppercase mb-6 text-[#FBBF24] bg-[#FBBF24]/5">
             <Sparkles className="w-3.5 h-3.5" />
-            Vantagens Exclusivas
+            Economize com planos
           </span>
 
-          <h2 className="text-4xl md:text-5xl lg:text-[4rem] font-black text-foreground leading-[1] tracking-tighter max-w-3xl mx-auto mb-6">
-            Escolha o{' '}
-            <span className="bg-gradient-to-r from-[#1A73E8] via-[#4285F4] to-[#FBBC04] bg-clip-text text-transparent">
-              Pacote Premium
-            </span>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 text-foreground tracking-tight">
+            Pacotes <span className="text-[#FBBF24]">Recorrentes</span>
           </h2>
-          <p className="text-lg md:text-xl text-muted-foreground/70 max-w-2xl mx-auto leading-relaxed">
-            Economize até 20% com nossos pacotes recorrentes e garanta a agenda do seu pet sempre em dia.
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Cuidados contínuos para o seu pet com economia e praticidade.
           </p>
+
+          {/* Size Filter */}
+          <div className="mt-12 max-w-2xl mx-auto">
+            <h4 className="font-semibold text-foreground mb-6 flex items-center justify-center gap-2 text-[15px]">
+              <Dog className="w-5 h-5 text-[#FBBF24]" />
+              Qual o porte do seu cachorro?
+            </h4>
+            <div className="grid grid-cols-3 gap-3 sm:gap-4">
+              {SIZE_OPTIONS.map((opt) => {
+                const isSelected = selectedSize === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => setSelectedSize(opt.value)}
+                    className={cn(
+                      "p-3 sm:p-5 rounded-[20px] sm:rounded-3xl border-2 transition-all duration-300 text-center outline-none focus-visible:ring-2 focus-visible:ring-[#FBBF24] focus-visible:ring-offset-2 focus-visible:ring-offset-background relative overflow-hidden group",
+                      isSelected
+                        ? 'border-[#FBBF24] bg-gradient-to-br from-[#FBBF24]/10 to-[#FBBF24]/5 shadow-[0_8px_24px_-6px_rgba(251,191,36,0.2)] scale-[1.03] z-10'
+                        : 'border-border/50 hover:border-[#FBBF24]/40 hover:bg-[#FBBF24]/5 hover:-translate-y-1 hover:shadow-lg'
+                    )}
+                  >
+                    {/* Subtle glow for selected */}
+                    {isSelected && <div className="absolute inset-0 bg-gradient-to-t from-[#FBBF24]/20 to-transparent opacity-50" />}
+                    
+                    <span className="text-2xl sm:text-3xl mb-2 block relative z-10 transition-transform duration-300 group-hover:scale-110">{opt.emoji}</span>
+                    <p className={cn("font-bold text-xs sm:text-sm relative z-10 transition-colors", isSelected ? "text-[#F5B000]" : "text-foreground")}>{opt.label}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground/60 mt-1 relative z-10 font-medium">{opt.desc}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </motion.div>
 
         {/* ── Cards grid ── */}
         <motion.div
-          className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto"
+          key={selectedSize}
+          className="flex flex-wrap justify-center gap-8 max-w-6xl mx-auto"
           variants={stagger}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.1 }}
         >
-          {packages.map((pkg) => {
-            const intervalLabel = getIntervalLabel(pkg.interval_days);
-            const intervalDesc = getIntervalDesc(pkg.interval_days);
-            const isPopular = settings.package_destaque_ids?.includes(pkg.id);
-            const prices = settings.package_prices?.[pkg.id] || { pequeno: 0, medio: 0, grande: 0 };
-            const features = settings.package_features?.[pkg.id] || DEFAULT_FEATURES;
+          {(() => {
+            const filteredPackages = packages.filter(pkg => {
+              const allowedSizes = settings.package_sizes?.[pkg.id] || ['pequeno', 'medio', 'grande'];
+              return allowedSizes.includes(selectedSize);
+            });
 
-            return (
-              <motion.div
-                key={pkg.id}
-                className="relative group h-full"
-                variants={fadeUp}
-              >
+            if (filteredPackages.length > 0) {
+              return filteredPackages.map((pkg) => {
+                const isQuinzenal = pkg.name.toLowerCase().includes('quinzenal') || pkg.interval_days === 15;
+                const title = pkg.name;
+                const subtitleText = getIntervalLabel(pkg.interval_days);
+                const descText = getIntervalDesc(pkg.interval_days);
+                
+                const features = settings.package_features?.[pkg.id] || DEFAULT_FEATURES;
+                const isDestaque = settings.package_destaque_ids && settings.package_destaque_ids.length > 0 
+                  ? settings.package_destaque_ids.includes(pkg.id) 
+                  : pkg.interval_days === 15; // default highlight
+
+                return (
+                  <motion.div
+                    key={pkg.id}
+                    className={cn(
+                      "relative group flex flex-col pt-5 w-full max-w-[360px]",
+                      isDestaque && "lg:scale-[1.03] lg:-translate-y-2 z-10"
+                    )}
+                    variants={fadeUp}
+                  >
+                {/* Destaque Glow Background (behind card) */}
+                {isDestaque && (
+                  <div className="absolute inset-0 bg-[#FBBF24]/10 dark:bg-[#FBBF24]/5 blur-2xl rounded-[32px] -z-10 transition-opacity duration-500 opacity-0 group-hover:opacity-100" />
+                )}
+                
                 <div className={cn(
-                  "relative h-full flex flex-col rounded-3xl overflow-hidden transition-all duration-700 ease-out",
-                  "bg-white/80 dark:bg-card/40 backdrop-blur-md",
-                  "border border-border/40 hover:-translate-y-3",
-                  isPopular 
-                    ? 'border-secondary/40 shadow-[0_20px_50px_-12px_hsl(var(--secondary)/0.2)]' 
-                    : 'shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_25px_60px_-12px_rgba(0,0,0,0.12)]'
+                  "relative h-full flex flex-col p-6 sm:p-8 rounded-[32px] border shadow-xl transition-all duration-300",
+                  isDestaque 
+                    ? "bg-gradient-to-b from-card via-card to-[#FBBF24]/5 dark:from-[#232730] dark:via-[#232730] dark:to-[#FBBF24]/10 border-[#FBBF24]/40 shadow-[0_8px_30px_-4px_rgba(251,191,36,0.2)] hover:border-[#FBBF24]" 
+                    : "bg-card dark:bg-[#232730] border-border/50 hover:border-primary/30"
                 )}>
-                  {/* Popular badge */}
-                  {isPopular && (
-                    <div className="absolute top-6 right-6 z-10">
-                      <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase bg-secondary text-secondary-foreground shadow-lg shadow-secondary/20 transition-transform duration-700 group-hover:scale-105">
-                        <Sparkles className="w-3 h-3" />
-                        Destaque
-                      </span>
+                  
+                  {/* Badge Mais Escolhido */}
+                  {isDestaque && (
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                      <div className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-[#F5B000] to-[#FBBF24] shadow-[0_4px_12px_rgba(251,191,36,0.4)]">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#1A1D23] animate-pulse" />
+                        <span className="text-[11px] font-black text-[#1A1D23] uppercase tracking-widest whitespace-nowrap">Mais Escolhido</span>
+                      </div>
                     </div>
                   )}
 
-                  <div className="p-7 lg:p-9 flex-1 flex flex-col">
-                    {/* Header */}
-                    <div className="flex items-start gap-5 mb-8">
-                      <div className={cn(
-                        "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-xl transition-all duration-700 group-hover:scale-110 group-hover:rotate-6",
-                        isPopular ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground"
-                      )}>
-                        <Repeat className="w-7 h-7" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-foreground tracking-tight mb-1">
-                          {pkg.name}
-                        </h3>
-                        <div className="flex flex-col">
-                          <span className={cn(
-                            "text-sm font-bold uppercase tracking-wider",
-                            isPopular ? "text-secondary" : "text-primary"
-                          )}>{intervalLabel}</span>
-                          <span className="text-xs text-muted-foreground/60">{intervalDesc}</span>
+                  {/* Top Shine Effect */}
+                  {isDestaque && (
+                    <div className="absolute top-0 left-0 right-0 h-1 rounded-t-[32px] bg-gradient-to-r from-transparent via-[#FBBF24]/50 to-transparent opacity-50" />
+                  )}
+
+                  {/* Header Card */}
+                  <div className="flex flex-col gap-4 mb-8 text-center items-center relative z-10">
+                    <div className={cn(
+                      "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-md transition-transform duration-300 group-hover:scale-110",
+                      isDestaque ? "bg-gradient-to-br from-[#F5B000] to-[#FBBF24] shadow-[#FBBF24]/30" : "bg-primary/10 text-primary"
+                    )}>
+                      <Repeat className={cn("w-7 h-7", isDestaque ? "text-[#1A1D23]" : "text-primary")} />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black text-foreground mb-1.5 leading-tight tracking-tight">{title}</h3>
+                      <p className={cn("font-bold text-sm leading-tight mb-1", isDestaque ? "text-[#F5B000]" : "text-primary")}>{subtitleText}</p>
+                      <p className="text-muted-foreground text-sm leading-tight">{descText}</p>
+                    </div>
+                  </div>
+
+                  {/* Features */}
+                  <ul className="space-y-4 mb-8 flex-1">
+                    {features.map((feat) => (
+                      <li key={feat} className="flex items-center gap-3 text-sm font-medium text-foreground/80">
+                        <div className={cn(
+                          "w-5 h-5 rounded-full border flex items-center justify-center shrink-0",
+                          isDestaque ? "border-[#FBBF24] bg-[#FBBF24]/10" : "border-primary/50 bg-primary/10"
+                        )}>
+                          <Check className={cn("w-3 h-3", isDestaque ? "text-[#FBBF24]" : "text-primary")} />
                         </div>
-                      </div>
-                    </div>
+                        {feat}
+                      </li>
+                    ))}
+                  </ul>
 
-                    {/* Price */}
-                    <div className="mb-8 p-5 rounded-2xl bg-muted/30 border border-border/5">
-                      <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] mb-1.5">Pacotes a partir de</p>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className={cn("text-sm font-bold", isPopular ? "text-secondary" : "text-primary")}>R$</span>
-                        <span className={cn("text-4xl font-black tracking-tighter", isPopular ? "text-secondary" : "text-foreground")}>
-                          {prices.pequeno}
-                        </span>
-                        <span className="text-sm text-muted-foreground/40 font-medium">/mês</span>
-                      </div>
-                    </div>
-
-                    {/* Features */}
-                    <ul className="space-y-4 mb-10 flex-1">
-                      {features.map((feat) => (
-                        <li key={feat} className="flex items-start gap-3 text-[13px] font-medium text-foreground/80 leading-snug">
-                          <div className={cn(
-                            "w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5",
-                            isPopular ? "bg-secondary/10 text-secondary" : "bg-primary/10 text-primary"
-                          )}>
-                            <Check className="w-3 h-3" />
-                          </div>
-                          {feat}
-                        </li>
-                      ))}
-                    </ul>
-
-                    {/* CTA */}
-                    <div className="space-y-3">
-                      <Button
-                        size="lg"
-                        className={cn(
-                          "w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl gap-2 transition-all duration-700",
-                          isPopular
-                            ? "bg-secondary text-secondary-foreground shadow-[0_8px_20px_-6px_hsl(var(--secondary)/0.4)] hover:shadow-[0_12px_25px_-4px_hsl(var(--secondary)/0.5)] hover:brightness-110"
-                            : "bg-primary text-primary-foreground shadow-[0_8px_20px_-6px_hsl(var(--primary)/0.3)] hover:shadow-[0_12px_25px_-4px_hsl(var(--primary)/0.4)] hover:brightness-110"
-                        )}
-                        onClick={() => setSelectedPkg(pkg)}
-                      >
-                        Agendar Pacote
-                        <ArrowRight className="w-4 h-4" />
-                      </Button>
-                      <p className="text-center text-[10px] font-bold text-muted-foreground/30 uppercase tracking-widest">
-                        Cancelamento flexível sem taxas
-                      </p>
-                    </div>
+                  {/* CTA */}
+                  <div className="space-y-4 mt-auto">
+                    <Button
+                      size="lg"
+                      className={cn(
+                        "w-full h-14 rounded-2xl font-bold text-base transition-all flex items-center justify-center gap-2",
+                        isDestaque 
+                          ? "bg-[#FBBF24] hover:bg-[#F5B000] text-[#1A1D23] shadow-[0_0_20px_rgba(251,191,36,0.3)] hover:shadow-[0_0_30px_rgba(251,191,36,0.4)]" 
+                          : "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
+                      )}
+                      onClick={() => handleWhatsApp(pkg)}
+                    >
+                      Quero esse plano
+                      <ArrowRight className="w-5 h-5" />
+                    </Button>
+                    <p className="text-center text-xs font-medium text-muted-foreground/60">
+                      Cancelamento fácil a qualquer momento.
+                    </p>
                   </div>
                 </div>
               </motion.div>
             );
-          })}
+          }) 
+        } else {
+          return (
+            <motion.div variants={fadeUp} className="w-full max-w-lg mx-auto text-center py-20">
+              {seedError ? (
+                <div className="bg-red-500/10 text-red-500 p-4 rounded-xl border border-red-500/20">
+                  <p className="font-bold mb-2">Erro ao criar pacotes automaticamente:</p>
+                  <code className="text-sm">{seedError}</code>
+                  <p className="mt-4 text-xs">Por favor, envie um print desta tela para o desenvolvedor.</p>
+                </div>
+              ) : (
+                <div className="bg-card dark:bg-[#232730] border border-border/50 rounded-3xl p-8 sm:p-12 shadow-lg">
+                  <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-6">
+                    <Dog className="w-8 h-8 text-muted-foreground/40" />
+                  </div>
+                  <h3 className="text-xl font-bold text-foreground mb-2">Nenhum pacote disponível</h3>
+                  <p className="text-sm text-muted-foreground">
+                    No momento não temos pacotes recorrentes disponíveis para cachorros de porte <span className="font-semibold text-foreground capitalize">{selectedSize === 'medio' ? 'médio' : selectedSize}</span>.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-6 rounded-xl gap-2 border-[#FBBF24]/30 hover:bg-[#FBBF24]/10 hover:text-[#FBBF24]"
+                    onClick={() => openWhatsAppConversation({ phone: getPetshopWhatsAppPhone(), message: `Olá! Não encontrei um plano recorrente para o porte ${selectedSize}, vocês teriam alguma opção?` })}
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Consultar pelo WhatsApp
+                  </Button>
+                </div>
+              )}
+            </motion.div>
+          );
+        }
+      })()}
         </motion.div>
       </div>
-
-      <InterestModal
-        pkg={selectedPkg}
-        open={!!selectedPkg}
-        onClose={() => setSelectedPkg(null)}
-      />
     </section>
   );
 }

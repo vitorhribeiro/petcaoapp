@@ -93,7 +93,10 @@ export async function createCustomerPackage(data: {
     } as any)
     .select()
     .single();
-  if (error) { console.error('createCustomerPackage error:', error); return null; }
+  if (error) { 
+    console.error('createCustomerPackage error:', error); 
+    throw new Error(error.message); 
+  }
   return row as CustomerPackageRow;
 }
 
@@ -119,7 +122,10 @@ export async function createPackage(data: Omit<PackageRow, 'id' | 'petshop_id'>)
     .insert({ ...data, petshop_id: PETSHOP_ID } as any)
     .select()
     .single();
-  if (error) { console.error('createPackage error:', error); return null; }
+  if (error) { 
+    console.error('createPackage error:', error); 
+    throw new Error(error.message); 
+  }
   return row as PackageRow;
 }
 

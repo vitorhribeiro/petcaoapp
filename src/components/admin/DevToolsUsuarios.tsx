@@ -175,6 +175,8 @@ export function DevToolsUsuarios() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editUser, setEditUser] = useState<ProfileWithRole | null>(null);
   const [viewUser, setViewUser] = useState<ProfileWithRole | null>(null);
+  const [deleteConfirmUser, setDeleteConfirmUser] = useState<ProfileWithRole | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', role: 'admin' as AppRole });
   const [creating, setCreating] = useState(false);
   const { matrix } = usePageAccess();
@@ -270,17 +272,22 @@ export function DevToolsUsuarios() {
     fetchUsers();
   };
 
-  const deleteUser = async (userId: string) => {
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmUser) return;
+    setDeleting(true);
     const { error } = await supabase.functions.invoke('seed-dev-user', {
-      body: { action: 'delete', userId },
+      body: { action: 'delete', userId: deleteConfirmUser.user_id },
     });
 
     if (error) {
       toast({ title: 'Erro ao remover usuário', description: error.message, variant: 'destructive' });
+      setDeleting(false);
       return;
     }
 
     toast({ title: 'Usuário removido completamente' });
+    setDeleteConfirmUser(null);
+    setDeleting(false);
     fetchUsers();
   };
 
@@ -535,7 +542,7 @@ export function DevToolsUsuarios() {
               onEdit={() => setEditUser(u)}
               onViewAccount={() => { setViewUser(u); setTempPassword(null); setCopied(false); }}
               onChangeRole={(role) => updateUserRole(u.user_id, role)}
-              onDelete={() => deleteUser(u.user_id)}
+              onDelete={() => setDeleteConfirmUser(u)}
               availableRoles={availableRoles}
             />
           ))}
@@ -788,7 +795,28 @@ export function DevToolsUsuarios() {
             </div>
           </DialogContent>
         </Dialog>
-      )}
+      {/* ─── Delete Confirmation Dialog ─── */}
+      <Dialog open={!!deleteConfirmUser} onOpenChange={() => setDeleteConfirmUser(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="w-5 h-5" /> Confirmar Exclusão
+            </DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir permanentemente o usuário <strong className="text-foreground">{deleteConfirmUser?.name}</strong>?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-destructive/10 p-3 rounded-lg border border-destructive/20 text-destructive text-xs">
+            Esta ação removerá completamente o perfil, cargo e as credenciais de autenticação. O e-mail ficará livre para ser registrado novamente. Esta ação não pode ser desfeita.
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button variant="outline" onClick={() => setDeleteConfirmUser(null)} disabled={deleting}>Cancelar</Button>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleting}>
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />} Excluir Permanentemente
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

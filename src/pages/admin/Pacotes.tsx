@@ -44,6 +44,7 @@ export default function Pacotes() {
     active: true
   });
   const [planPrices, setPlanPrices] = useState({ pequeno: 0, medio: 0, grande: 0 });
+  const [planSizes, setPlanSizes] = useState<string[]>(['pequeno', 'medio', 'grande']);
   const [planFeatures, setPlanFeatures] = useState<string[]>([]);
   const [newFeature, setNewFeature] = useState('');
 
@@ -116,7 +117,7 @@ export default function Pacotes() {
     setObservation('');
   };
 
-  const handleActivate = () => {
+  const handleActivate = async () => {
     if (!phone || !packageType) {
       toast.error('Preencha telefone e tipo de pacote');
       return;
@@ -125,16 +126,21 @@ export default function Pacotes() {
       toast.error('Por favor, cadastre o cliente antes de criar um pacote.');
       return;
     }
-    createCustomerPackage({
-      customer_id: foundTutor.user_id,
-      package_id: packageType,
-      pet_id: selectedPetId,
-      start_date: startDate || new Date().toISOString().split('T')[0],
-      observation,
-    });
-    toast.success('Pacote ativado com sucesso!');
-    setAddOpen(false);
-    resetModal();
+    try {
+      await createCustomerPackage({
+        customer_id: foundTutor.user_id,
+        package_id: packageType,
+        pet_id: selectedPetId || undefined,
+        start_date: startDate || new Date().toISOString().split('T')[0],
+        observation,
+      });
+      toast.success('Pacote ativado com sucesso!');
+      setAddOpen(false);
+      resetModal();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Erro ao ativar pacote. Verifique os dados.');
+    }
   };
 
   const getNextDate = (pkg: any) => {
@@ -196,11 +202,13 @@ export default function Pacotes() {
       });
       const prices = settings.package_prices?.[p.id] || { pequeno: 0, medio: 0, grande: 0 };
       setPlanPrices(prices);
+      setPlanSizes(settings.package_sizes?.[p.id] || ['pequeno', 'medio', 'grande']);
       setPlanFeatures(settings.package_features?.[p.id] || []);
     } else {
       setEditingPlanId(null);
       setPlanForm({ name: '', type: 'banho', interval_days: 7, description: '', active: true });
       setPlanPrices({ pequeno: 0, medio: 0, grande: 0 });
+      setPlanSizes(['pequeno', 'medio', 'grande']);
       setPlanFeatures([]);
     }
     setPlanModalOpen(true);
@@ -209,13 +217,14 @@ export default function Pacotes() {
   const handleSavePlan = async () => {
     try {
       let packageId = editingPlanId;
+      
+      const properType = planForm.interval_days === 7 ? 'SEMANAL' : planForm.interval_days === 15 ? 'QUINZENAL' : 'MENSAL';
+      const payload = { ...planForm, type: properType };
+
       if (editingPlanId) {
-        await updatePackageType(editingPlanId, planForm);
+        await updatePackageType(editingPlanId, payload);
       } else {
-        // Since addPackageType returns void in context but we need the ID, 
-        // we might need to fetch it or modify addPackageType.
-        // Actually, let's just refresh and hope for the best, or use the service directly.
-        const created = await packagesService.createPackage(planForm);
+        const created = await packagesService.createPackage(payload);
         if (created) {
           packageId = created.id;
           await refreshPackageTypes();
@@ -225,13 +234,15 @@ export default function Pacotes() {
       if (packageId) {
         const newPrices = { ...(settings.package_prices || {}), [packageId]: planPrices };
         const newFeatures = { ...(settings.package_features || {}), [packageId]: planFeatures };
-        await updateSettings({ package_prices: newPrices, package_features: newFeatures });
+        const newSizes = { ...(settings.package_sizes || {}), [packageId]: planSizes };
+        await updateSettings({ package_prices: newPrices, package_features: newFeatures, package_sizes: newSizes });
       }
 
       toast.success(editingPlanId ? 'Plano atualizado!' : 'Plano criado!');
       setPlanModalOpen(false);
-    } catch (err) {
-      toast.error('Erro ao salvar plano');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Erro ao salvar plano');
     }
   };
 
@@ -606,6 +617,27 @@ export default function Pacotes() {
           <div className="space-y-1.5">
             <Label className="text-xs">Descrição</Label>
             <Input value={planForm.description} onChange={e => setPlanForm({ ...planForm, description: e.target.value })} placeholder="Ex: Banho completo com tosa higiênica" className="h-10 rounded-xl" />
+          </div>
+
+          {/* Portes */}
+          <div className="space-y-3 pt-2">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60">Portes Atendidos</h4>
+            <div className="flex gap-6">
+              {['pequeno', 'medio', 'grande'].map(size => (
+                <label key={size} className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <input 
+                    type="checkbox" 
+                    checked={planSizes.includes(size)} 
+                    onChange={e => {
+                      if (e.target.checked) setPlanSizes([...planSizes, size]);
+                      else setPlanSizes(planSizes.filter(s => s !== size));
+                    }} 
+                    className="rounded border-primary/30 text-primary focus:ring-primary w-4 h-4"
+                  />
+                  <span className="capitalize">{size === 'medio' ? 'Médio' : size}</span>
+                </label>
+              ))}
+            </div>
           </div>
 
           {/* Prices */}

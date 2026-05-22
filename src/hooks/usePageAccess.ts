@@ -105,7 +105,11 @@ export function usePageAccess() {
       allowed: false
     }));
 
-    await supabase.from('page_access_matrix').upsert(entries);
+    const { error } = await supabase.from('page_access_matrix').upsert(entries);
+    if (error) {
+      console.error('Error adding role:', error);
+      return false;
+    }
     return true;
   }, [matrix]);
 

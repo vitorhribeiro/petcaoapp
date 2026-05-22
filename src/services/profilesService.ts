@@ -23,7 +23,7 @@ export async function getProfile(userId: string): Promise<ProfileRow | null> {
   return data as ProfileRow | null;
 }
 
-export async function getClientProfiles(): Promise<ProfileRow[]> {
+export async function getClientProfiles(): Promise<(ProfileRow & { pets?: any[] })[]> {
   // Get all profiles that have 'cliente' role
   const { data: roles } = await supabase
     .from('user_roles')
@@ -33,14 +33,23 @@ export async function getClientProfiles(): Promise<ProfileRow[]> {
   if (!roles || roles.length === 0) return [];
   
   const userIds = roles.map(r => r.user_id);
-  const { data, error } = await supabase
+  const { data: profilesData, error } = await supabase
     .from('profiles')
     .select('*')
     .in('user_id', userIds)
     .order('name');
   
-  if (error) return [];
-  return (data || []) as ProfileRow[];
+  if (error || !profilesData) return [];
+
+  const { data: petsData } = await supabase
+    .from('pets')
+    .select('*')
+    .in('owner_id', userIds);
+
+  return profilesData.map(p => ({
+    ...p,
+    pets: petsData?.filter(pet => pet.owner_id === p.user_id) || []
+  }));
 }
 
 export async function updateProfile(userId: string, data: Partial<ProfileRow>): Promise<boolean> {
