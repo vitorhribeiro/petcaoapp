@@ -28,6 +28,7 @@ interface SizeModalProps {
   open: boolean;
   onClose: () => void;
   customCategories: ServiceCategory[];
+  whatsapp?: string;
 }
 
 const SIZE_OPTIONS = [
@@ -51,12 +52,12 @@ function SizeModal({ service, open, onClose, customCategories }: SizeModalProps)
   const catInfo = service ? getCategoryByValue(service.category, customCategories) : null;
   const ServiceIcon = service ? getIconComponent(service.icon || (catInfo ? catInfo.icon : 'scissors')) : Package;
 
-  const scrollToAgenda = () => {
+  const handleWhatsAppClick = () => {
+    if (!service || !whatsapp) return;
+    const message = `Olá Petcão! Gostaria de saber mais sobre o serviço "${service.name}". Podem me ajudar?`;
+    const url = `https://wa.me/55${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
     onClose();
-    setTimeout(() => {
-      const el = document.querySelector('#calendario');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    }, 300);
   };
 
   const handleOpenChange = (v: boolean) => {
@@ -97,9 +98,9 @@ function SizeModal({ service, open, onClose, customCategories }: SizeModalProps)
             "hover:shadow-[0_6px_24px_-4px_hsl(var(--primary)/0.35)] hover:brightness-110",
             "transition-all duration-200",
           )}
-          onClick={scrollToAgenda}
+          onClick={handleWhatsAppClick}
         >
-          Agendar agora
+          Falar com o Petcão
           <ArrowRight className="w-4 h-4" />
         </Button>
       }
@@ -326,7 +327,7 @@ export function ServicesSection() {
                           {/* Button Hover Shine */}
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite] pointer-events-none" />
                           
-                          <span className="text-[10px] font-black uppercase tracking-wider whitespace-nowrap">Consultar</span>
+                          <span className="text-[10px] font-black uppercase tracking-wider whitespace-nowrap">Ver mais</span>
                           <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover/btn:translate-x-1" />
                         </button>
                       </div>
@@ -352,6 +353,7 @@ export function ServicesSection() {
         open={!!selectedService}
         onClose={() => setSelectedService(null)}
         customCategories={customCategories}
+        whatsapp={settings.whatsapp}
       />
     </section>
   );

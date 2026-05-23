@@ -335,10 +335,9 @@ export function GallerySection() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ambiente">🏠 Ambientes</SelectItem>
-                      <SelectItem value="antes-depois">✨ Antes e Depois</SelectItem>
-                      <SelectItem value="pets">🐶 Pets</SelectItem>
-                      <SelectItem value="outro">📌 Outro</SelectItem>
+                      {categories.map(cat => (
+                        <SelectItem key={cat.slug} value={cat.slug} className="capitalize">{cat.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
