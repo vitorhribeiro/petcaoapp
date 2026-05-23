@@ -21,7 +21,7 @@ export function ResponsiveModal({
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
+      <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false} repositionInputs={false}>
         <DrawerContent className="max-h-[92dvh] flex flex-col outline-none">
           <DrawerHeader className="text-left px-6 pt-5 pb-2 shrink-0">
             <div className="flex items-center gap-3">
