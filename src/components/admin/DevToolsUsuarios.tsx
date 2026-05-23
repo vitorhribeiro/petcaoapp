@@ -795,6 +795,8 @@ export function DevToolsUsuarios() {
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
       {/* ─── Delete Confirmation Dialog ─── */}
       <Dialog open={!!deleteConfirmUser} onOpenChange={() => setDeleteConfirmUser(null)}>
         <DialogContent className="sm:max-w-md">
