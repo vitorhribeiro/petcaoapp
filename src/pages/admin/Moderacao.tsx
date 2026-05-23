@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useConfig } from '@/hooks/useConfig';
 import * as galleryService from '@/services/galleryService';
+import { getGalleryCategories, createGalleryCategory, updateGalleryCategory, deleteGalleryCategory, GalleryCategoryRow } from '@/services/galleryCategoriesService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollableTabs, premiumTabClass, premiumTabListClass } from '@/components/ui/scrollable-tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -64,6 +65,381 @@ const STATUS_ICONS: Record<ModerationStatus, any> = {
   rejeitado: XCircle,
 };
 
+// ─── Shared Sub-Components ───
+const FilterChips = ({ value, onChange, options }: { value: string; onChange: (v: any) => void; options: { label: string; value: string }[] }) => (
+  <div className="flex flex-wrap gap-1.5">
+    {options.map(o => (
+      <button
+        key={o.value}
+        onClick={() => onChange(o.value)}
+        className={cn(
+          'px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold border transition-all duration-200',
+          value === o.value
+            ? 'bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20'
+            : 'bg-muted/50 backdrop-blur-sm text-muted-foreground border-border/30 hover:border-primary/40 hover:text-foreground'
+        )}
+      >
+        {o.label}
+      </button>
+    ))}
+  </div>
+);
+
+const Pagination = ({ page, total, onPrev, onNext }: { page: number; total: number; onPrev: () => void; onNext: () => void }) => (
+  total > 1 ? (
+    <div className="flex items-center justify-center gap-3 mt-6">
+      <Button variant="outline" size="sm" onClick={onPrev} disabled={page === 0} className="rounded-full w-9 h-9 p-0">
+        <ChevronLeft className="w-4 h-4" />
+      </Button>
+      <span className="text-sm text-muted-foreground font-medium tabular-nums">
+        {page + 1} <span className="text-muted-foreground/50">de</span> {total}
+      </span>
+      <Button variant="outline" size="sm" onClick={onNext} disabled={page >= total - 1} className="rounded-full w-9 h-9 p-0">
+        <ChevronRight className="w-4 h-4" />
+      </Button>
+    </div>
+  ) : null
+);
+
+const EmptyState = ({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description?: string }) => (
+  <div className="flex flex-col items-center justify-center py-20 px-6 bg-card/40 border border-dashed border-border/60 rounded-3xl space-y-4">
+    <div className="w-20 h-20 rounded-full bg-muted/30 flex items-center justify-center relative border border-border/20 shadow-inner">
+      <Icon className="w-10 h-10 text-muted-foreground/30" />
+      <div className="absolute inset-0 rounded-full border border-primary/5 animate-pulse" />
+    </div>
+    <div className="text-center space-y-1">
+      <p className="text-lg font-bold text-foreground/80">{title}</p>
+      {description && <p className="text-sm text-muted-foreground/60 max-w-[280px] mx-auto leading-relaxed">{description}</p>}
+    </div>
+  </div>
+);
+
+// ─── Photo Card ───
+const PhotoCard = React.memo(({ 
+  img, 
+  showActions, 
+  showCategoryEdit,
+  onView,
+  onEdit,
+  onDelete,
+  onApprove,
+  onReject,
+  onUpdateCategory,
+  categorySelection,
+  onCategorySelectionChange,
+  availableCategories
+}: { 
+  img: galleryService.GalleryPhotoRow; 
+  showActions: boolean; 
+  showCategoryEdit?: boolean;
+  onView: (id: string) => void;
+  onEdit: (img: galleryService.GalleryPhotoRow) => void;
+  onDelete: (img: galleryService.GalleryPhotoRow) => void;
+  onApprove: (id: string, cat: string) => void;
+  onReject: (id: string) => void;
+  onUpdateCategory: (id: string, cat: string) => void;
+  categorySelection: string;
+  onCategorySelectionChange: (v: string) => void;
+  availableCategories: string[];
+}) => {
+  const [optimisticCategory, setOptimisticCategory] = React.useState(img.category || '');
+
+  React.useEffect(() => {
+    setOptimisticCategory(img.category || '');
+  }, [img.category]);
+
+  return (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.95 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ duration: 0.2 }}
+    className="relative group"
+  >
+    <div className="aspect-square bg-muted rounded-2xl overflow-hidden border border-border/40 relative shadow-sm group-hover:shadow-md transition-all duration-300">
+      <OptimizedImage 
+        src={img.url} 
+        alt={img.alt || ''} 
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+        aspectRatio="square" 
+      />
+      
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+        <Badge className={cn('text-[10px] font-bold border-none backdrop-blur-md px-2 py-0.5 shadow-sm', 
+          img.moderation_status === 'aprovado' ? 'bg-emerald-500/90 text-white' : 
+          img.moderation_status === 'pendente' ? 'bg-amber-500/90 text-white' : 
+          'bg-destructive/90 text-white'
+        )}>
+          {STATUS_LABELS[img.moderation_status as ModerationStatus] || img.moderation_status}
+        </Badge>
+      </div>
+
+      <div className="absolute top-2 left-2 flex gap-1">
+        {img.category && (
+          <Badge className="text-[10px] font-bold border-none backdrop-blur-md px-2 py-0.5 shadow-sm bg-background/80 text-foreground capitalize">
+            {img.category}
+          </Badge>
+        )}
+      </div>
+
+      <div className="absolute bottom-2 left-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <Button 
+            size="sm" 
+            className="h-10 px-4 text-xs flex-1 bg-white hover:bg-white/90 text-black font-bold rounded-xl shadow-xl border-none" 
+            onClick={() => onView(img.id)}
+          >
+            <Eye className="w-4 h-4 mr-2" /> Ver
+          </Button>
+          <Button 
+            size="sm" 
+            className="h-10 w-10 p-0 bg-white hover:bg-white/90 text-black font-bold rounded-xl shadow-xl border-none" 
+            onClick={() => onEdit(img)}
+          >
+            <Edit2 className="w-4 h-4" />
+          </Button>
+          <Button 
+            size="sm" 
+            className="h-10 w-10 p-0 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-xl border-none"
+            onClick={() => onDelete(img)}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+      </div>
+    </div>
+
+    {showActions && img.moderation_status === 'pendente' && (
+      <div className="mt-2 flex gap-2">
+        <Select
+          value={categorySelection}
+          onValueChange={onCategorySelectionChange}
+        >
+          <SelectTrigger className="h-8 text-[11px] rounded-xl flex-1 bg-card">
+            <SelectValue placeholder="Tipo..." />
+          </SelectTrigger>
+          <SelectContent>
+            {availableCategories?.map(cat => (
+              <SelectItem key={cat} value={cat} className="capitalize">{cat}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          size="sm"
+          className="h-8 w-8 p-0 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shrink-0"
+          disabled={!categorySelection}
+          onClick={() => onApprove(img.id, categorySelection)}
+        >
+          <CheckCircle2 className="w-4 h-4" />
+        </Button>
+        <Button 
+          size="sm" 
+          variant="outline" 
+          className="h-8 w-8 p-0 rounded-xl text-destructive border-destructive/20 hover:bg-destructive/10 shrink-0" 
+          onClick={() => onReject(img.id)}
+        >
+          <XCircle className="w-4 h-4" />
+        </Button>
+      </div>
+    )}
+    
+    {showCategoryEdit && img.moderation_status === 'aprovado' && (
+      <div className="mt-2">
+        <Select
+          value={optimisticCategory}
+          onValueChange={(v) => {
+            setOptimisticCategory(v);
+            onUpdateCategory(img.id, v);
+          }}
+        >
+          <SelectTrigger className="h-8 text-[10px] rounded-xl w-full bg-muted/40 border-none hover:bg-muted/60 transition-colors">
+            <SelectValue placeholder="Alterar categoria..." />
+          </SelectTrigger>
+          <SelectContent>
+            {availableCategories?.map(cat => (
+              <SelectItem key={cat} value={cat} className="capitalize">{cat}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    )}
+  </motion.div>
+  );
+});
+PhotoCard.displayName = 'PhotoCard';
+
+// ─── Review Card ───
+const ReviewCard = React.memo(({ 
+  review, 
+  showActions, 
+  responseText, 
+  onResponseChange, 
+  onSaveResponse, 
+  onEdit,
+  onApprove,
+  onReject,
+  refreshReviews
+}: { 
+  review: reviewsService.ReviewRow; 
+  showActions: boolean; 
+  responseText: string; 
+  onResponseChange: (v: string) => void;
+  onSaveResponse: (id: string) => void;
+  onEdit: (r: reviewsService.ReviewRow) => void;
+  onApprove: (id: string) => void;
+  onReject: (id: string) => void;
+  refreshReviews: () => void;
+}) => (
+  <motion.div
+    initial={{ opacity: 0, x: -12 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ duration: 0.3 }}
+  >
+    <Card className="border-border/40 bg-card/60 backdrop-blur-sm hover:shadow-md transition-all duration-300 rounded-3xl overflow-hidden relative group">
+      <CardContent className="p-5 sm:p-6">
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Review Visual Column (if has photo) */}
+          {review.photos && review.photos.length > 0 && (
+            <div className="w-24 h-24 md:w-32 md:h-32 shrink-0 rounded-2xl overflow-hidden border border-border/40 shadow-sm relative group/review-photo">
+              <OptimizedImage src={review.photos[0]} alt="Foto da avaliação" className="w-full h-full object-cover" aspectRatio="square" />
+              <button 
+                className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/review-photo:opacity-100 transition-opacity"
+                onClick={() => {
+                  const win = window.open(review.photos![0], '_blank');
+                  win?.focus();
+                }}
+              >
+                <Plus className="w-5 h-5 text-white" />
+              </button>
+            </div>
+          )}
+
+          {/* Review Content Column */}
+          <div className="flex-1 space-y-4 min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 shadow-inner">
+                  <span className="text-lg font-bold text-primary">{review.name?.charAt(0)?.toUpperCase()}</span>
+                </div>
+                <div>
+                  <h4 className="font-bold text-foreground flex items-center gap-2">
+                    {review.name}
+                    <Badge className={cn('text-[10px] font-bold px-2 py-0 border-none', 
+                      review.moderation_status === 'aprovado' ? 'bg-emerald-500/10 text-emerald-600' : 
+                      review.moderation_status === 'pendente' ? 'bg-amber-500/10 text-amber-600' : 
+                      'bg-destructive/10 text-destructive'
+                    )}>
+                      {STATUS_LABELS[review.moderation_status as ModerationStatus] || review.moderation_status}
+                    </Badge>
+                  </h4>
+                  {review.pet_name && <p className="text-xs text-muted-foreground flex items-center gap-1.5"><Sparkles className="w-3 h-3 text-primary/60" /> {review.pet_name}</p>}
+                </div>
+              </div>
+              <div className="flex gap-0.5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={cn(
+                      "w-4 h-4",
+                      star <= (review.rating || 5) ? "fill-amber-400 text-amber-400" : "fill-muted text-muted"
+                    )}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {review.review_text && (
+              <p className="text-sm text-foreground/80 italic leading-relaxed border-l-2 border-primary/20 pl-4 py-1">"{review.review_text}"</p>
+            )}
+
+            <div className="bg-muted/30 p-4 rounded-2xl border border-border/40 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                <MessageSquare className="w-4 h-4" /> Resposta do Petshop
+              </div>
+              {review.shop_response ? (
+                <p className="text-sm text-muted-foreground bg-white dark:bg-black/20 p-3 rounded-xl border border-border/40 leading-relaxed">{review.shop_response}</p>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Escreva uma resposta pública..."
+                    className="h-10 text-sm bg-white dark:bg-black/20 border-border/40 rounded-xl"
+                    value={responseText}
+                    onChange={(e) => onResponseChange(e.target.value)}
+                  />
+                  <Button size="sm" onClick={() => onSaveResponse(review.id)} className="h-10 rounded-xl px-4 gap-2 shadow-sm" disabled={!responseText?.trim()}>
+                    <Send className="w-4 h-4" /> Responder
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-border/40">
+              <span className="text-xs text-muted-foreground font-medium bg-muted px-2.5 py-1 rounded-md">{review.service_name || 'Serviço não especificado'}</span>
+              <Button variant="ghost" size="sm" className="h-8 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg">
+                Ver Histórico do Cliente <ExternalLink className="w-3 h-3 ml-1.5" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex md:flex-col gap-2 shrink-0 md:border-l md:border-border/20 md:pl-4">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="flex-1 md:flex-none h-10 rounded-xl gap-2 text-muted-foreground hover:text-primary hover:bg-primary/5"
+              onClick={() => onEdit(review)}
+            >
+              <Edit2 className="w-4 h-4" /> <span className="md:hidden">Editar</span>
+            </Button>
+            
+            {showActions && review.moderation_status === 'pendente' ? (
+              <>
+                <Button size="sm" className="flex-1 md:flex-none h-10 rounded-xl gap-2 bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm" onClick={() => onApprove(review.id)}>
+                  <CheckCircle2 className="w-4 h-4" /> Aprovar
+                </Button>
+                <Button size="sm" variant="outline" className="flex-1 md:flex-none h-10 rounded-xl gap-2 text-destructive border-destructive/20 hover:bg-destructive/5" onClick={() => onReject(review.id)}>
+                  <XCircle className="w-4 h-4" /> Rejeitar
+                </Button>
+              </>
+            ) : (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="flex-1 md:flex-none h-10 rounded-xl gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/5">
+                    <Trash2 className="w-4 h-4" /> <span className="md:hidden">Excluir</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="rounded-3xl border-border/40 bg-card/95 backdrop-blur-xl">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir avaliação?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação removerá permanentemente a avaliação do cliente e não poderá ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="gap-2">
+                    <AlertDialogCancel className="rounded-2xl border-border/40">Voltar</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-2xl"
+                      onClick={() => {
+                        toast.promise(reviewsService.updateReview(review.id, { moderation_status: 'rejeitado' }), {
+                          loading: 'Excluindo...',
+                          success: 'Avaliação removida!',
+                          error: 'Erro ao remover.'
+                        });
+                        refreshReviews();
+                      }}
+                    >
+                      Confirmar Exclusão
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  </motion.div>
+));
+ReviewCard.displayName = 'ReviewCard';
+
 export default function Moderacao() {
   const { galleryImages, reviewsList, approvePhoto, rejectPhoto, approveReview, rejectReview, addPhoto, setShopResponse, refreshGallery, refreshReviews, deletePhoto, updatePhoto, updateReview } = useAdmin();
   const { displayLimits } = useConfig();
@@ -78,8 +454,32 @@ export default function Moderacao() {
   const [responseTexts, setResponseTexts] = useState<Record<string, string>>({});
   const [photoCategorySelections, setPhotoCategorySelections] = useState<Record<string, string>>({});
 
+  const [galleryCategories, setGalleryCategories] = useState<GalleryCategoryRow[]>([]);
+
+  React.useEffect(() => {
+    const fetchCats = async () => {
+      let cats = await getGalleryCategories();
+      
+      // Ensure 'copa' category exists locally or create it
+      if (!cats.some(c => c.slug === 'copa')) {
+        const copaCat = await createGalleryCategory('Copa', 'copa', 100);
+        if (copaCat) {
+          cats = [...cats, copaCat];
+        }
+      }
+      setGalleryCategories(cats);
+    };
+    fetchCats();
+  }, []);
+
   const [photoFilter, setPhotoFilter] = useState<'todas' | ModerationStatus>('todas');
+  const [categoryFilter, setCategoryFilter] = useState<string>('todas');
   const [photoPage, setPhotoPage] = useState(0);
+
+  const [categoriesManageOpen, setCategoriesManageOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingCategoryValue, setEditingCategoryValue] = useState('');
 
   const [reviewFilter, setReviewFilter] = useState<'todas' | ModerationStatus>('todas');
   const [reviewPage, setReviewPage] = useState(0);
@@ -93,9 +493,14 @@ export default function Moderacao() {
   const approvedPhotos = galleryImages.filter(img => img.moderation_status === 'aprovado');
   const approvedReviews = reviewsList.filter(r => r.moderation_status === 'aprovado');
 
-  const filteredPhotos = photoFilter === 'todas'
+  const baseFilteredPhotos = photoFilter === 'todas'
     ? galleryImages
     : galleryImages.filter(img => img.moderation_status === photoFilter);
+
+  const filteredPhotos = categoryFilter === 'todas'
+    ? baseFilteredPhotos
+    : baseFilteredPhotos.filter(img => img.category === categoryFilter);
+
   const totalPhotoPages = Math.ceil(filteredPhotos.length / pageSize);
   const pagedPhotos = filteredPhotos.slice(photoPage * pageSize, (photoPage + 1) * pageSize);
 
@@ -215,7 +620,8 @@ const PhotoCard = React.memo(({
   onReject,
   onUpdateCategory,
   categorySelection,
-  onCategorySelectionChange
+  onCategorySelectionChange,
+  availableCategories
 }: { 
   img: galleryService.GalleryPhotoRow; 
   showActions: boolean; 
@@ -226,9 +632,18 @@ const PhotoCard = React.memo(({
   onApprove: (id: string, cat: string) => void;
   onReject: (id: string) => void;
   onUpdateCategory: (id: string, cat: string) => void;
+  onUpdateCategory: (id: string, cat: string) => void;
   categorySelection: string;
   onCategorySelectionChange: (v: string) => void;
-}) => (
+  availableCategories: string[];
+}) => {
+  const [optimisticCategory, setOptimisticCategory] = React.useState(img.category || '');
+
+  React.useEffect(() => {
+    setOptimisticCategory(img.category || '');
+  }, [img.category]);
+
+  return (
   <motion.div
     initial={{ opacity: 0, scale: 0.95 }}
     animate={{ opacity: 1, scale: 1 }}
@@ -254,10 +669,8 @@ const PhotoCard = React.memo(({
           {STATUS_LABELS[img.moderation_status as ModerationStatus] || img.moderation_status}
         </Badge>
         {img.category && (
-          <Badge variant="secondary" className="text-[9px] bg-background/80 backdrop-blur-md border-none text-foreground/70 px-1.5 py-0">
-            {img.category === 'ambiente' ? '🏠 Ambiente' : 
-             img.category === 'antes-depois' ? '✨ Antes/Depois' : 
-             img.category === 'pets' ? '🐶 Pets' : '📌 Outro'}
+          <Badge variant="secondary" className="text-[9px] bg-background/80 backdrop-blur-md border-none text-foreground/70 px-1.5 py-0 capitalize">
+            {img.category}
           </Badge>
         )}
       </div>
@@ -297,10 +710,9 @@ const PhotoCard = React.memo(({
             <SelectValue placeholder="Tipo..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ambiente">🏠 Ambiente</SelectItem>
-            <SelectItem value="antes-depois">✨ Antes/Depois</SelectItem>
-            <SelectItem value="pets">🐶 Pets</SelectItem>
-            <SelectItem value="outro">📌 Outro</SelectItem>
+            {availableCategories?.map(cat => (
+              <SelectItem key={cat} value={cat} className="capitalize">{cat}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Button
@@ -325,23 +737,26 @@ const PhotoCard = React.memo(({
     {showCategoryEdit && img.moderation_status === 'aprovado' && (
       <div className="mt-2">
         <Select
-          value={img.category || ''}
-          onValueChange={(v) => onUpdateCategory(img.id, v)}
+          value={optimisticCategory}
+          onValueChange={(v) => {
+            setOptimisticCategory(v);
+            onUpdateCategory(img.id, v);
+          }}
         >
           <SelectTrigger className="h-8 text-[10px] rounded-xl w-full bg-muted/40 border-none hover:bg-muted/60 transition-colors">
             <SelectValue placeholder="Alterar categoria..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ambiente">🏠 Ambiente</SelectItem>
-            <SelectItem value="antes-depois">✨ Antes/Depois</SelectItem>
-            <SelectItem value="pets">🐶 Pets</SelectItem>
-            <SelectItem value="outro">📌 Outro</SelectItem>
+            {availableCategories?.map(cat => (
+              <SelectItem key={cat} value={cat} className="capitalize">{cat}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
     )}
   </motion.div>
-));
+  );
+});
 PhotoCard.displayName = 'PhotoCard';
 
 // ─── Review Card ───
@@ -623,7 +1038,23 @@ ReviewCard.displayName = 'ReviewCard';
                 { label: 'Rejeitadas', value: 'rejeitado' },
               ]}
             />
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); setPhotoPage(0); }}>
+                <SelectTrigger className="h-9 w-[140px] text-xs rounded-xl bg-background border-border/30">
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas as categorias</SelectItem>
+                  {galleryCategories.map(cat => (
+                    <SelectItem key={cat.slug} value={cat.slug} className="capitalize">{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button onClick={() => setCategoriesManageOpen(true)} variant="outline" size="sm" className="h-9 px-3 rounded-xl gap-1 border-border/30 text-xs">
+                Gerenciar Categorias
+              </Button>
+            </div>
+            <div className="flex items-center gap-4 ml-auto">
               <span className="text-xs text-muted-foreground font-medium">{filteredPhotos.length} fotos encontradas</span>
               <Button onClick={() => setUploadOpen(true)} size="sm" className="gap-2 h-9 rounded-xl">
                 <Plus className="w-3.5 h-3.5" /> Enviar Foto
@@ -650,9 +1081,16 @@ ReviewCard.displayName = 'ReviewCard';
                   onDelete={setPhotoToDelete}
                   onApprove={approvePhoto}
                   onReject={rejectPhoto}
-                  onUpdateCategory={updatePhotoCategory}
+                  onUpdateCategory={(id, cat) => {
+                    toast.promise(updatePhotoCategory(id, cat), {
+                      loading: 'Atualizando categoria...',
+                      success: 'Categoria atualizada!',
+                      error: 'Erro ao atualizar.'
+                    });
+                  }}
                   categorySelection={photoCategorySelections[img.id] || ''}
                   onCategorySelectionChange={(v) => setPhotoCategorySelections(prev => ({ ...prev, [img.id]: v }))}
+                  availableCategories={galleryCategories.map(c => c.slug)}
                 />
               ))}
             </div>
@@ -733,6 +1171,140 @@ ReviewCard.displayName = 'ReviewCard';
         onOpenChange={setAddReviewOpen}
       />
 
+      <ResponsiveModal
+        open={categoriesManageOpen}
+        onOpenChange={setCategoriesManageOpen}
+        title="Gerenciar Categorias"
+      >
+        <div className="space-y-6 pt-2 pb-4">
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Adicionar Nova</h4>
+            <div className="flex gap-2">
+              <Input 
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="Ex: festas, banho, etc."
+                className="h-11 text-base rounded-xl"
+              />
+              <Button 
+                className="h-11 px-6 rounded-xl shrink-0"
+                disabled={!newCategoryName.trim()}
+                onClick={async () => {
+                  const name = newCategoryName.trim();
+                  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                  if (slug && !galleryCategories.some(c => c.slug === slug)) {
+                    const newCat = await createGalleryCategory(name, slug);
+                    if (newCat) {
+                      setGalleryCategories([...galleryCategories, newCat]);
+                      setNewCategoryName('');
+                      toast.success('Categoria adicionada!');
+                    } else {
+                      toast.error('Erro ao criar categoria.');
+                    }
+                  } else if (galleryCategories.some(c => c.slug === slug)) {
+                    toast.error('Categoria já existe!');
+                  }
+                }}
+              >
+                Adicionar
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Categorias Existentes</h4>
+            {galleryCategories.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-2 text-center">Nenhuma categoria encontrada.</p>
+            ) : (
+              <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-2">
+                {galleryCategories.map(cat => (
+                  <div key={cat.id} className="flex items-center justify-between p-3 rounded-xl border border-border/40 bg-muted/20 hover:bg-muted/40 transition-colors">
+                    {editingCategoryId === cat.id ? (
+                      <div className="flex items-center gap-2 flex-1 mr-2">
+                        <Input 
+                          value={editingCategoryValue}
+                          onChange={e => setEditingCategoryValue(e.target.value)}
+                          className="h-8 text-sm"
+                          autoFocus
+                        />
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10"
+                          onClick={async () => {
+                            const newName = editingCategoryValue.trim();
+                            if (!newName) return;
+                            const newSlug = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                            toast.promise(updateGalleryCategory(cat.id, { name: newName, slug: newSlug }), {
+                              loading: 'Atualizando...',
+                              success: () => {
+                                setGalleryCategories(prev => prev.map(c => c.id === cat.id ? { ...c, name: newName, slug: newSlug } : c));
+                                setEditingCategoryId(null);
+                                return 'Categoria atualizada!';
+                              },
+                              error: 'Erro ao atualizar.'
+                            });
+                          }}
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="h-8 w-8 p-0 text-muted-foreground"
+                          onClick={() => setEditingCategoryId(null)}
+                        >
+                          <XCircle className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex flex-col min-w-0 pr-4">
+                          <span className="font-semibold text-foreground text-sm truncate">{cat.name}</span>
+                          <span className="text-[10px] text-muted-foreground truncate">{cat.slug}</span>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                            onClick={() => {
+                              setEditingCategoryId(cat.id);
+                              setEditingCategoryValue(cat.name);
+                            }}
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => {
+                              if (confirm(`Tem certeza que deseja excluir a categoria "${cat.name}"?`)) {
+                                toast.promise(deleteGalleryCategory(cat.id), {
+                                  loading: 'Excluindo...',
+                                  success: () => {
+                                    setGalleryCategories(prev => prev.filter(c => c.id !== cat.id));
+                                    return 'Categoria excluída!';
+                                  },
+                                  error: 'Erro ao excluir.'
+                                });
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </ResponsiveModal>
+
       {/* ── Edit Photo Modal ── */}
       <ResponsiveModal 
         open={!!editPhotoTarget} 
@@ -805,10 +1377,9 @@ ReviewCard.displayName = 'ReviewCard';
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ambiente">🏠 Ambientes</SelectItem>
-                    <SelectItem value="antes-depois">✨ Antes e Depois</SelectItem>
-                    <SelectItem value="pets">🐶 Pets</SelectItem>
-                    <SelectItem value="outro">📌 Outro</SelectItem>
+                    {galleryCategories.map(cat => (
+                      <SelectItem key={cat.slug} value={cat.slug} className="capitalize">{cat.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

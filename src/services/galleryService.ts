@@ -86,7 +86,11 @@ export async function updateGalleryPhoto(id: string, data: Partial<GalleryPhotoR
     .from('gallery_photos')
     .update(data as any)
     .eq('id', id);
-  return !error;
+  if (error) {
+    console.error('updateGalleryPhoto error:', error);
+    return false;
+  }
+  return true;
 }
 export async function deleteGalleryPhoto(id: string): Promise<boolean> {
   const { error } = await supabase

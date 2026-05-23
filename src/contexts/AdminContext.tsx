@@ -326,7 +326,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   }, [refreshGallery]);
 
   const updatePhoto = useCallback(async (id: string, data: Partial<galleryService.GalleryPhotoRow>) => {
-    await galleryService.updateGalleryPhoto(id, data);
+    const success = await galleryService.updateGalleryPhoto(id, data);
+    if (!success) throw new Error('Falha ao atualizar foto');
     await refreshGallery();
   }, [refreshGallery]);
 
