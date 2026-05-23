@@ -57,6 +57,9 @@ Deno.serve(async (req) => {
         );
       }
 
+      // Cleanup orphaned records that might break the on_auth_user_created trigger
+      await supabaseAdmin.from("user_accounts").delete().eq("email", email.toLowerCase());
+      
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
