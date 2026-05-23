@@ -14,6 +14,7 @@ import { StickerAlbumSection } from '@/components/sections/StickerAlbumSection';
 import { ReviewsSection } from '@/components/sections/ReviewsSection';
 import { LocationSection } from '@/components/sections/LocationSection';
 import { CTASection } from '@/components/sections/CTASection';
+import { FloatingScheduleButton } from '@/components/layout/FloatingScheduleButton';
 
 function IndexContent() {
   const isMobile = useIsMobile();
@@ -38,6 +39,7 @@ function IndexContent() {
 
       <Footer />
       {isMobile && <BottomNav />}
+      <FloatingScheduleButton />
     </div>
   );
 }
