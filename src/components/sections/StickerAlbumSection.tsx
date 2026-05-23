@@ -18,11 +18,12 @@ const BR = { green: '#009C3B', yellow: '#FFDF00', blue: '#002776', darkGreen: '#
 /* ─────────────────────────────────────────────────────────
    Filled Sticker — Premium card redesign (Panini Style)
 ───────────────────────────────────────────────────────── */
-function FilledSticker({ card, canAdmin, onDelete, onEdit }: {
+function FilledSticker({ card, canAdmin, onDelete, onEdit, onView }: {
   card: StickerCard;
   canAdmin: boolean;
   onDelete: (id: string) => void;
   onEdit: (card: StickerCard) => void;
+  onView?: (url: string) => void;
 }) {
   const [hovered, setHovered] = useState(false);
 
@@ -33,94 +34,30 @@ function FilledSticker({ card, canAdmin, onDelete, onEdit }: {
       animate={{ opacity: 1, scale: 1, rotateY: 0 }}
       exit={{ opacity: 0, scale: 0.6 }}
       transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-      className="relative group"
+      className="relative group w-full"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{ perspective: 1000 }}
     >
       <div
-        className="relative bg-white rounded-lg p-1.5 cursor-default transition-transform duration-300"
+        onClick={() => onView?.(card.url)}
+        className="relative bg-white cursor-pointer transition-all duration-300 rounded-[4px]"
         style={{
           boxShadow: hovered
-            ? '0 20px 40px rgba(0,0,0,0.5), 0 0 0 2px #FFDF00, 0 0 25px rgba(255,223,0,0.5)'
-            : '0 8px 24px rgba(0,0,0,0.3)',
-          transform: hovered ? 'translateY(-8px) rotateY(5deg) scale(1.05)' : 'translateY(0) rotateY(0) scale(1)',
+            ? '0 12px 24px rgba(0,0,0,0.15)'
+            : '0 4px 12px rgba(0,0,0,0.08)',
+          transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
+          aspectRatio: '1 / 1.38',
+          padding: '4px',
         }}
       >
-        {/* Inner Gold/Green Card */}
-        <div
-          className="relative rounded overflow-hidden h-full flex flex-col"
-          style={{
-            background: 'linear-gradient(135deg, #004D28 0%, #008040 40%, #009C3B 100%)',
-            border: '2px solid #FFDF00'
-          }}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between px-2 py-1 bg-gradient-to-r from-[#002776] to-[#001D5E] border-b-2 border-[#FFDF00]">
-            <span className="text-[10px] font-black text-white">2026</span>
-            <span className="text-[10px] font-black tracking-widest text-[#FFDF00]">PETCÃO</span>
-            <div className="flex gap-1">
-              <span className="w-2 h-2 rounded-full bg-[#009C3B]"></span>
-              <span className="w-2 h-2 rounded-full bg-[#FFDF00]"></span>
-            </div>
-          </div>
-
-          {/* Holographic background pattern */}
-          <div className="absolute inset-0 opacity-20" style={{
-            backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.4) 1px, transparent 0)',
-            backgroundSize: '8px 8px'
-          }} />
-
-          {/* Photo Section */}
-          <div className="relative mx-1 mt-1 border-2 border-white rounded-sm overflow-hidden" style={{ aspectRatio: '3/3.5' }}>
-            <img
-              src={card.url}
-              alt={card.alt || card.pet_name || ''}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-            {/* Holographic foil overlay on image */}
-            <div className="absolute inset-0 pointer-events-none transition-opacity duration-500"
-              style={{
-                background: 'linear-gradient(125deg, transparent 20%, rgba(255,255,255,0.4) 40%, rgba(255,223,0,0.2) 60%, transparent 80%)',
-                opacity: hovered ? 1 : 0,
-                mixBlendMode: 'overlay'
-              }}
-            />
-          </div>
-
-          {/* Info Section */}
-          <div className="px-1.5 py-1.5 flex-1 flex flex-col justify-end relative z-10 bg-gradient-to-t from-black/80 to-transparent">
-            <div className="flex items-center justify-between">
-              <p className="font-black text-[12px] leading-tight truncate uppercase text-white drop-shadow-md">
-                {card.pet_name || '?'}
-              </p>
-              <span className="text-[12px]" title="Brasil">🇧🇷</span>
-            </div>
-            {card.owner_name && (
-              <p className="text-[#FFDF00] text-[8px] font-bold truncate mt-0.5 uppercase tracking-wide">
-                Tutor: {card.owner_name}
-              </p>
-            )}
-            {card.caption && (
-              <p className="text-white/80 text-[8px] leading-tight mt-0.5 line-clamp-2 italic drop-shadow">
-                "{card.caption}"
-              </p>
-            )}
-          </div>
-
-          {/* Dynamic reflection on hover */}
-          <div className="absolute inset-0 pointer-events-none rounded transition-transform duration-500"
-            style={{
-              background: 'linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.3) 25%, transparent 30%)',
-              transform: hovered ? 'translateX(100%)' : 'translateX(-100%)',
-            }}
-          />
+        {/* Inner Card Boundary - Just the image now */}
+        <div className="relative w-full h-full overflow-hidden rounded-[2px] bg-gray-100">
+          <img src={card.url} className="absolute inset-0 w-full h-full object-cover" alt={card.alt || card.pet_name || ''} />
         </div>
 
         {/* Admin actions */}
         {canAdmin && hovered && (
-          <div className="absolute -top-3 -right-3 flex gap-1 z-20">
+          <div className="absolute -top-3 -right-3 flex gap-1 z-40 pointer-events-auto">
             <button
               onClick={(e) => { e.stopPropagation(); onEdit(card); }}
               className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-lg text-emerald-600 hover:bg-emerald-50 hover:scale-110 transition-all border border-emerald-100"
@@ -154,22 +91,23 @@ function EmptySlot({ number, canAdmin, onAdd }: {
         className="rounded-lg flex flex-col items-center justify-center transition-all duration-200 overflow-hidden relative"
         style={{
           aspectRatio: '3/4.2',
-          background: 'rgba(255, 255, 255, 0.05)',
-          border: `2px dashed ${canAdmin ? 'rgba(255,223,0,0.4)' : 'rgba(255,255,255,0.2)'}`,
+          background: 'rgba(0, 0, 0, 0.25)',
+          border: `2px dashed ${canAdmin ? 'rgba(255,223,0,0.8)' : 'rgba(255,255,255,0.3)'}`,
           cursor: canAdmin ? 'pointer' : 'default',
-          backdropFilter: 'blur(4px)',
+          backdropFilter: 'blur(12px)',
+          boxShadow: 'inset 0 0 20px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.15)',
         }}
         onClick={canAdmin ? onAdd : undefined}
         onMouseEnter={e => {
           if (canAdmin) {
             (e.currentTarget as HTMLElement).style.borderColor = BR.yellow;
-            (e.currentTarget as HTMLElement).style.background = 'rgba(255,223,0,0.1)';
+            (e.currentTarget as HTMLElement).style.background = 'rgba(255,223,0,0.2)';
           }
         }}
         onMouseLeave={e => {
           if (canAdmin) {
-            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,223,0,0.4)';
-            (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)';
+            (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,223,0,0.8)';
+            (e.currentTarget as HTMLElement).style.background = 'rgba(0, 0, 0, 0.25)';
           }
         }}
       >
@@ -211,14 +149,31 @@ function EditStickerModal({ card, open, onClose, onSave }: {
 }) {
   const [petName, setPetName] = useState('');
   const [ownerName, setOwnerName] = useState('');
-  const [caption, setCaption] = useState('');
+  const [bio, setBio] = useState('');
+  const [teamPosition, setTeamPosition] = useState('');
+  const [shirtNumber, setShirtNumber] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (card) {
       setPetName(card.pet_name || '');
       setOwnerName(card.owner_name || '');
-      setCaption(card.caption || '');
+
+      let b = card.caption || '';
+      let pos = '';
+      let num = '';
+      try {
+        if (card.caption && card.caption.trim().startsWith('{')) {
+          const data = JSON.parse(card.caption);
+          b = data.bio || '';
+          pos = data.position || '';
+          num = data.number || '';
+        }
+      } catch (e) { }
+
+      setBio(b);
+      setTeamPosition(pos);
+      setShirtNumber(num);
     }
   }, [card]);
 
@@ -226,10 +181,16 @@ function EditStickerModal({ card, open, onClose, onSave }: {
     if (!card) return;
     setSaving(true);
     try {
+      const captionData = JSON.stringify({
+        bio: bio.trim(),
+        position: teamPosition.trim(),
+        number: shirtNumber.trim()
+      });
+
       await onSave(card.id, {
         pet_name: petName.trim() || null,
         owner_name: ownerName.trim() || null,
-        caption: caption.trim() || null,
+        caption: captionData,
       });
       onClose();
     } finally {
@@ -262,11 +223,23 @@ function EditStickerModal({ card, open, onClose, onSave }: {
           <Label className="text-xs font-semibold text-muted-foreground">Nome do dono</Label>
           <Input value={ownerName} onChange={(e) => setOwnerName(e.target.value.slice(0, 60))} className="h-11 rounded-xl" />
         </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Posição</Label>
+            <Input value={teamPosition} onChange={(e) => setTeamPosition(e.target.value.slice(0, 30))} className="h-11 rounded-xl" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Nº Camisa</Label>
+            <Input type="number" value={shirtNumber} onChange={(e) => setShirtNumber(e.target.value.slice(0, 3))} className="h-11 rounded-xl" />
+          </div>
+        </div>
+
         <div className="space-y-1.5">
           <Label className="text-xs font-semibold text-muted-foreground">Bio / Curiosidade</Label>
           <textarea
-            value={caption}
-            onChange={(e) => setCaption(e.target.value.slice(0, 120))}
+            value={bio}
+            onChange={(e) => setBio(e.target.value.slice(0, 120))}
             rows={2}
             className="flex w-full rounded-xl border border-input bg-background px-3 py-3 text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
@@ -328,6 +301,7 @@ export function StickerAlbumSection() {
   const [loading, setLoading] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<StickerCard | null>(null);
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
 
   const loadStickers = useCallback(async () => {
     setLoading(true);
@@ -624,10 +598,19 @@ export function StickerAlbumSection() {
           </div>
 
           {/* ─── Album Body ─── */}
-          <div style={{ background: 'linear-gradient(180deg, #f0f4f8 0%, #e1e8f0 100%)', borderTop: '2px solid #FFDF00' }}>
+          <div className="relative overflow-hidden" style={{
+            backgroundColor: '#001D5E',
+            backgroundImage: 'url("/album-bg.png")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'bottom center',
+            borderTop: '2px solid #FFDF00'
+          }}>
+
+            {/* Frosted white overlay to make the background subtle and let stickers pop */}
+            <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] pointer-events-none z-0" />
 
             {/* Sub-header strip */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-4 md:px-6 py-3.5 bg-white"
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3 px-4 md:px-6 py-3.5 bg-white shadow-md"
               style={{ borderBottom: '1px solid rgba(0,0,0,0.1)' }}
             >
               <div className="flex items-center justify-between w-full md:w-auto">
@@ -643,20 +626,20 @@ export function StickerAlbumSection() {
                   </span>
                 )}
               </div>
-              
+
               <div className="flex items-center gap-3 w-full md:w-auto">
                 {loading && (
                   <span style={{ fontSize: 10, color: '#666' }} className="animate-pulse hidden md:inline">
                     Carregando...
                   </span>
                 )}
-                
+
                 {/* Score/Slots */}
                 <div className="flex items-center justify-center bg-gradient-to-br from-[#002776] to-[#001D5E] text-white px-2.5 py-1 rounded-md shadow-sm border border-[#FFDF00]/30 shrink-0" style={{ minWidth: 48 }}>
                   <span style={{ fontSize: 14, fontWeight: 900, lineHeight: 1 }}>{filledCount}</span>
                   <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.7, marginLeft: 2, lineHeight: 1 }}>/{TOTAL_SLOTS}</span>
                 </div>
-                
+
                 {/* Thematic Progress Bar Wrapper */}
                 <div className="relative flex-1 md:w-64 h-5 mx-1.5">
                   {/* Track */}
@@ -665,11 +648,11 @@ export function StickerAlbumSection() {
                     <div className="absolute inset-0 opacity-[0.06]" style={{
                       background: 'repeating-linear-gradient(90deg, #000 0px, #000 12px, transparent 12px, transparent 24px)'
                     }} />
-                    
+
                     {/* Fill */}
                     <motion.div
                       className="absolute top-0 bottom-0 left-0 rounded-full"
-                      style={{ 
+                      style={{
                         background: `linear-gradient(90deg, ${BR.green} 0%, #3dba6b 50%, ${BR.yellow} 100%)`,
                         boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.4)'
                       }}
@@ -680,36 +663,36 @@ export function StickerAlbumSection() {
                     >
                       {/* Shine effect at the end of the bar */}
                       <div className="absolute top-0 bottom-0 right-0 w-8" style={{
-                         background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6) 50%, transparent)'
+                        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6) 50%, transparent)'
                       }} />
                     </motion.div>
                   </div>
 
                   {/* Tracking Icon */}
                   <motion.div
-                     className="absolute top-1/2 -translate-y-1/2 flex items-center justify-center z-10"
-                     style={{ width: 24, height: 24, marginLeft: -12 }}
-                     initial={{ left: '0%' }}
-                     whileInView={{ left: `${progressPct}%` }}
-                     viewport={{ once: true }}
-                     transition={{ duration: 1.2, type: "spring", bounce: 0.2 }}
+                    className="absolute top-1/2 -translate-y-1/2 flex items-center justify-center z-10"
+                    style={{ width: 24, height: 24, marginLeft: -12 }}
+                    initial={{ left: '0%' }}
+                    whileInView={{ left: `${progressPct}%` }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1.2, type: "spring", bounce: 0.2 }}
                   >
-                     <span style={{ fontSize: 18, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }}>⚽</span>
+                    <span style={{ fontSize: 18, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }}>⚽</span>
                   </motion.div>
                 </div>
-                
+
                 <span className="text-right shrink-0" style={{ minWidth: 36, fontSize: 14, fontWeight: 900, color: BR.green }}>
                   {progressPct}%
                 </span>
               </div>
             </div>
             {/* Rainbow underline */}
-            <div className="h-[2px] mx-6 rounded-full"
+            <div className="relative z-10 h-[2px] mx-6 rounded-full"
               style={{ background: `linear-gradient(90deg, ${BR.green}55, ${BR.yellow}55, transparent)` }}
             />
 
             {/* Sticker grid */}
-            <div className="p-5 md:p-8">
+            <div className="relative z-10 p-5 md:p-8">
               <AnimatePresence mode="popLayout">
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 md:gap-4">
                   {slots.map((slot) =>
@@ -720,6 +703,7 @@ export function StickerAlbumSection() {
                         canAdmin={canAdmin}
                         onDelete={handleDelete}
                         onEdit={setEditTarget}
+                        onView={setViewingImage}
                       />
                     ) : (
                       <EmptySlot
@@ -736,7 +720,7 @@ export function StickerAlbumSection() {
 
             {/* Album footer */}
             <div
-              className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-[#009C3B] via-[#004D28] to-[#009C3B]"
+              className="relative z-10 flex items-center justify-between px-6 py-4 bg-gradient-to-r from-[#009C3B] via-[#004D28] to-[#009C3B]"
             >
               <div className="flex items-center gap-2">
 
@@ -767,6 +751,35 @@ export function StickerAlbumSection() {
         onClose={() => setEditTarget(null)}
         onSave={handleEdit}
       />
+
+      {/* Lightbox Modal */}
+      <AnimatePresence>
+        {viewingImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setViewingImage(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 cursor-zoom-out"
+          >
+            <motion.img
+              initial={{ scale: 0.9, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 10 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              src={viewingImage}
+              className="max-w-full max-h-[90vh] rounded-xl shadow-2xl object-contain ring-4 ring-white/10"
+              alt="Visualização da Figurinha"
+              onClick={(e) => e.stopPropagation()} // Prevent clicking the image from closing it if they want to drag, but a click outside closes.
+            />
+            
+            {/* Close Button Hint */}
+            <div className="absolute top-6 right-6 w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white cursor-pointer transition-colors" onClick={() => setViewingImage(null)}>
+              ✕
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

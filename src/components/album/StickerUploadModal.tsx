@@ -28,7 +28,9 @@ export function StickerUploadModal({ open, onOpenChange, onSuccess }: StickerUpl
   const [fileSize, setFileSize] = useState(0);
   const [petName, setPetName] = useState('');
   const [ownerName, setOwnerName] = useState('');
-  const [caption, setCaption] = useState('');
+  const [bio, setBio] = useState('');
+  const [teamPosition, setTeamPosition] = useState('Atacante');
+  const [shirtNumber, setShirtNumber] = useState('10');
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -74,11 +76,17 @@ export function StickerUploadModal({ open, onOpenChange, onSuccess }: StickerUpl
       });
 
       setUploadProgress('Salvando no álbum...');
+      const captionData = JSON.stringify({
+        bio: bio.trim(),
+        position: teamPosition,
+        number: shirtNumber
+      });
+      
       const result = await createStickerCard({
         url,
         pet_name: petName.trim(),
         owner_name: ownerName.trim() || undefined,
-        caption: caption.trim() || undefined,
+        caption: captionData,
       });
 
       if (!result) throw new Error('Falha ao salvar figurinha.');
@@ -102,7 +110,9 @@ export function StickerUploadModal({ open, onOpenChange, onSuccess }: StickerUpl
     setFileSize(0);
     setPetName('');
     setOwnerName('');
-    setCaption('');
+    setBio('');
+    setTeamPosition('Atacante');
+    setShirtNumber('10');
     setLoading(false);
     setUploadProgress('');
   };
@@ -220,20 +230,45 @@ export function StickerUploadModal({ open, onOpenChange, onSuccess }: StickerUpl
           />
         </div>
 
-        {/* Caption (optional) */}
+        {/* Position and Number */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold">Posição no time</Label>
+            <Input
+              value={teamPosition}
+              onChange={(e) => setTeamPosition(e.target.value.slice(0, 30))}
+              placeholder="Ex: Atacante"
+              className="h-11 rounded-xl text-base"
+              autoComplete="off"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold">Nº da camisa</Label>
+            <Input
+              type="number"
+              value={shirtNumber}
+              onChange={(e) => setShirtNumber(e.target.value.slice(0, 3))}
+              placeholder="Ex: 10"
+              className="h-11 rounded-xl text-base"
+              autoComplete="off"
+            />
+          </div>
+        </div>
+
+        {/* Bio (optional) */}
         <div className="space-y-2">
           <Label className="text-sm font-semibold">
             Curiosidade / Bio
             <span className="text-muted-foreground text-xs font-normal ml-1">(opcional)</span>
           </Label>
           <textarea
-            value={caption}
-            onChange={(e) => setCaption(e.target.value.slice(0, 120))}
+            value={bio}
+            onChange={(e) => setBio(e.target.value.slice(0, 120))}
             placeholder="Uma curiosidade sobre o pet... 🐾"
             rows={2}
             className="flex w-full rounded-xl border border-input bg-background px-3 py-3 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
           />
-          <p className="text-xs text-muted-foreground text-right">{caption.length}/120</p>
+          <p className="text-xs text-muted-foreground text-right">{bio.length}/120</p>
         </div>
 
         <div className="p-3 rounded-xl bg-primary/5 border border-primary/15">

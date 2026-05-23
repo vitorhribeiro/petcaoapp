@@ -82,7 +82,8 @@ export function HeroSection() {
 
   return (
     <section id="inicio" className="relative min-h-screen flex items-center pt-16 pb-28 lg:pb-0 overflow-hidden">
-      <div className="container mx-auto px-4">
+      
+      <div className="container mx-auto px-4 relative z-10">
         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* ── Left column — text content ── */}
           <motion.div
@@ -129,17 +130,11 @@ export function HeroSection() {
             {/* Title — improved typography */}
             <motion.h1
               variants={fadeUp}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] lg:leading-tight max-w-[320px] sm:max-w-none mx-auto lg:mx-0"
+              className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] lg:leading-[1.15] max-w-[320px] sm:max-w-none mx-auto lg:mx-0"
             >
-              {homeContent.hero.title.includes('carinho') ? (
-                <>
-                  <span className="text-foreground">Seu pet merece</span>
-                  <br className="sm:hidden" />
-                  {' '}<span className="bg-gradient-to-r from-[#1A73E8] via-[#4285F4] to-[#FBBC04] bg-clip-text text-transparent">carinho e cuidado</span>
-                </>
-              ) : (
-                homeContent.hero.title
-              )}
+              <span className="text-foreground">A Copa já chegou no</span>
+              <br className="hidden sm:block" />
+              {' '}<span className="bg-gradient-to-r from-[#009C3B] via-[#FFDF00] to-[#002776] bg-clip-text text-transparent font-black tracking-tight drop-shadow-sm">PetCão</span>
             </motion.h1>
 
             {/* Mobile orbital visual — more breathing room */}

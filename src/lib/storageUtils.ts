@@ -22,7 +22,7 @@ export async function uploadImageToStorage(
       .from(bucket)
       .upload(fileName, webpBlob, {
         contentType: 'image/webp',
-        upsert: false,
+        upsert: true,
       });
 
     if (error) {

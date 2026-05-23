@@ -21,7 +21,7 @@ interface MobileDrawerMenuProps {
 }
 
 const exploreItems = [
-  { id: 'album',       icon: PawPrint,     label: '🏆 Álbum',    color: '#0a7ae6', bg: 'rgba(10,122,230,0.15)'  },
+  { id: 'album',       icon: PawPrint,     label: '🏆 Álbum',    color: '#009C3B', bg: 'rgba(255,223,0,0.25)' },
   { id: 'servicos',    icon: Scissors,     label: 'Serviços',    color: '#8B5CF6', bg: 'rgba(139,92,246,0.15)' },
   { id: 'pacotes',     icon: Package,      label: 'Pacotes',     color: '#3B82F6', bg: 'rgba(59,130,246,0.15)'  },
   { id: 'fotos',       icon: Camera,       label: 'Galeria',     color: '#EC4899', bg: 'rgba(236,72,153,0.15)'  },

@@ -88,11 +88,7 @@ function PremiumCard({ icon: Icon, title, description, children, className = '' 
 }
 
 /* ─── Favicon Uploader ─── */
-function FaviconUploader() {
-  const [faviconPreview, setFaviconPreview] = useState<string>(() => {
-    const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-    return link?.href || '/favicon.ico';
-  });
+function FaviconUploader({ value, onChange }: { value: string; onChange: (url: string) => void }) {
   const [uploading, setUploading] = useState(false);
 
   const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,20 +98,9 @@ function FaviconUploader() {
     if (!validation.valid) { toast.error(validation.error || 'Arquivo inválido'); e.target.value = ''; return; }
     setUploading(true);
     try {
-      const { url } = await uploadImageToStorage(file, 'logos', 'favicon', { quality: 0.75, maxWidth: 256, maxHeight: 256 });
-      setFaviconPreview(url);
-      // Update the actual favicon in the document
-      let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-      if (!link) {
-        link = document.createElement('link');
-        link.rel = 'icon';
-        document.head.appendChild(link);
-      }
-      link.href = url;
-      link.type = 'image/png';
-      // Save to localStorage for persistence
-      localStorage.setItem('petcao-favicon', url);
-      toast.success('Favicon atualizado!');
+      const { url } = await uploadImageToStorage(file, 'logos', undefined, { quality: 0.75, maxWidth: 256, maxHeight: 256 });
+      onChange(url);
+      toast.success('Favicon atualizado! Clique em "Salvar" para aplicar.');
     } catch {
       toast.error('Erro ao enviar favicon.');
     }
@@ -125,15 +110,15 @@ function FaviconUploader() {
 
   return (
     <div className="flex items-center gap-4">
-      <div className="w-14 h-14 rounded-xl border border-border/50 overflow-hidden bg-muted/50 flex items-center justify-center shadow-sm">
-        <img src={faviconPreview} alt="Favicon" className="w-8 h-8 object-contain" />
+      <div className="w-16 h-16 rounded-xl border border-border/50 overflow-hidden bg-muted/50 flex items-center justify-center shadow-sm">
+        <img src={value || '/favicon.ico'} alt="Favicon" className="w-8 h-8 object-contain" />
       </div>
       <div>
         <Button type="button" variant="outline" size="sm" className="gap-1.5 h-10" disabled={uploading} onClick={() => document.getElementById('favicon-upload')?.click()}>
           <Upload className="w-3.5 h-3.5" /> {uploading ? 'Enviando...' : 'Alterar Favicon'}
         </Button>
         <input id="favicon-upload" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon" onChange={handleFaviconUpload} className="hidden" />
-        <p className="text-[11px] text-muted-foreground mt-1.5">PNG ou ICO, 256×256px recomendado</p>
+        <p className="text-[10px] text-muted-foreground mt-1.5">PNG ou ICO, 256×256px recomendado</p>
       </div>
     </div>
   );
@@ -188,11 +173,14 @@ export default function Configuracoes() {
   const [overrideNote, setOverrideNote] = useState('');
   const [logoPreview, setLogoPreview] = useState<string>(branding.logoUrl);
   const [mascotPreview, setMascotPreview] = useState<string>(branding.mascotUrl);
+  const [adminLogoPreview, setAdminLogoPreview] = useState<string>(branding.adminLogoUrl || '');
   const [brandingForm, setBrandingForm] = useState({
     shopName: branding.shopName, 
     primaryColor: branding.primaryColor, 
     logoUrl: branding.logoUrl,
     mascotUrl: branding.mascotUrl,
+    adminLogoUrl: branding.adminLogoUrl || '',
+    faviconUrl: branding.faviconUrl || '',
   });
   const [openTime, setOpenTime] = useState(config.openingHours.openTime);
   const [closeTime, setCloseTime] = useState(config.openingHours.closeTime);
@@ -253,7 +241,7 @@ export default function Configuracoes() {
     if (!validation.valid) { toast.error(validation.error || 'Arquivo inválido'); e.target.value = ''; return; }
     try {
       toast.loading('Enviando foto...');
-      const { url } = await uploadImageToStorage(file, 'logos', 'mascot', { quality: 0.8, maxWidth: 1024, maxHeight: 1024 });
+      const { url } = await uploadImageToStorage(file, 'logos', undefined, { quality: 0.8, maxWidth: 1024, maxHeight: 1024 });
       setMascotPreview(url);
       setBrandingForm(prev => ({ ...prev, mascotUrl: url }));
       toast.dismiss();
@@ -261,6 +249,25 @@ export default function Configuracoes() {
     } catch {
       toast.dismiss();
       toast.error('Erro ao enviar foto. Tente novamente.');
+    }
+    e.target.value = '';
+  };
+
+  const handleAdminLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const validation = validateImageFile(file);
+    if (!validation.valid) { toast.error(validation.error || 'Arquivo inválido'); e.target.value = ''; return; }
+    try {
+      toast.loading('Enviando logo admin...');
+      const { url } = await uploadImageToStorage(file, 'logos', undefined, { quality: 0.8, maxWidth: 800, maxHeight: 400 });
+      setAdminLogoPreview(url);
+      setBrandingForm(prev => ({ ...prev, adminLogoUrl: url }));
+      toast.dismiss();
+      toast.success('Logo do admin atualizada! Clique em "Salvar".');
+    } catch {
+      toast.dismiss();
+      toast.error('Erro ao enviar logo admin. Tente novamente.');
     }
     e.target.value = '';
   };
@@ -547,7 +554,7 @@ export default function Configuracoes() {
                       <Upload className="w-3.5 h-3.5" /> Escolher logo
                     </Button>
                     <input id="logo-upload" type="file" accept="image/png,image/jpeg,image/webp" onChange={handleLogoUpload} className="hidden" />
-                    <p className="text-[10px] text-muted-foreground mt-1.5">Exibida no topo do site.</p>
+                    <p className="text-[10px] text-muted-foreground mt-1.5">Exibida no topo do site principal.</p>
                   </div>
                 </div>
               </div>
@@ -569,11 +576,34 @@ export default function Configuracoes() {
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">Favicon (Ícone do Navegador)</Label>
-              <FaviconUploader />
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Logo (Painel Admin)</Label>
+                <div className="flex items-center gap-4">
+                  {adminLogoPreview && (
+                    <div className="w-16 h-16 rounded-xl border border-border/50 overflow-hidden bg-muted/50 flex items-center justify-center shadow-sm">
+                      <OptimizedImage src={adminLogoPreview} alt="Logo Admin" className="w-full h-full object-contain" showSkeleton={false} />
+                    </div>
+                  )}
+                  {!adminLogoPreview && (
+                    <div className="w-16 h-16 rounded-xl border border-border/50 bg-muted/50 flex items-center justify-center shadow-sm">
+                       <span className="text-xs text-muted-foreground text-center px-1">Sem logo</span>
+                    </div>
+                  )}
+                  <div>
+                    <Button type="button" variant="outline" size="sm" className="gap-1.5 h-10" onClick={() => document.getElementById('admin-logo-upload')?.click()}>
+                      <Upload className="w-3.5 h-3.5" /> Escolher logo admin
+                    </Button>
+                    <input id="admin-logo-upload" type="file" accept="image/png,image/jpeg,image/webp" onChange={handleAdminLogoUpload} className="hidden" />
+                    <p className="text-[10px] text-muted-foreground mt-1.5">Exibida no menu lateral do painel admin.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Favicon (Ícone do Navegador)</Label>
+                <FaviconUploader value={brandingForm.faviconUrl} onChange={(url) => setBrandingForm(p => ({ ...p, faviconUrl: url }))} />
+              </div>
             </div>
 
             <div className="pt-2">

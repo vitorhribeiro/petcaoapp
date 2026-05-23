@@ -9,6 +9,8 @@ export interface Branding {
   shopName: string;
   logoUrl: string;
   mascotUrl: string;
+  adminLogoUrl: string;
+  faviconUrl: string;
   primaryColor: string;
   templateSelected: TemplateId;
 }
@@ -117,6 +119,8 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     shopName: petshop?.name || 'PetCão',
     logoUrl: petshop?.logo_url || '',
     mascotUrl: settings.homeContent?.hero?.imageUrl || '',
+    adminLogoUrl: settings.adminLogoUrl || '',
+    faviconUrl: settings.faviconUrl || '',
     primaryColor: settings.primaryColor || '#0A7AE6',
     templateSelected: (settings.templateSelected || 'modern') as TemplateId,
   };
@@ -137,7 +141,19 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
       root.style.setProperty('--primary', hsl);
       root.style.setProperty('--ring', hsl);
     }
-  }, [branding.templateSelected, branding.primaryColor, currentTheme]);
+
+    // Apply favicon if loaded
+    if (branding.faviconUrl) {
+      let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = branding.faviconUrl;
+      link.type = 'image/png';
+    }
+  }, [branding.templateSelected, branding.primaryColor, currentTheme, branding.faviconUrl]);
 
   const saveBranding = useCallback(async (partial: Partial<Branding>) => {
     const petshopUpdates: Record<string, any> = {};
@@ -145,6 +161,12 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
 
     if (partial.shopName !== undefined) petshopUpdates.name = partial.shopName;
     if (partial.logoUrl !== undefined) petshopUpdates.logo_url = partial.logoUrl;
+    if (partial.adminLogoUrl !== undefined) settingsUpdates.adminLogoUrl = partial.adminLogoUrl;
+    if (partial.faviconUrl !== undefined) {
+      settingsUpdates.faviconUrl = partial.faviconUrl;
+      // also save to localStorage for faster first load
+      localStorage.setItem('petcao-favicon', partial.faviconUrl);
+    }
     if (partial.mascotUrl !== undefined) {
       settingsUpdates.homeContent = {
         ...(settings.homeContent || DEFAULT_HOME_CONTENT),

@@ -69,7 +69,15 @@ export function Header({ onOpenLogin, onOpenRegister }: HeaderProps) {
             {/* Desktop nav */}
             <nav className="hidden lg:flex items-center gap-1">
               {navLinks.map((link) => (
-                <button key={link.href} onClick={() => scrollToSection(link.href)} className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                <button 
+                  key={link.href} 
+                  onClick={() => scrollToSection(link.href)} 
+                  className={`px-3 py-1.5 text-sm transition-all ${
+                    link.href === '#album'
+                      ? 'font-black text-[#009C3B] bg-gradient-to-r from-[#FFDF00]/20 to-[#FFDF00]/10 border border-[#FFDF00]/50 rounded-md shadow-sm mx-1 hover:scale-105 hover:shadow-md'
+                      : 'font-medium text-muted-foreground hover:text-foreground'
+                  }`}
+                >
                   {link.label}
                 </button>
               ))}
