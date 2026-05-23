@@ -228,6 +228,22 @@ export function DevToolsUsuarios() {
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
+  const extractErrorMessage = async (error: any, defaultMessage: string = 'Erro desconhecido') => {
+    let msg = error?.message || defaultMessage;
+    if (error && 'context' in error && error.context instanceof Response) {
+      try {
+        const errData = await error.context.clone().json();
+        if (errData && errData.error) msg = errData.error;
+      } catch (e) {
+        try {
+          const errText = await error.context.clone().text();
+          if (errText) msg = errText;
+        } catch (e2) {}
+      }
+    }
+    return msg;
+  };
+
   const handleCreate = async () => {
     if (!createForm.name || !createForm.email || !createForm.password) {
       toast({ title: 'Preencha todos os campos obrigatórios', variant: 'destructive' });
@@ -239,12 +255,13 @@ export function DevToolsUsuarios() {
     }
 
     setCreating(true);
-    const { error } = await supabase.functions.invoke('seed-dev-user', {
+    const { data, error } = await supabase.functions.invoke('seed-dev-user', {
       body: { action: 'create', email: createForm.email, password: createForm.password, name: createForm.name, role: createForm.role },
     });
 
-    if (error) {
-      toast({ title: 'Erro ao criar usuário', description: error.message, variant: 'destructive' });
+    if (error || data?.error) {
+      const errorMessage = await extractErrorMessage(error, data?.error);
+      toast({ title: 'Erro ao criar usuário', description: errorMessage, variant: 'destructive' });
       setCreating(false);
       return;
     }
@@ -275,12 +292,13 @@ export function DevToolsUsuarios() {
   const handleConfirmDelete = async () => {
     if (!deleteConfirmUser) return;
     setDeleting(true);
-    const { error } = await supabase.functions.invoke('seed-dev-user', {
+    const { data, error } = await supabase.functions.invoke('seed-dev-user', {
       body: { action: 'delete', userId: deleteConfirmUser.user_id },
     });
 
-    if (error) {
-      toast({ title: 'Erro ao remover usuário', description: error.message, variant: 'destructive' });
+    if (error || data?.error) {
+      const errorMessage = await extractErrorMessage(error, data?.error);
+      toast({ title: 'Erro ao remover usuário', description: errorMessage, variant: 'destructive' });
       setDeleting(false);
       return;
     }
@@ -298,8 +316,9 @@ export function DevToolsUsuarios() {
       body: { user_id: userId },
     });
 
-    if (error) {
-      toast({ title: 'Erro ao gerar senha temporária', description: error.message, variant: 'destructive' });
+    if (error || data?.error) {
+      const errorMessage = await extractErrorMessage(error, data?.error);
+      toast({ title: 'Erro ao gerar senha temporária', description: errorMessage, variant: 'destructive' });
       setResetLoading(false);
       return;
     }

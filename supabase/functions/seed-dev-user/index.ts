@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     if (!caller) {
       return new Response(
         JSON.stringify({ error: "Não autenticado" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     if (!callerRole) {
       return new Response(
         JSON.stringify({ error: "Permissão negada. Somente DEV ou ADMIN." }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       if (!email || !password || !name) {
         return new Response(
           JSON.stringify({ error: "Missing email, password or name" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
       if (!userId) {
         return new Response(
           JSON.stringify({ error: "Missing userId" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
     if (!password) {
       return new Response(
         JSON.stringify({ error: "DEV_SEED_PASSWORD secret not configured." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -174,10 +174,11 @@ Deno.serve(async (req) => {
       JSON.stringify({ message: "Dev user created", userId: newUser.user.id }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Function error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: error.message || String(error) }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

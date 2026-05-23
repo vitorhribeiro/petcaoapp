@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     const { data: { user: caller } } = await supabaseAdmin.auth.getUser(token);
     if (!caller) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
 
     if (!callerRole || !["dev", "admin"].includes(callerRole.role)) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
     const { user_id } = await req.json();
     if (!user_id) {
       return new Response(JSON.stringify({ error: "Missing user_id" }), {
-        status: 400,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -92,10 +92,11 @@ Deno.serve(async (req) => {
       JSON.stringify({ temp_password: tempPassword, expires_at: expiresAt }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Function error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: error.message || String(error) }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
