@@ -19,7 +19,7 @@ interface HeaderProps {
 
 const navLinks = [
   { href: '#inicio', label: 'Início' },
-  { href: '#album', label: '🏆 Álbum' },
+  { href: '#album', label: 'Álbum' },
   { href: '#servicos', label: 'Serviços' },
   { href: '#pacotes', label: 'Pacotes' },
   { href: '#agenda', label: 'Agenda' },
@@ -72,13 +72,16 @@ export function Header({ onOpenLogin, onOpenRegister }: HeaderProps) {
                 <button 
                   key={link.href} 
                   onClick={() => scrollToSection(link.href)} 
-                  className={`px-3 py-1.5 text-sm transition-all ${
+                  className={`transition-all duration-300 relative group overflow-hidden flex items-center gap-1.5 ${
                     link.href === '#album'
-                      ? 'font-black text-[#009C3B] bg-gradient-to-r from-[#FFDF00]/20 to-[#FFDF00]/10 border border-[#FFDF00]/50 rounded-md shadow-sm mx-1 hover:scale-105 hover:shadow-md'
-                      : 'font-medium text-muted-foreground hover:text-foreground'
+                      ? 'px-3 py-1 text-[14px] font-bold text-[#009C3B] bg-gradient-to-r from-[#FFDF00]/20 to-[#FFDF00]/10 border border-[#FFDF00]/50 rounded-full mx-1 hover:bg-[#FFDF00]/30 hover:scale-105'
+                      : 'px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {link.label}
+                  {link.href === '#album' && (
+                    <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f1e7-1f1f7.svg" alt="Bandeira do Brasil" className="inline-block w-3.5 h-3.5 align-middle" />
+                  )}
                 </button>
               ))}
               {isAuthenticated && (user?.role === 'cliente' || clientModeActive) && (

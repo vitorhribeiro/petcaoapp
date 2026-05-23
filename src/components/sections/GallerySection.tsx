@@ -41,7 +41,26 @@ export function GallerySection() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const showAdmin = isDev() || isAdmin();
 
-  useEffect(() => { getGalleryCategories(true).then(setCategories); }, []);
+  useEffect(() => { 
+    const fetchCats = async () => {
+      const fetchedCats = await getGalleryCategories(true);
+      // Ensure 'copa' category exists locally so stickers can be viewed
+      if (!fetchedCats.some(c => c.slug === 'copa')) {
+        fetchedCats.push({
+          id: 'temp-copa-id',
+          petshop_id: '',
+          name: 'Copa',
+          slug: 'copa',
+          max_photos: 100,
+          sort_order: 99,
+          is_active: true,
+          created_at: new Date().toISOString()
+        });
+      }
+      setCategories(fetchedCats); 
+    };
+    fetchCats();
+  }, []);
   useEffect(() => { setVisibleCount(ITEMS_PER_PAGE); }, [selectedCategory]);
 
   const approvedImages = useMemo(

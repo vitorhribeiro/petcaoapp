@@ -81,34 +81,37 @@ export function Footer() {
       <div className="container mx-auto px-6 relative z-10">
         {/* ── Top section: Brand Hub ── */}
         <div className="pt-20 pb-16">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 bg-white/40 dark:bg-white/[0.08] backdrop-blur-md border border-white/60 dark:border-white/[0.12] p-8 rounded-[2.5rem] shadow-xl shadow-black/[0.02]">
-            <div className="flex items-center gap-6">
-              <div className="relative group">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-8 bg-white/40 dark:bg-white/[0.08] backdrop-blur-md border border-white/60 dark:border-white/[0.12] p-6 md:p-8 rounded-[2.5rem] shadow-xl shadow-black/[0.02]">
+            <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto">
+              <div className="relative group shrink-0">
                 <div className="absolute -inset-2 bg-gradient-to-tr from-primary/20 to-secondary/20 rounded-3xl blur opacity-100 transition duration-500" />
-                <div className="relative p-3.5 bg-white dark:bg-surface rounded-2xl border border-border/40 dark:border-white/[0.1] shadow-lg">
-                  <OptimizedImage src={logoSrc} alt={branding.shopName} className="h-12 w-auto max-w-[160px] max-h-12 object-contain" showSkeleton={false} />
+                <div className="relative p-3 bg-white dark:bg-surface rounded-2xl border border-border/40 dark:border-white/[0.1] shadow-lg">
+                  <OptimizedImage src={logoSrc} alt={branding.shopName} className="h-10 md:h-12 w-auto max-w-[120px] md:max-w-[160px] object-contain" showSkeleton={false} />
                 </div>
               </div>
               <div className="space-y-1">
-                <h3 className="font-bold text-2xl tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">{branding.shopName}</h3>
-                <p className="text-sm text-muted-foreground font-medium flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                  Cuidado premium para seu pet
+                <h3 className="font-bold text-xl md:text-2xl tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent leading-tight">{branding.shopName}</h3>
+                <p className="text-xs md:text-sm text-muted-foreground font-medium flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shrink-0" />
+                  <span className="truncate">Cuidado premium para seu pet</span>
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="hidden sm:flex flex-col items-end mr-2">
-                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">Precisa de ajuda?</span>
+            {/* Divider for mobile only */}
+            <div className="w-full h-px bg-border/40 md:hidden" />
+
+            <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
+              <div className="flex flex-col md:items-end">
+                <span className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">Precisa de ajuda?</span>
                 <span className="text-sm font-semibold">{phone || 'Entre em contato'}</span>
               </div>
               <button
                 onClick={scrollToTop}
-                className="group w-14 h-14 bg-primary text-primary-foreground hover:scale-105 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-lg shadow-primary/20"
+                className="group w-12 h-12 md:w-14 md:h-14 bg-primary text-primary-foreground hover:scale-105 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-lg shadow-primary/20 shrink-0"
                 aria-label="Voltar ao topo"
               >
-                <ChevronUp className="w-6 h-6 group-hover:-translate-y-1 transition-transform duration-300" />
+                <ChevronUp className="w-5 h-5 md:w-6 md:h-6 group-hover:-translate-y-1 transition-transform duration-300" />
               </button>
             </div>
           </div>
@@ -243,15 +246,15 @@ export function Footer() {
 
         {/* ── Bottom Copyright ── */}
         <div className="border-t border-border/60 dark:border-white/[0.06] py-10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <Heart className="w-4 h-4 text-red-500 fill-red-500" />
+          <div className="flex items-center justify-center text-center max-w-sm md:max-w-none md:text-left">
             <p className="text-[13px] font-medium text-muted-foreground/70">
+              <Heart className="w-4 h-4 text-red-500 fill-red-500 inline-block mr-1.5 -mt-0.5" />
               © {currentYear} {branding.shopName}. Todos os direitos reservados a Otix Landing.
             </p>
           </div>
           
-          <div className="flex items-center gap-6">
-            <div className="flex gap-4 text-[13px] font-medium text-muted-foreground/50">
+          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-6">
+            <div className="flex gap-6 md:gap-4 text-[13px] font-medium text-muted-foreground/50">
               <Dialog>
                 <DialogTrigger asChild>
                   <button className="hover:text-primary transition-colors flex items-center gap-1.5 group/link">
@@ -344,7 +347,7 @@ export function Footer() {
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="h-4 w-px bg-border/60" />
+            <div className="hidden md:block h-4 w-px bg-border/60" />
             <div className="relative group/otix">
               <div className="absolute -inset-1 bg-gradient-to-tr from-primary/20 to-secondary/20 rounded-full blur opacity-100 transition duration-500" />
               <a 

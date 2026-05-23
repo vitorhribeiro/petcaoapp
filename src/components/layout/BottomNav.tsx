@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Home, Scissors, CalendarPlus, Package, MapPin } from 'lucide-react';
+import { Home, Scissors, CalendarPlus, Image, MapPin } from 'lucide-react';
 
 const sideItems = [
   { id: 'inicio', icon: Home, label: 'Home' },
   { id: 'servicos', icon: Scissors, label: 'Serviços' },
-  { id: 'pacotes', icon: Package, label: 'Pacotes' },
+  { id: 'fotos', icon: Image, label: 'Galeria' },
   { id: 'localizacao', icon: MapPin, label: 'Local' },
 ];
 

@@ -53,6 +53,7 @@ export function PackagesSection() {
   const [packages, setPackages] = useState<PackageRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState<string>('pequeno');
+  const [selectedFrequency, setSelectedFrequency] = useState<number | null>(null);
   const [seedError, setSeedError] = useState<string | null>(null);
 
   const handleWhatsApp = (pkg: PackageRow) => {
@@ -93,6 +94,12 @@ export function PackagesSection() {
       }
       
       setPackages(activePackages);
+      if (activePackages.length > 0) {
+        const freqs = Array.from(new Set(activePackages.map(p => p.interval_days))).sort((a, b) => a - b);
+        if (freqs.includes(7)) setSelectedFrequency(7);
+        else if (freqs.includes(15)) setSelectedFrequency(15);
+        else setSelectedFrequency(freqs[0]);
+      }
       setLoading(false);
     });
   }, []);
@@ -156,11 +163,43 @@ export function PackagesSection() {
               })}
             </div>
           </div>
+
+          {/* Frequency Filter */}
+          {packages.length > 0 && (
+            <div className="mt-8 max-w-lg mx-auto">
+              <h4 className="font-semibold text-foreground mb-4 flex items-center justify-center gap-2 text-[15px]">
+                <Repeat className="w-4 h-4 text-[#FBBF24]" />
+                Qual a frequência dos banhos?
+              </h4>
+              <div className="flex flex-wrap bg-muted/30 p-1.5 rounded-3xl border border-border/50 gap-2">
+                {Array.from(new Set(packages.map(p => p.interval_days)))
+                  .sort((a, b) => a - b)
+                  .map(freq => {
+                    const isSelected = selectedFrequency === freq;
+                    return (
+                      <button
+                        key={freq}
+                        onClick={() => setSelectedFrequency(freq)}
+                        className={cn(
+                          "flex-1 py-3.5 px-4 rounded-2xl font-bold text-sm transition-all whitespace-nowrap border-2 relative overflow-hidden group",
+                          isSelected
+                            ? "border-[#FBBF24] bg-gradient-to-br from-[#FBBF24]/10 to-[#FBBF24]/5 shadow-[0_4px_12px_-2px_rgba(251,191,36,0.2)] text-[#F5B000] scale-[1.02] z-10"
+                            : "border-transparent text-muted-foreground hover:text-foreground hover:bg-background/50"
+                        )}
+                      >
+                        {isSelected && <div className="absolute inset-0 bg-gradient-to-t from-[#FBBF24]/20 to-transparent opacity-50" />}
+                        <span className="relative z-10">{getIntervalLabel(freq)}</span>
+                      </button>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
         </motion.div>
 
         {/* ── Cards grid ── */}
         <motion.div
-          key={selectedSize}
+          key={`${selectedSize}-${selectedFrequency}`}
           className="flex flex-wrap justify-center gap-8 max-w-6xl mx-auto"
           variants={stagger}
           initial="hidden"
@@ -170,7 +209,9 @@ export function PackagesSection() {
           {(() => {
             const filteredPackages = packages.filter(pkg => {
               const allowedSizes = settings.package_sizes?.[pkg.id] || ['pequeno', 'medio', 'grande'];
-              return allowedSizes.includes(selectedSize);
+              const matchesSize = allowedSizes.includes(selectedSize);
+              const matchesFreq = selectedFrequency === null || pkg.interval_days === selectedFrequency;
+              return matchesSize && matchesFreq;
             });
 
             if (filteredPackages.length > 0) {

@@ -20,7 +20,7 @@ export async function getAlbumStickers(): Promise<StickerCard[]> {
     .from('gallery_photos')
     .select('*')
     .eq('petshop_id', PETSHOP_ID)
-    .eq('category', 'pets')
+    .in('category', ['pets', 'copa'])
     .ilike('alt', 'Figurinha%')
     .eq('moderation_status', 'aprovado')
     .order('created_at', { ascending: true });
@@ -47,7 +47,7 @@ export async function createStickerCard(data: {
       url: data.url,
       alt: data.pet_name ? `Figurinha de ${data.pet_name}` : 'Figurinha PetCão',
       caption: data.caption || '',
-      category: 'pets',
+      category: 'copa',
       source: 'PETSHOP',
       pet_name: data.pet_name || null,
       owner_name: data.owner_name || null,

@@ -134,7 +134,10 @@ export function HeroSection() {
             >
               <span className="text-foreground">A Copa já chegou no</span>
               <br className="hidden sm:block" />
-              {' '}<span className="bg-gradient-to-r from-[#009C3B] via-[#FFDF00] to-[#002776] bg-clip-text text-transparent font-black tracking-tight drop-shadow-sm">PetCão</span>
+              {' '}<span className="bg-gradient-to-r from-[#009C3B] via-[#FFDF00] to-[#002776] bg-clip-text text-transparent font-black tracking-tight drop-shadow-sm">PetCão</span>{' '}
+              <span className="inline-block relative z-10" style={{ WebkitTextFillColor: 'initial', textShadow: 'none' }}>
+                🏆 <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f1e7-1f1f7.svg" alt="Bandeira do Brasil" className="inline-block w-[1.1em] h-[1.1em] align-middle -mt-1 ml-0.5 drop-shadow-sm" />
+              </span>
             </motion.h1>
 
             {/* Mobile orbital visual — more breathing room */}
