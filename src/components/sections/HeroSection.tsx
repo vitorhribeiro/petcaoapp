@@ -15,6 +15,7 @@ import {
 
 import { heroStagger as stagger, heroFadeUp as fadeUp } from '@/lib/animations';
 import { cn } from '@/lib/utils';
+import { openWhatsAppConversation } from '@/lib/whatsapp';
 
 /* ── Inject scroll indicator animation (CSS-only) ── */
 const scrollStyleId = 'hero-scroll-styles';
@@ -181,8 +182,7 @@ export function HeroSection() {
                 size="lg"
                 className="hidden sm:flex bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-8 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/25 transition-all duration-200"
                 onClick={() => {
-                  const calendarEl = document.getElementById('agenda-wizard') || document.getElementById('agenda');
-                  if (calendarEl) calendarEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  openWhatsAppConversation({ phone: undefined, message: 'Oiii! Meu pet está pronto para a Copa e precisa daquele banho de campeão! Quais horários vocês têm livres?' });
                 }}
               >
                 {homeContent.hero.buttonPrimary}

@@ -596,17 +596,7 @@ export function CalendarSection({ onOpenLogin }: CalendarSectionProps) {
               </div>
 
               {/* Login / Preview Area (Secondary) */}
-              {!isAuthenticated && (
-                <div className="mt-6 pt-4 border-t border-border/40 flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground/70">Deseja conhecer a plataforma?</span>
-                  <button 
-                    onClick={onOpenLogin} 
-                    className="text-primary hover:text-primary-light font-bold transition-colors underline underline-offset-4"
-                  >
-                    Entrar / Criar Conta
-                  </button>
-                </div>
-              )}
+
             </div>
 
             {/* Right Column: Key Features Showcase */}
@@ -867,14 +857,11 @@ export function CalendarSection({ onOpenLogin }: CalendarSectionProps) {
                     <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3">
                       <Lock className="w-6 h-6 text-primary" />
                     </div>
-                    <h3 className="text-lg font-bold text-foreground mb-1.5">Faça login para agendar</h3>
+                    <h3 className="text-lg font-bold text-foreground mb-1.5">Agendamento</h3>
                     <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-                      Entre para ver horários disponíveis e confirmar pelo WhatsApp.
+                      Por favor, utilize o botão do WhatsApp ao lado para agendar seu horário.
                     </p>
                     <div className="space-y-2">
-                      <Button className="w-full" onClick={onOpenLogin}>
-                        Entrar / Criar conta
-                      </Button>
                       <Button variant="ghost" size="sm" className="w-full text-xs">
                         Voltar para o site
                       </Button>
@@ -892,16 +879,13 @@ export function CalendarSection({ onOpenLogin }: CalendarSectionProps) {
                   <CalendarDays className="w-6 h-6" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-bold text-foreground">Como deseja agendar?</h3>
+                  <h3 className="text-xl font-bold text-foreground">Agendamento Rápido</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Você pode criar uma conta para salvar o perfil dos seus pets ou agendar rapidamente como convidado.
+                    Você pode agendar rapidamente como convidado.
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                  <Button className="flex-1 rounded-xl h-11 font-semibold" onClick={onOpenLogin}>
-                    Entrar / Criar Conta
-                  </Button>
-                  <Button variant="outline" className="flex-1 rounded-xl h-11 font-semibold" onClick={() => setIsGuest(true)}>
+                  <Button className="flex-1 rounded-xl h-11 font-semibold" onClick={() => setIsGuest(true)}>
                     Agendar como Convidado
                   </Button>
                 </div>

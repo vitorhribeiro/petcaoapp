@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Home, Scissors, CalendarPlus, Image, MapPin } from 'lucide-react';
+import { openWhatsAppConversation } from '@/lib/whatsapp';
 
 const sideItems = [
   { id: 'inicio', icon: Home, label: 'Home' },
@@ -32,8 +33,7 @@ export function BottomNav() {
   };
 
   const handleAgendarClick = () => {
-    const calendarEl = document.getElementById('agenda-wizard') || document.getElementById('agenda');
-    if (calendarEl) calendarEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    openWhatsAppConversation({ phone: undefined, message: 'Olá, PetCão! Gostaria de ver os horários disponíveis para dar aquele trato no meu pet!' });
   };
 
   const leftItems = sideItems.slice(0, 2);

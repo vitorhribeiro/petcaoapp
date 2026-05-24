@@ -11,6 +11,7 @@ import { MobileDrawerMenu } from '@/components/layout/MobileDrawerMenu';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 import { useTestModes } from '@/contexts/TestModesContext';
+import { openWhatsAppConversation } from '@/lib/whatsapp';
 
 interface HeaderProps {
   onOpenLogin?: () => void;
@@ -108,15 +109,9 @@ export function Header({ onOpenLogin, onOpenRegister }: HeaderProps) {
                   </span>
                   <Button variant="outline" size="sm" onClick={handleLogout}>Sair</Button>
                 </>
-              ) : (
-                <>
-                  <Button variant="ghost" size="sm" onClick={handleOpenLogin}>Entrar</Button>
-                  <Button variant="outline" size="sm" onClick={handleOpenRegister}>Cadastrar</Button>
-                </>
-              )}
+              ) : null}
               <Button size="sm" className="bg-secondary hover:bg-secondary/90 text-secondary-foreground" onClick={() => {
-                const calendarEl = document.getElementById('agenda-wizard') || document.getElementById('agenda');
-                if (calendarEl) calendarEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                openWhatsAppConversation({ phone: undefined, message: 'Olá, PetCão! Gostaria de ver os horários disponíveis para dar aquele trato no meu pet!' });
               }}>
                 Agendar
               </Button>
@@ -126,13 +121,15 @@ export function Header({ onOpenLogin, onOpenRegister }: HeaderProps) {
             <div className="lg:hidden flex items-center gap-0.5 sm:gap-1">
               <NotificationBell />
               <ThemeToggle />
-              <button
-                onClick={() => isAuthenticated ? navigate('/perfil') : handleOpenLogin()}
-                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                aria-label={isAuthenticated ? "Acessar perfil" : "Fazer login"}
-              >
-                <User className="w-[1.15rem] h-[1.15rem]" />
-              </button>
+              {isAuthenticated && (
+                <button
+                  onClick={() => navigate('/perfil')}
+                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  aria-label="Acessar perfil"
+                >
+                  <User className="w-[1.15rem] h-[1.15rem]" />
+                </button>
+              )}
               <button
                 onClick={() => setDrawerOpen(true)}
                 className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"

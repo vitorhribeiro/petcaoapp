@@ -44,7 +44,8 @@ export function getPetshopWhatsAppPhone(options?: {
 }
 
 export function buildWhatsAppUrl(phone: string | null | undefined, message: string): string | null {
-  const normalizedPhone = normalizeWhatsAppPhone(phone);
+  const resolvedPhone = phone || getPetshopWhatsAppPhone();
+  const normalizedPhone = normalizeWhatsAppPhone(resolvedPhone);
   if (!normalizedPhone) return null;
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
 }

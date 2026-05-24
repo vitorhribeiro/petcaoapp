@@ -382,34 +382,7 @@ export function MobileDrawerMenu({ open, onOpenChange, onOpenLogin }: MobileDraw
                     Faça login para agendar e acompanhar seus pets.
                   </p>
 
-                  {/* CTA button */}
-                  <button
-                    onClick={() => { close(); navigate('/auth/login'); }}
-                    style={{
-                      marginTop: 18, width: '100%', padding: '14px', borderRadius: 16, border: 'none', cursor: 'pointer',
-                      background: 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 60%, #0EA5E9 100%)',
-                      color: '#fff', fontSize: 15, fontWeight: 700,
-                      letterSpacing: '-0.2px',
-                      boxShadow: '0 6px 28px rgba(99,102,241,0.5)',
-                      transition: 'transform 150ms, box-shadow 150ms',
-                    }}
-                    onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.97)'; e.currentTarget.style.boxShadow = '0 3px 14px rgba(99,102,241,0.4)'; }}
-                    onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 6px 28px rgba(99,102,241,0.5)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 6px 28px rgba(99,102,241,0.5)'; }}
-                  >
-                    Entrar / Criar conta
-                  </button>
 
-                  {/* Divider hint */}
-                  <p style={{ margin: '12px 0 0', fontSize: 11, color: textSub }}>
-                    Novo por aqui?{' '}
-                    <button
-                      onClick={() => { close(); navigate('/auth/register'); }}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 11, fontWeight: 700, color: '#6366F1' }}
-                    >
-                      Crie sua conta grátis
-                    </button>
-                  </p>
                 </div>
               )}
             </div>

@@ -14,10 +14,10 @@ export function CTASection() {
   });
 
   const scrollToAgenda = () => {
-    const element = document.querySelector('#agenda');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    openWhatsAppConversation({ 
+      phone: petshopWhatsAppPhone, 
+      message: 'Oie! Vi o site de vocês e quero garantir o melhor cuidado para o meu amigo de quatro patas! Podemos agendar?' 
+    });
   };
 
   return (
