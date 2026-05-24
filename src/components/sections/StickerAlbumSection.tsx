@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, Pencil } from 'lucide-react';
+import { Plus, Trash2, Pencil, Download } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -330,6 +330,31 @@ export function StickerAlbumSection() {
       toast.success('Figurinha atualizada!');
     } else {
       throw new Error('Falha ao atualizar');
+    }
+  };
+
+  const handleDownloadImage = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!viewingImage) return;
+    
+    try {
+      const toastId = toast.loading('Baixando figurinha...');
+      const response = await fetch(viewingImage);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `figurinha-petcao-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.dismiss(toastId);
+      toast.success('Download concluído!');
+    } catch (error) {
+      console.error('Error downloading image:', error);
+      toast.dismiss();
+      toast.error('Erro ao baixar a figurinha.');
     }
   };
 
@@ -760,7 +785,7 @@ export function StickerAlbumSection() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setViewingImage(null)}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 cursor-zoom-out"
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/85 backdrop-blur-md p-4 cursor-zoom-out gap-6"
           >
             <motion.img
               initial={{ scale: 0.9, y: 10 }}
@@ -768,11 +793,24 @@ export function StickerAlbumSection() {
               exit={{ scale: 0.9, y: 10 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               src={viewingImage}
-              className="max-w-full max-h-[90vh] rounded-xl shadow-2xl object-contain ring-4 ring-white/10"
+              className="max-w-full max-h-[80vh] rounded-xl shadow-2xl object-contain ring-4 ring-white/10"
               alt="Visualização da Figurinha"
               onClick={(e) => e.stopPropagation()} // Prevent clicking the image from closing it if they want to drag, but a click outside closes.
             />
             
+            {/* Download Button */}
+            <motion.button 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="px-5 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full flex items-center gap-2 text-white text-sm font-medium transition-colors z-50 cursor-pointer" 
+              onClick={handleDownloadImage}
+              title="Baixar Figurinha"
+            >
+              <Download className="w-4 h-4" />
+              Baixar Figurinha
+            </motion.button>
+
             {/* Close Button Hint */}
             <div className="absolute top-6 right-6 w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white cursor-pointer transition-colors" onClick={() => setViewingImage(null)}>
               ✕
