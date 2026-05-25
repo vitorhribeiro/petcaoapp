@@ -286,15 +286,9 @@ export function PhotoComments({
               </div>
             ) : (
               <div className="bg-primary/5 border border-primary/10 rounded-2xl p-5 text-center">
-                <p className="text-xs text-muted-foreground font-medium mb-3">
-                  Faça login para participar da conversa.
+                <p className="text-xs text-muted-foreground font-medium">
+                  Sistema de curtidas e comentários disponível em breve.
                 </p>
-                <button
-                  onClick={() => window.location.href = '/auth/login'}
-                  className="px-5 py-2 rounded-full bg-primary text-primary-foreground text-[11px] font-bold shadow-sm hover:brightness-110 transition-all active:scale-95"
-                >
-                  Entrar
-                </button>
               </div>
             )}
           </div>
@@ -420,12 +414,9 @@ export function PhotoComments({
           </div>
         ) : (
           <div className="px-5 pb-2">
-            <button 
-              onClick={() => window.location.href = '/auth/login'}
-              className="w-full h-12 bg-primary text-primary-foreground font-bold rounded-2xl shadow-lg active:scale-[0.98] transition-all"
-            >
-              Entre para participar
-            </button>
+            <div className="w-full h-12 flex items-center justify-center bg-muted/30 text-muted-foreground text-sm font-semibold rounded-2xl border border-border/20 text-center">
+              Sistema de curtidas e comentários em breve
+            </div>
           </div>
         )}
       </div>
