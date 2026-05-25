@@ -17,7 +17,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import {
   Plus, Trash2, Edit2, Scissors, GripVertical, Eye, Clock, DollarSign,
   Sparkles, Copy, Save, CheckCircle2, Loader2,
-  TrendingUp, Package, AlertCircle, ChevronRight, FolderOpen
+  TrendingUp, Package, AlertCircle, ChevronRight, FolderOpen, X
 } from 'lucide-react';
 import { ServiceRow } from '@/services/servicesService';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -303,7 +303,7 @@ export default function Servicos() {
   const [form, setForm] = useState<Omit<ServiceRow, 'id' | 'petshop_id'>>({
     name: '', description: '', icon: 'scissors', category: 'banho',
     price_pequeno: 0, price_medio: 0, price_grande: 0,
-    duration_minutes: 60, active: true, sort_order: 0
+    duration_minutes: 60, active: true, sort_order: 0, included_items: []
   });
 
   const sensors = useSensors(
@@ -334,7 +334,7 @@ export default function Servicos() {
     setForm({
       name: '', description: '', icon: 'scissors', category: 'banho',
       price_pequeno: 0, price_medio: 0, price_grande: 0,
-      duration_minutes: 60, active: true, sort_order: servicesList.length
+      duration_minutes: 60, active: true, sort_order: servicesList.length, included_items: []
     });
     setTempColor('#0A7AE6');
     setEditOpen(true);
@@ -346,7 +346,14 @@ export default function Servicos() {
       name: s.name, description: s.description || '', icon: s.icon || 'scissors',
       category: s.category, price_pequeno: s.price_pequeno || 0, price_medio: s.price_medio || 0,
       price_grande: s.price_grande || 0, duration_minutes: s.duration_minutes || 60,
-      active: s.active ?? true, sort_order: s.sort_order || 0
+      active: s.active ?? true, sort_order: s.sort_order || 0, 
+      included_items: (s.included_items && s.included_items.length > 0) ? s.included_items : [
+        'Banho completo com produtos premium',
+        'Secagem cuidadosa',
+        'Escovação da pelagem',
+        'Corte de unhas e limpeza de ouvidos',
+        'Finalização com perfume pet'
+      ]
     });
     setTempColor(settings.service_colors?.[s.id] || '#0A7AE6');
     setEditOpen(true);
@@ -358,7 +365,7 @@ export default function Servicos() {
         name: `${s.name} (cópia)`, description: s.description, icon: s.icon,
         category: s.category, price_pequeno: s.price_pequeno, price_medio: s.price_medio,
         price_grande: s.price_grande, duration_minutes: s.duration_minutes,
-        active: false, sort_order: servicesList.length
+        active: false, sort_order: servicesList.length, included_items: s.included_items
       });
       toast.success('Serviço duplicado (inativo)');
     } catch { toast.error('Erro ao duplicar'); }
@@ -380,6 +387,7 @@ export default function Servicos() {
           duration_minutes: form.duration_minutes,
           active: form.active,
           sort_order: form.sort_order,
+          included_items: form.included_items,
         };
         await updateService(editingId, payload);
         
@@ -669,6 +677,54 @@ export default function Servicos() {
               rows={3}
               className="text-base rounded-xl resize-none"
             />
+          </div>
+
+          {/* Included Items Dynamic List */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Itens Inclusos</Label>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => setForm({ ...form, included_items: [...(form.included_items || []), ''] })}
+              >
+                <Plus className="w-3.5 h-3.5" /> Adicionar item
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {(form.included_items || []).map((item, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <Input
+                    value={item}
+                    onChange={e => {
+                      const newItems = [...(form.included_items || [])];
+                      newItems[idx] = e.target.value;
+                      setForm({ ...form, included_items: newItems });
+                    }}
+                    placeholder={`Item ${idx + 1}`}
+                    className="h-10 text-sm rounded-xl flex-1"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 text-muted-foreground hover:text-destructive shrink-0"
+                    onClick={() => {
+                      const newItems = [...(form.included_items || [])];
+                      newItems.splice(idx, 1);
+                      setForm({ ...form, included_items: newItems });
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+              {(!form.included_items || form.included_items.length === 0) && (
+                <div className="text-center py-4 rounded-xl border border-dashed border-border text-xs text-muted-foreground">
+                  Nenhum item incluso adicionado.
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Category + Duration */}

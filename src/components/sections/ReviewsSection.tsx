@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { uploadImageToStorage } from '@/lib/storageUtils';
 import { validateImageFile } from '@/lib/imageUtils';
-import { Star, ChevronLeft, ChevronRight, MessageSquare, Store, Settings, Plus, Upload } from 'lucide-react';
+import { Star, ChevronLeft, ChevronRight, MessageSquare, Store, Settings, Plus, Upload, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConfig } from '@/hooks/useConfig';
 import { useNavigate } from 'react-router-dom';
@@ -116,15 +116,35 @@ export function ReviewsSection() {
 
   if (approvedReviews.length === 0) {
     return (
-      <section id="avaliacoes" className="py-20 bg-muted/50 scroll-mt-20">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-primary">{homeContent.reviews.title}</h2>
+      <section id="avaliacoes" className="py-16 md:py-20 lg:py-24 scroll-mt-20 relative overflow-hidden">
+        {/* Background Gradients (matching Services) */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/20 to-background" />
+        <div className="absolute top-[15%] left-[10%] w-[600px] h-[600px] rounded-full bg-primary/[0.02] dark:bg-primary/[0.035] blur-[140px] pointer-events-none" />
+        <div className="absolute bottom-[10%] right-[8%] w-[500px] h-[500px] rounded-full bg-primary/[0.015] dark:bg-primary/[0.03] blur-[120px] pointer-events-none" />
+
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
+          <div className="text-center mb-14 md:mb-18">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/[0.06] dark:bg-primary/[0.1] border border-primary/10 rounded-full text-primary text-[11px] font-semibold tracking-[0.15em] uppercase mb-6">
+              <Sparkles className="w-3.5 h-3.5" />
+              Depoimentos
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-foreground tracking-tight leading-none mb-5">
+              Nossas <span className="bg-gradient-to-r from-[#1A73E8] via-[#4285F4] to-[#FBBC04] bg-clip-text text-transparent">Avaliações</span>
+            </h2>
+            <p className="text-sm md:text-base text-muted-foreground/90 max-w-xl mx-auto leading-relaxed font-medium">
+              Histórias reais de quem confia na PetCão. Veja as experiências de clientes e seus pets com nossos serviços!
+            </p>
+          </div>
           <div className="max-w-md mx-auto py-12">
             <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-lg text-muted-foreground mb-4">Ainda não temos avaliações.</p>
             {isAuthenticated && (
-              <Button variant="outline" onClick={() => setReviewOpen(true)} className="gap-2">
-                <Plus className="w-4 h-4" /> Seja o primeiro a avaliar
+              <Button 
+                variant="outline" 
+                onClick={() => setReviewOpen(true)} 
+                className="gap-2 h-11 px-5 border-primary/20 hover:border-primary/50 rounded-xl text-xs font-semibold shadow-sm transition-all duration-300 hover:shadow-primary/5 hover:-translate-y-0.5 active:translate-y-0"
+              >
+                <Plus className="w-4 h-4 text-primary" /> Seja o primeiro a avaliar
               </Button>
             )}
           </div>
@@ -134,11 +154,24 @@ export function ReviewsSection() {
   }
 
   return (
-    <section id="avaliacoes" className="py-20 bg-muted/50 scroll-mt-20">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12 relative">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-primary">{homeContent.reviews.title}</h2>
-          <p className="text-lg text-muted-foreground">{homeContent.reviews.subtitle}</p>
+    <section id="avaliacoes" className="py-16 md:py-20 lg:py-24 scroll-mt-20 relative overflow-hidden">
+      {/* Background Gradients */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/20 to-background" />
+      <div className="absolute top-[15%] left-[10%] w-[600px] h-[600px] rounded-full bg-primary/[0.02] dark:bg-primary/[0.035] blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-[10%] right-[8%] w-[500px] h-[500px] rounded-full bg-primary/[0.015] dark:bg-primary/[0.03] blur-[120px] pointer-events-none" />
+
+      <div className="container mx-auto px-4 sm:px-6 relative z-10">
+        <div className="text-center mb-14 md:mb-18 relative">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/[0.06] dark:bg-primary/[0.1] border border-primary/10 rounded-full text-primary text-[11px] font-semibold tracking-[0.15em] uppercase mb-6">
+            <Sparkles className="w-3.5 h-3.5" />
+            Depoimentos
+          </span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-foreground tracking-tight leading-none mb-5">
+            Nossas <span className="bg-gradient-to-r from-[#1A73E8] via-[#4285F4] to-[#FBBC04] bg-clip-text text-transparent">Avaliações</span>
+          </h2>
+          <p className="text-sm md:text-base text-muted-foreground/90 max-w-xl mx-auto leading-relaxed font-medium">
+            Histórias reais de quem confia na PetCão. Veja as experiências de clientes e seus pets com nossos serviços!
+          </p>
           {showAdmin && (
             <TooltipProvider>
               <Tooltip>
@@ -157,9 +190,13 @@ export function ReviewsSection() {
         </div>
 
         {isAuthenticated && (
-          <div className="flex justify-center mb-6">
-            <Button variant="outline" className="gap-2" onClick={() => setReviewOpen(true)}>
-              <Plus className="w-4 h-4" /> Avaliar
+          <div className="flex justify-center mb-10 relative z-20">
+            <Button 
+              variant="outline" 
+              className="gap-2 h-11 px-5 border-primary/20 hover:border-primary/50 rounded-xl text-xs font-semibold shadow-sm transition-all duration-300 hover:shadow-primary/5 hover:-translate-y-0.5 active:translate-y-0" 
+              onClick={() => setReviewOpen(true)}
+            >
+              <Plus className="w-4 h-4 text-primary" /> Avaliar
             </Button>
           </div>
         )}

@@ -30,7 +30,7 @@ export function GallerySection() {
   const navigate = useNavigate();
   const { homeContent } = useHomeContent();
   const { displayLimits } = useConfig();
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('pets');
   const [viewerIndex, setViewerIndex] = useState(-1);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [moderationOpen, setModerationOpen] = useState(false);

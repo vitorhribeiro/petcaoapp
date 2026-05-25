@@ -14,6 +14,7 @@ export interface ServiceRow {
   duration_minutes: number | null;
   sort_order: number | null;
   petshop_id: string;
+  included_items?: string[] | null;
 }
 
 export async function getServices(): Promise<ServiceRow[]> {

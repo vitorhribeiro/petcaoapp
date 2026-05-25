@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Scissors, ArrowRight, Clock, Calendar, Sparkles, Package, PawPrint, Shield } from 'lucide-react';
+import { Scissors, ArrowRight, Clock, Calendar, Sparkles, Package, PawPrint, Shield, Check, Info, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useActiveServices } from '@/hooks/useActiveServices';
 import { usePetshop } from '@/contexts/PetshopContext';
@@ -37,7 +37,7 @@ const SIZE_OPTIONS = [
   { value: 'grande', label: 'Grande', desc: 'Acima de 25kg', emoji: '🦮' },
 ] as const;
 
-function SizeModal({ service, open, onClose, customCategories }: SizeModalProps) {
+function SizeModal({ service, open, onClose, customCategories, whatsapp }: SizeModalProps) {
   const [selectedSize, setSelectedSize] = useState<string>('');
 
   const getPrice = (size: string): number | null => {
@@ -52,13 +52,6 @@ function SizeModal({ service, open, onClose, customCategories }: SizeModalProps)
   const catInfo = service ? getCategoryByValue(service.category, customCategories) : null;
   const ServiceIcon = service ? getIconComponent(service.icon || (catInfo ? catInfo.icon : 'scissors')) : Package;
 
-  const handleWhatsAppClick = () => {
-    if (!service || !whatsapp) return;
-    const message = `Olá Petcão! Gostaria de saber mais sobre o serviço "${service.name}". Podem me ajudar?`;
-    const url = `https://wa.me/55${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
-    window.open(url, '_blank');
-    onClose();
-  };
 
   const handleOpenChange = (v: boolean) => {
     if (!v) {
@@ -80,66 +73,110 @@ function SizeModal({ service, open, onClose, customCategories }: SizeModalProps)
       open={open}
       onOpenChange={handleOpenChange}
       title={service.name}
-      description="Consulte nossa equipe para mais detalhes sobre os valores e disponibilidade."
+      description={service.description || "Consulte nossa equipe para mais detalhes sobre os valores e disponibilidade."}
       icon={
         catInfo ? (
-          <div className={cn("p-2.5 rounded-xl bg-gradient-to-br shadow-md", catInfo.gradient)}>
-            <ServiceIcon className="w-5 h-5 text-white" />
+          <div className={cn("p-2.5 rounded-xl bg-gradient-to-br shadow-md shrink-0", catInfo.gradient)}>
+            <ServiceIcon className="w-6 h-6 text-white" />
           </div>
         ) : undefined
       }
       maxWidth="max-w-md"
       stickyFooter={
-        <Button
+        <a
+          href={`https://wa.me/55${whatsapp ? String(whatsapp).replace(/\D/g, '') : '11999999999'}?text=${encodeURIComponent(`Olá Petcão! Gostaria de saber mais sobre o serviço "${service?.name}". Podem me ajudar?`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => onClose()}
           className={cn(
-            "w-full h-12 text-base font-semibold rounded-xl gap-2",
-            "bg-gradient-to-r from-primary to-primary/85 text-primary-foreground",
-            "shadow-[0_4px_16px_-3px_hsl(var(--primary)/0.3)]",
-            "hover:shadow-[0_6px_24px_-4px_hsl(var(--primary)/0.35)] hover:brightness-110",
+            "flex items-center justify-center w-full h-12 text-base font-semibold rounded-xl gap-2",
+            "bg-[#0066FF] hover:bg-[#0052CC] text-white", // specific blue from the mockup
             "transition-all duration-200",
           )}
-          onClick={handleWhatsAppClick}
         >
           Falar com o Petcão
           <ArrowRight className="w-4 h-4" />
-        </Button>
+        </a>
       }
     >
-      <div className="space-y-5">
+      <div className="space-y-4 pt-2">
         {/* Duration */}
         {service.duration_minutes && (
-          <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-muted/40 dark:bg-muted/20 border border-border/30">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Clock className="w-4 h-4 text-primary" />
+          <div className="flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-[#F4F7FA] border border-[#E2E8F0]/50">
+            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm">
+              <Clock className="w-5 h-5 text-[#3B82F6]" />
             </div>
             <div>
-              <span className="text-xs text-muted-foreground/60 font-medium">Duração estimada</span>
+              <span className="text-xs text-muted-foreground font-medium">Duração estimada</span>
               <span className="block text-sm font-semibold text-foreground">{service.duration_minutes} minutos</span>
             </div>
           </div>
         )}
 
-        {/* Included features */}
-        <div className="bg-muted/20 dark:bg-muted/10 p-4 rounded-xl border border-border/40">
-          <span className="text-[10px] font-bold text-muted-foreground/60 tracking-wider uppercase mb-2.5 block">
-            O que está incluso?
-          </span>
-          <p className="text-sm text-foreground/80 leading-relaxed font-medium">
-            {service.description || 'Este serviço é realizado com muito carinho e com produtos premium, garantindo o conforto, a saúde e a beleza do seu pet.'}
-          </p>
+        {/* Included Items */}
+        {(() => {
+          const items = (Array.isArray(service.included_items) && service.included_items.length > 0)
+            ? service.included_items
+            : [
+                'Banho completo com produtos premium',
+                'Secagem cuidadosa',
+                'Escovação da pelagem',
+                'Corte de unhas e limpeza de ouvidos',
+                'Finalização com perfume pet'
+              ];
+          
+          if (!Array.isArray(items)) return null;
+
+          return (
+            <div className="p-4 rounded-2xl border border-border/60 bg-white">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle className="w-4 h-4 text-[#3B82F6]" />
+                <span className="text-sm font-bold text-foreground">
+                  O que está incluso?
+                </span>
+              </div>
+              <ul className="flex flex-col">
+                {items.map((item, idx) => (
+                  <li key={idx} className={cn("flex items-start gap-2.5 text-sm text-muted-foreground py-2", idx !== items.length - 1 && "border-b border-border/40")}>
+                    <div className="mt-0.5 shrink-0">
+                      <Check className="w-4 h-4 text-[#3B82F6]" />
+                    </div>
+                    <span className="leading-tight">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })()}
+
+        {/* Benefits */}
+        <div className="p-4 rounded-2xl border border-border/60 bg-white">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-[#3B82F6]" />
+            <span className="text-sm font-bold text-foreground">Benefícios</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {TRUST_ITEMS.map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <div key={i} className="flex flex-col items-center justify-center gap-2 p-3 text-center border border-border/60 rounded-xl bg-white">
+                  <Icon className="w-5 h-5 text-[#3B82F6]" />
+                  <span className="text-[10px] font-medium text-muted-foreground leading-tight px-1">{item.text}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Trust indicators */}
-        <div className="grid grid-cols-1 gap-2 pt-2">
-          {TRUST_ITEMS.map((item, i) => {
-            const Icon = item.icon;
-            return (
-              <div key={i} className="flex items-center gap-2.5 text-xs text-muted-foreground/50">
-                <Icon className="w-3.5 h-3.5 text-primary/40 shrink-0" />
-                <span>{item.text}</span>
-              </div>
-            );
-          })}
+        {/* Observações */}
+        <div className="p-4 rounded-2xl bg-[#FAFAFA] border border-border/60">
+          <div className="flex items-center gap-2 mb-2">
+            <Info className="w-4 h-4 text-[#F97316]" />
+            <span className="text-sm font-bold text-foreground">Observações</span>
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            O tempo e o valor podem variar conforme porte, tipo de pelagem e condição do pet. Consulte nossa equipe para mais detalhes.
+          </p>
         </div>
       </div>
     </ResponsiveModal>

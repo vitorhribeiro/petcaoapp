@@ -48,14 +48,12 @@ function OrbitalImage({
   src,
   alt,
   size = 100,
-  onClick,
   delay = 0,
   floatClass = 'orbital-float-1',
 }: {
   src: string;
   alt: string;
   size?: number;
-  onClick?: () => void;
   delay?: number;
   floatClass?: string;
 }) {
@@ -64,10 +62,8 @@ function OrbitalImage({
 
   return (
     <div className={floatClass}>
-      <motion.button
-        type="button"
-        onClick={onClick}
-        className="group relative rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      <motion.div
+        className="group relative rounded-full"
         initial={{ opacity: 0, scale: 0.7 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3, delay: delay * 0.3 + 0.2, ease: [0.25, 0.1, 0.25, 1] }}
@@ -91,7 +87,7 @@ function OrbitalImage({
             onLoadError={() => setFailed(true)}
           />
         </div>
-      </motion.button>
+      </motion.div>
     </div>
   );
 }
@@ -120,11 +116,10 @@ interface OrbitalVisualProps {
   img1: string;
   img2: string;
   img3: string;
-  onClickImage?: (index: 1 | 2 | 3) => void;
   className?: string;
 }
 
-export function OrbitalVisual({ mascot, img1, img2, img3, onClickImage, className = '' }: OrbitalVisualProps) {
+export function OrbitalVisual({ mascot, img1, img2, img3, className = '' }: OrbitalVisualProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
 
@@ -199,7 +194,7 @@ export function OrbitalVisual({ mascot, img1, img2, img3, onClickImage, classNam
             transition: 'transform 0.3s ease-out',
           }}
         >
-          <OrbitalImage src={img1} alt="Galeria" size={185} delay={0.15} floatClass="orbital-float-1" onClick={() => onClickImage?.(1)} />
+          <OrbitalImage src={img1} alt="Galeria" size={185} delay={0.15} floatClass="orbital-float-1" />
         </div>
 
         {/* Orbital 2 — bottom left */}
@@ -211,7 +206,7 @@ export function OrbitalVisual({ mascot, img1, img2, img3, onClickImage, classNam
             transition: 'transform 0.3s ease-out',
           }}
         >
-          <OrbitalImage src={img2} alt="Serviços" size={155} delay={0.25} floatClass="orbital-float-2" onClick={() => onClickImage?.(2)} />
+          <OrbitalImage src={img2} alt="Serviços" size={155} delay={0.25} floatClass="orbital-float-2" />
         </div>
 
         {/* Orbital 3 — bottom right */}
@@ -223,7 +218,7 @@ export function OrbitalVisual({ mascot, img1, img2, img3, onClickImage, classNam
             transition: 'transform 0.3s ease-out',
           }}
         >
-          <OrbitalImage src={img3} alt="Antes e Depois" size={135} delay={0.35} floatClass="orbital-float-3" onClick={() => onClickImage?.(3)} />
+          <OrbitalImage src={img3} alt="Antes e Depois" size={135} delay={0.35} floatClass="orbital-float-3" />
         </div>
 
         {/* Speech bubble — premium style */}
@@ -273,17 +268,17 @@ export function OrbitalVisual({ mascot, img1, img2, img3, onClickImage, classNam
 
           {/* Orbital 1 — top right (gentle float only) */}
           <div className="absolute z-20 orbital-float-1" style={{ top: -10, right: 10 }}>
-            <OrbitalImage src={img1} alt="Galeria" size={120} delay={0.1} floatClass="" onClick={() => onClickImage?.(1)} />
+            <OrbitalImage src={img1} alt="Galeria" size={120} delay={0.1} floatClass="" />
           </div>
 
           {/* Orbital 2 — bottom left */}
           <div className="absolute z-20 orbital-float-2" style={{ bottom: 0, left: 5 }}>
-            <OrbitalImage src={img2} alt="Serviços" size={100} delay={0.2} floatClass="" onClick={() => onClickImage?.(2)} />
+            <OrbitalImage src={img2} alt="Serviços" size={100} delay={0.2} floatClass="" />
           </div>
 
           {/* Orbital 3 — bottom right */}
           <div className="absolute z-20 orbital-float-3" style={{ bottom: 0, right: 0 }}>
-            <OrbitalImage src={img3} alt="Antes e Depois" size={80} delay={0.3} floatClass="" onClick={() => onClickImage?.(3)} />
+            <OrbitalImage src={img3} alt="Antes e Depois" size={80} delay={0.3} floatClass="" />
           </div>
 
           {/* Speech bubble mobile — premium */}
