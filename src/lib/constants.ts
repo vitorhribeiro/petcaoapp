@@ -103,6 +103,9 @@ export interface PetshopSettings {
   // Inauguration date (ISO string, e.g. "2023-05-13")
   inauguratedAt: string;
 
+  // WhatsApp configuration
+  whatsappNumber?: string;
+
   // Custom service categories (beyond defaults)
   custom_categories?: Array<{
     value: string;
@@ -175,6 +178,7 @@ export const DEFAULT_SETTINGS: PetshopSettings = {
   package_destaque_ids: [],
   notification_settings: DEFAULT_NOTIFICATION_SETTINGS_CONFIG,
 
+  whatsappNumber: WHATSAPP_NUMBER,
   inauguratedAt: '2023-05-13',
 };
 

@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { getPetshop, updatePetshop as updatePetshopService, updatePetshopSettings, Petshop } from '@/services/petshopService';
-import { PetshopSettings, DEFAULT_SETTINGS } from '@/lib/constants';
+import { PetshopSettings, DEFAULT_SETTINGS, WHATSAPP_NUMBER } from '@/lib/constants';
+
+export let globalWhatsappNumber = WHATSAPP_NUMBER;
 
 interface PetshopContextType {
   petshop: Petshop | null;
@@ -26,6 +28,7 @@ export function PetshopProvider({ children }: { children: ReactNode }) {
   useEffect(() => { load(); }, [load]);
 
   const settings = petshop?.settings || DEFAULT_SETTINGS;
+  globalWhatsappNumber = settings.whatsappNumber || WHATSAPP_NUMBER;
 
   const handleUpdatePetshop = useCallback(async (data: Partial<Omit<Petshop, 'id' | 'settings'>>) => {
     const ok = await updatePetshopService(data);

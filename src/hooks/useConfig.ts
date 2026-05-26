@@ -112,6 +112,7 @@ export function useConfig() {
     zoom: settings.locationZoom,
   };
   const appointmentInterval = settings.slotIntervalMinutes;
+  const whatsappNumber = settings.whatsappNumber || WHATSAPP_NUMBER;
 
   const setWeeklySchedule = useCallback(async (updater: WeeklySchedule | ((prev: WeeklySchedule) => WeeklySchedule)) => {
     const newSchedule = typeof updater === 'function' ? updater(weeklySchedule) : updater;
@@ -151,6 +152,10 @@ export function useConfig() {
     await updateSettings({ slotIntervalMinutes: interval });
   }, [updateSettings]);
 
+  const setWhatsappNumber = useCallback(async (number: string) => {
+    await updateSettings({ whatsappNumber: number });
+  }, [updateSettings]);
+
   const addDateOverride = useCallback(async (override: DateOverride) => {
     const filtered = dateOverrides.filter(o => o.date !== override.date);
     await updateSettings({ dateOverrides: [...filtered, override] });
@@ -178,6 +183,7 @@ export function useConfig() {
     displayLimits, setDisplayLimits,
     locationSettings, setLocationSettings,
     appointmentInterval, setAppointmentInterval,
+    whatsappNumber, setWhatsappNumber,
     isOpenOnDate,
   };
 }

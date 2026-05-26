@@ -1,4 +1,5 @@
 import { WHATSAPP_NUMBER } from '@/lib/constants';
+import { globalWhatsappNumber } from '@/contexts/PetshopContext';
 
 export function normalizeWhatsAppPhone(raw?: string | null): string | null {
   const digits = (raw || '').replace(/\D/g, '');
@@ -39,7 +40,7 @@ export function getPetshopWhatsAppPhone(options?: {
   return (
     extractPhoneFromWhatsAppUrl(options?.whatsappUrl) ||
     normalizeWhatsAppPhone(options?.phone) ||
-    normalizeWhatsAppPhone(WHATSAPP_NUMBER)
+    normalizeWhatsAppPhone(globalWhatsappNumber || WHATSAPP_NUMBER)
   );
 }
 

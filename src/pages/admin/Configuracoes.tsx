@@ -24,7 +24,7 @@ import { usePetshop } from '@/contexts/PetshopContext';
 import {
   Check, Clock, CalendarDays, Palette, Layout, Save, Upload, Share2, MapPin,
   BarChart2, FileText, Map, RotateCcw, Timer, Star, Plus, Settings, Trash2,
-  ImageIcon, ChevronLeft, ChevronRight, Bell, Sparkles,
+  ImageIcon, ChevronLeft, ChevronRight, Bell, Sparkles, MessageCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { SocialLink } from '@/hooks/useConfig';
@@ -171,6 +171,7 @@ export default function Configuracoes() {
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [overrideNote, setOverrideNote] = useState('');
+  const [whatsappNum, setWhatsappNum] = useState(config.whatsappNumber);
   const [logoPreview, setLogoPreview] = useState<string>(branding.logoUrl);
   const [mascotPreview, setMascotPreview] = useState<string>(branding.mascotUrl);
   const [adminLogoPreview, setAdminLogoPreview] = useState<string>(branding.adminLogoUrl || '');
@@ -313,6 +314,17 @@ export default function Configuracoes() {
 
         {/* ===== GERAL (CMS) ===== */}
         <TabsContent value="geral" className="space-y-4 mt-5">
+          <PremiumCard icon={MessageCircle} title="WhatsApp Principal" description="Número usado para atalhos e botões de agendamento no site.">
+            <div className="space-y-3 p-4 rounded-xl bg-muted/30 border border-border/40">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Número do WhatsApp (código do país + DDD + número)</Label>
+                <div className="flex gap-2">
+                  <Input value={whatsappNum} onChange={e => setWhatsappNum(e.target.value.replace(/\D/g, ''))} className="h-11 flex-1" placeholder="Ex: 5511999999999" />
+                  <SaveButton onClick={() => { logFieldChanges(actorId, 'whatsapp', { whatsappNumber: config.whatsappNumber }, { whatsappNumber: whatsappNum }).catch(() => {}); config.setWhatsappNumber(whatsappNum); toast.success('Número do WhatsApp atualizado!'); }} label="Salvar" />
+                </div>
+              </div>
+            </div>
+          </PremiumCard>
           <InaugurationDateCard />
           <PremiumCard icon={FileText} title="Conteúdo da Home" description="Edite os textos e imagens exibidos na página principal.">
             {/* Hero */}
@@ -493,10 +505,6 @@ export default function Configuracoes() {
             <div className="space-y-2">
               <Label className="text-xs font-medium">Endereço completo</Label>
               <Input value={addressForm.address} onChange={e => setAddressForm(p => ({ ...p, address: e.target.value }))} className="h-11" />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2"><Label className="text-xs font-medium">Telefone</Label><Input value={addressForm.phone} onChange={e => setAddressForm(p => ({ ...p, phone: e.target.value }))} className="h-11" /></div>
-              <div className="space-y-2"><Label className="text-xs font-medium">WhatsApp (só números)</Label><Input value={addressForm.whatsapp} onChange={e => setAddressForm(p => ({ ...p, whatsapp: e.target.value }))} className="h-11" /></div>
             </div>
             <SaveButton onClick={() => { logFieldChanges(actorId, 'endereco', config.shopAddress, addressForm).catch(() => {}); config.setShopAddress(addressForm); toast.success('Endereço salvo!'); }} label="Salvar endereço" />
           </PremiumCard>
