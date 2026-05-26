@@ -37,11 +37,8 @@ export function getPetshopWhatsAppPhone(options?: {
   phone?: string | null;
   whatsappUrl?: string | null;
 }): string | null {
-  return (
-    extractPhoneFromWhatsAppUrl(options?.whatsappUrl) ||
-    normalizeWhatsAppPhone(options?.phone) ||
-    normalizeWhatsAppPhone(globalWhatsappNumber || WHATSAPP_NUMBER)
-  );
+  // Always favor the global configuration so the user only has one place to update the number.
+  return normalizeWhatsAppPhone(globalWhatsappNumber || WHATSAPP_NUMBER);
 }
 
 export function buildWhatsAppUrl(phone: string | null | undefined, message: string): string | null {

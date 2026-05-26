@@ -8,15 +8,16 @@ import { useHomeContent } from '@/hooks/useHomeContent';
 import { usePetshop } from '@/contexts/PetshopContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cardVariants } from '@/lib/animations';
+import { formatPhone } from '@/lib/phoneUtils';
 
 export function LocationSection() {
-  const { shopAddress, locationSettings } = useConfig();
+  const { shopAddress, locationSettings, whatsappNumber } = useConfig();
   const { settings } = usePetshop();
   const { isDev, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { homeContent } = useHomeContent();
   const address = shopAddress.address || '';
-  const phone = shopAddress.phone || '';
+  const phone = whatsappNumber ? formatPhone(whatsappNumber) : shopAddress.phone || '';
   const showAdmin = isDev() || isAdmin();
 
   const lat = locationSettings.latitude;

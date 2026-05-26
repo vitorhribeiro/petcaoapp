@@ -8,6 +8,7 @@ import { useBranding } from '@/contexts/BrandingContext';
 import { useConfig } from '@/hooks/useConfig';
 import { usePetshop } from '@/contexts/PetshopContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatPhone } from '@/lib/phoneUtils';
 
 const SOCIAL_ICONS: Record<string, React.ElementType> = {
   instagram: Instagram,
@@ -44,13 +45,13 @@ function SocialSkeleton() {
 export function Footer() {
   const currentYear = new Date().getFullYear();
   const { branding } = useBranding();
-  const { socialLinks, shopAddress } = useConfig();
+  const { socialLinks, shopAddress, whatsappNumber } = useConfig();
   const { settings, loading: petshopLoading } = usePetshop();
   const logoSrc = branding.logoUrl || logoPetDefault;
 
   const isLoading = petshopLoading;
   const address = shopAddress.address || '';
-  const phone = shopAddress.phone || '';
+  const phone = whatsappNumber ? formatPhone(whatsappNumber) : shopAddress.phone || '';
   const enabledSocials = socialLinks.filter(s => s.enabled && s.url);
   const hasContactInfo = phone || address;
 

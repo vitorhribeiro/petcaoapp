@@ -3,6 +3,7 @@ import { Scissors, ArrowRight, Clock, Calendar, Sparkles, Package, PawPrint, Shi
 import { motion } from 'framer-motion';
 import { useActiveServices } from '@/hooks/useActiveServices';
 import { usePetshop } from '@/contexts/PetshopContext';
+import { globalWhatsappNumber } from '@/contexts/PetshopContext';
 import { ServicesSkeleton } from '@/components/skeletons/SectionSkeletons';
 import { Button } from '@/components/ui/button';
 import { ResponsiveModal } from '@/components/modals/ResponsiveModal';
@@ -84,7 +85,7 @@ function SizeModal({ service, open, onClose, customCategories, whatsapp }: SizeM
       maxWidth="max-w-md"
       stickyFooter={
         <a
-          href={`https://wa.me/55${whatsapp ? String(whatsapp).replace(/\D/g, '') : '11999999999'}?text=${encodeURIComponent(`Olá Petcão! Gostaria de saber mais sobre o serviço "${service?.name}". Podem me ajudar?`)}`}
+          href={`https://wa.me/55${(whatsapp || globalWhatsappNumber || '11999999999').replace(/\D/g, '')}?text=${encodeURIComponent(`Olá Petcão! Gostaria de saber mais sobre o serviço "${service?.name}". Podem me ajudar?`)}`}
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => onClose()}
@@ -390,7 +391,7 @@ export function ServicesSection() {
         open={!!selectedService}
         onClose={() => setSelectedService(null)}
         customCategories={customCategories}
-        whatsapp={settings.whatsapp}
+        whatsapp={settings.whatsappNumber}
       />
     </section>
   );

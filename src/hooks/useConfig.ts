@@ -67,14 +67,20 @@ const SOCIAL_LABELS: Record<string, string> = {
   youtube: 'YouTube', whatsapp: 'WhatsApp', site: 'Site',
 };
 
-function settingsToSocialLinks(settings: PetshopSettings): SocialLink[] {
+function settingsToSocialLinks(settings: PetshopSettings, globalNumber: string): SocialLink[] {
   const keys = ['instagram', 'tiktok', 'facebook', 'youtube', 'whatsapp', 'site'];
-  return keys.map(key => ({
-    key,
-    label: SOCIAL_LABELS[key] || key,
-    url: settings.social_links.links[`${key}_url`] || (key === 'whatsapp' ? `https://wa.me/${WHATSAPP_NUMBER}` : ''),
-    enabled: !!settings.social_links.enabled[key],
-  }));
+  return keys.map(key => {
+    let url = settings.social_links.links[`${key}_url`] || '';
+    if (key === 'whatsapp') {
+      url = `https://wa.me/${globalNumber.replace(/\D/g, '')}`;
+    }
+    return {
+      key,
+      label: SOCIAL_LABELS[key] || key,
+      url,
+      enabled: !!settings.social_links.enabled[key],
+    };
+  });
 }
 
 function socialLinksToSettings(links: SocialLink[]): PetshopSettings['social_links'] {
@@ -93,11 +99,12 @@ export function useConfig() {
   const weeklySchedule = openDaysToSchedule(settings.openDaysDefault);
   const dateOverrides = settings.dateOverrides || [];
   const openingHours: OpeningHours = { openTime: settings.openTimeDefault, closeTime: settings.closeTimeDefault };
-  const socialLinks = settingsToSocialLinks(settings);
+  const whatsappNumber = settings.whatsappNumber || WHATSAPP_NUMBER;
+  const socialLinks = settingsToSocialLinks(settings, whatsappNumber);
   const shopAddress: ShopAddress = {
     address: petshop?.address || '',
     phone: petshop?.phone || '',
-    whatsapp: WHATSAPP_NUMBER,
+    whatsapp: whatsappNumber,
   };
   const displayLimits: DisplayLimits = {
     maxPhotos: settings.limiteHomeFotos,
@@ -112,7 +119,6 @@ export function useConfig() {
     zoom: settings.locationZoom,
   };
   const appointmentInterval = settings.slotIntervalMinutes;
-  const whatsappNumber = settings.whatsappNumber || WHATSAPP_NUMBER;
 
   const setWeeklySchedule = useCallback(async (updater: WeeklySchedule | ((prev: WeeklySchedule) => WeeklySchedule)) => {
     const newSchedule = typeof updater === 'function' ? updater(weeklySchedule) : updater;

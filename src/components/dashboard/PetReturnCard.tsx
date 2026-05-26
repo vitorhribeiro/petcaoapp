@@ -10,7 +10,7 @@ import { ResponsiveModal } from '@/components/modals/ResponsiveModal';
 import { Dog, MessageCircle, AlertTriangle, Clock, CalendarCheck } from 'lucide-react';
 import { differenceInDays, parseISO, format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { WHATSAPP_NUMBER } from '@/lib/constants';
+import { globalWhatsappNumber } from '@/contexts/PetshopContext';
 
 interface PetReturnInfo {
   petId: string;
@@ -107,7 +107,7 @@ export function PetReturnCard({ appointments, pets, profiles }: PetReturnCardPro
     const msg = encodeURIComponent(
       `Olá! 🐶\nO ${pet.petName} já está na hora do próximo banho/tosa.\nÚltimo atendimento: ${format(parseISO(pet.lastServiceDate), "dd/MM/yyyy", { locale: ptBR })} (${pet.lastServiceName})\nQuer agendar para esta semana?\nAgende pelo nosso site!`
     );
-    const phone = pet.ownerPhone?.replace(/\D/g, '') || WHATSAPP_NUMBER;
+    const phone = pet.ownerPhone?.replace(/\D/g, '') || globalWhatsappNumber?.replace(/\D/g, '');
     window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
     setReminderPet(null);
   };
