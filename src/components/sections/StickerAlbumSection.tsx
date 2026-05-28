@@ -131,6 +131,9 @@ function EmptySlot({ number, canAdmin, onAdd }: {
             <span className="text-[14px] font-black tracking-widest text-white uppercase bg-black/30 px-3 py-1 rounded-full">
               {number}
             </span>
+            <span className="text-[10px] font-bold tracking-[0.1em] text-white uppercase text-center mt-1 px-2 leading-tight">
+              Convocação<br/>Em breve
+            </span>
           </div>
         )}
       </div>
