@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import * as petsService from '@/services/petsService';
 import * as profilesService from '@/services/profilesService';
 import * as accountsService from '@/services/accountsService';
-import { convertImageToWebP, validateImageFile, createImagePreview, generateUniqueFileName } from '@/lib/imageUtils';
+import { convertImageToWebP, validateImageFile, createImagePreview, generateUniqueFileName, processFileIfHEIC } from '@/lib/imageUtils';
 import { PawPrint, Phone, User, Mail, Camera, Loader2 } from 'lucide-react';
 
 const BREEDS = [
@@ -52,9 +52,19 @@ export function CompleteProfileModal({ userId, userName, userEmail, onComplete, 
       setError(validation.error || 'Imagem inválida.');
       return;
     }
-    setPetPhoto(file);
-    const preview = await createImagePreview(file);
-    setPetPhotoPreview(preview);
+    
+    try {
+      const processedFileOrBlob = await processFileIfHEIC(file);
+      const processedFile = processedFileOrBlob instanceof File 
+        ? processedFileOrBlob 
+        : new File([processedFileOrBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: processedFileOrBlob.type });
+
+      setPetPhoto(processedFile);
+      const preview = await createImagePreview(processedFile);
+      setPetPhotoPreview(preview);
+    } catch (error) {
+      setError('Erro ao processar imagem.');
+    }
   };
 
   const uploadPetPhoto = async (petId: string): Promise<string | null> => {
@@ -208,7 +218,7 @@ export function CompleteProfileModal({ userId, userName, userEmail, onComplete, 
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/jpeg,image/jpg,image/png,image/webp"
+                accept="image/jpeg,image/jpg,image/png,image/webp,.heic,.heif"
                 onChange={handlePhotoSelect}
                 className="hidden"
               />

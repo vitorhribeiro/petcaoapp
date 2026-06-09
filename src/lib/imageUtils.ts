@@ -2,6 +2,7 @@
  * Conversão automática de imagens para WebP
  * Mantém qualidade visual e reduz tamanho do arquivo
  */
+import heic2any from 'heic2any';
 
 export interface ConvertToWebPOptions {
   quality?: number; // 0.0 - 1.0, padrão 0.85
@@ -84,12 +85,14 @@ export async function convertImageToWebP(
  * Valida se o arquivo é uma imagem válida
  */
 export function validateImageFile(file: File): { valid: boolean; error?: string } {
-  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+  const fileName = file.name.toLowerCase();
+  const isHeicExtension = fileName.endsWith('.heic') || fileName.endsWith('.heif');
   
-  if (!validTypes.includes(file.type)) {
+  if (!validTypes.includes(file.type) && !isHeicExtension) {
     return {
       valid: false,
-      error: 'Formato inválido. Use JPG, PNG ou WEBP.'
+      error: 'Formato inválido. Use JPG, PNG, WEBP ou HEIC.'
     };
   }
 
@@ -102,6 +105,33 @@ export function validateImageFile(file: File): { valid: boolean; error?: string 
   }
 
   return { valid: true };
+}
+
+/**
+ * Converte HEIC/HEIF para JPEG para preview e compatibilidade
+ */
+export async function processFileIfHEIC(file: File): Promise<File | Blob> {
+  const fileName = file.name.toLowerCase();
+  const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || fileName.endsWith('.heic') || fileName.endsWith('.heif');
+
+  if (isHeic) {
+    try {
+      const convertedBlob = await heic2any({
+        blob: file,
+        toType: 'image/jpeg',
+        quality: 0.8
+      });
+      const blobToReturn = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+      return new File([blobToReturn], file.name.replace(/\.(heic|heif)$/i, '.jpg'), {
+        type: 'image/jpeg'
+      });
+    } catch (error) {
+      console.error('Erro ao converter HEIC:', error);
+      throw new Error('Falha ao converter imagem HEIC do iPhone.');
+    }
+  }
+
+  return file;
 }
 
 /**

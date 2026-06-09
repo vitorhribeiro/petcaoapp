@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ResponsiveModal } from '@/components/modals/ResponsiveModal';
 import { toast } from 'sonner';
 import { getGalleryCategories, GalleryCategoryRow } from '@/services/galleryCategoriesService';
-import { validateImageFile, createImagePreview } from '@/lib/imageUtils';
+import { validateImageFile, createImagePreview, processFileIfHEIC } from '@/lib/imageUtils';
 import { uploadImageToStorage } from '@/lib/storageUtils';
 
 interface GalleryUploadModalProps {
@@ -81,12 +81,17 @@ export function GalleryUploadModal({ open, onOpenChange, onSubmit, isAdmin }: Ga
     }
 
     try {
+      const processedFileOrBlob = await processFileIfHEIC(file);
+      const processedFile = processedFileOrBlob instanceof File 
+        ? processedFileOrBlob 
+        : new File([processedFileOrBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: processedFileOrBlob.type });
+
       // Salvar arquivo e criar preview
-      setSelectedFile(file);
-      setFileName(file.name);
-      setFileSize(file.size);
+      setSelectedFile(processedFile);
+      setFileName(processedFile.name);
+      setFileSize(processedFile.size);
       
-      const preview = await createImagePreview(file);
+      const preview = await createImagePreview(processedFile);
       setPhotoPreview(preview);
     } catch (error) {
       console.error('handleFileChange error:', error);
@@ -200,9 +205,9 @@ export function GalleryUploadModal({ open, onOpenChange, onSubmit, isAdmin }: Ga
               </div>
               <div className="text-center">
                 <p className="text-sm font-medium text-foreground">Toque para selecionar</p>
-                <p className="text-xs text-muted-foreground mt-0.5">JPG, PNG ou WEBP</p>
+                <p className="text-xs text-muted-foreground mt-0.5">JPG, PNG, WEBP ou HEIC</p>
               </div>
-              <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+              <input type="file" accept="image/*, .heic, .heif" onChange={handleFileChange} className="hidden" />
             </label>
           ) : (
             <div className="flex items-center gap-3 w-full px-4 py-3.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5">

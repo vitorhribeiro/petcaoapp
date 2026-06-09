@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { uploadImageToStorage } from '@/lib/storageUtils';
-import { validateImageFile } from '@/lib/imageUtils';
+import { validateImageFile, processFileIfHEIC } from '@/lib/imageUtils';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, Pet, Appointment } from '@/contexts/AuthContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -414,7 +414,7 @@ function ProfilePage() {
         <input
           id="profile-avatar-upload"
           type="file"
-          accept="image/*"
+          accept="image/*, .heic, .heif"
           className="hidden"
           onChange={async (e) => {
             const file = e.target.files?.[0];
@@ -422,8 +422,15 @@ function ProfilePage() {
             const validation = validateImageFile(file);
             if (!validation.valid) { toast.error(validation.error || 'Arquivo inválido'); e.target.value = ''; return; }
             try {
+              toast.loading('Processando foto...');
+              const processedFileOrBlob = await processFileIfHEIC(file);
+              const processedFile = processedFileOrBlob instanceof File 
+                ? processedFileOrBlob 
+                : new File([processedFileOrBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: processedFileOrBlob.type });
+
+              toast.dismiss();
               toast.loading('Enviando foto de perfil...');
-              const { url } = await uploadImageToStorage(file, 'avatars-users', `${user.id}/${Date.now()}`, { quality: 0.85, maxWidth: 400, maxHeight: 400 });
+              const { url } = await uploadImageToStorage(processedFile, 'avatars-users', `${user.id}/${Date.now()}`, { quality: 0.85, maxWidth: 400, maxHeight: 400 });
               updateUserAvatar(url);
               toast.dismiss();
               toast.success('Foto de perfil atualizada!');
@@ -900,16 +907,23 @@ function ProfilePage() {
             <input 
               id="add-pet-photo-upload"
               type="file"
-              accept="image/*"
+              accept="image/*, .heic, .heif"
               className="hidden"
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
                 const validation = validateImageFile(file);
-                if (!validation.valid) { toast.error(validation.error || 'Arquivo inválido'); return; }
+                if (!validation.valid) { toast.error(validation.error || 'Arquivo inválido'); e.target.value = ''; return; }
                 try {
+                  toast.loading('Processando foto...');
+                  const processedFileOrBlob = await processFileIfHEIC(file);
+                  const processedFile = processedFileOrBlob instanceof File 
+                    ? processedFileOrBlob 
+                    : new File([processedFileOrBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: processedFileOrBlob.type });
+
+                  toast.dismiss();
                   toast.loading('Enviando foto do pet...');
-                  const { url } = await uploadImageToStorage(file, 'avatars-users', `pets/new-${Date.now()}`, { quality: 0.8, maxWidth: 350, maxHeight: 350 });
+                  const { url } = await uploadImageToStorage(processedFile, 'avatars-users', `pets/new-${Date.now()}`, { quality: 0.8, maxWidth: 350, maxHeight: 350 });
                   setPetForm(p => ({ ...p, photo_url: url }));
                   toast.dismiss();
                   toast.success('Foto do pet carregada!');
@@ -917,6 +931,7 @@ function ProfilePage() {
                   toast.dismiss();
                   toast.error('Erro ao enviar foto.');
                 }
+                e.target.value = '';
               }}
             />
             <span className="text-xs text-muted-foreground font-medium">Foto do pet</span>
@@ -962,16 +977,23 @@ function ProfilePage() {
             <input 
               id="edit-pet-photo-upload"
               type="file"
-              accept="image/*"
+              accept="image/*, .heic, .heif"
               className="hidden"
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
                 const validation = validateImageFile(file);
-                if (!validation.valid) { toast.error(validation.error || 'Arquivo inválido'); return; }
+                if (!validation.valid) { toast.error(validation.error || 'Arquivo inválido'); e.target.value = ''; return; }
                 try {
+                  toast.loading('Processando foto...');
+                  const processedFileOrBlob = await processFileIfHEIC(file);
+                  const processedFile = processedFileOrBlob instanceof File 
+                    ? processedFileOrBlob 
+                    : new File([processedFileOrBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: processedFileOrBlob.type });
+
+                  toast.dismiss();
                   toast.loading('Enviando foto do pet...');
-                  const { url } = await uploadImageToStorage(file, 'avatars-users', `pets/${editingPetId || 'new'}-${Date.now()}`, { quality: 0.8, maxWidth: 350, maxHeight: 350 });
+                  const { url } = await uploadImageToStorage(processedFile, 'avatars-users', `pets/${editingPetId || 'new'}-${Date.now()}`, { quality: 0.8, maxWidth: 350, maxHeight: 350 });
                   setPetForm(p => ({ ...p, photo_url: url }));
                   toast.dismiss();
                   toast.success('Foto do pet carregada!');
@@ -979,6 +1001,7 @@ function ProfilePage() {
                   toast.dismiss();
                   toast.error('Erro ao enviar foto.');
                 }
+                e.target.value = '';
               }}
             />
             <span className="text-xs text-muted-foreground font-medium">Foto do pet</span>

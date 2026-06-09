@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ResponsiveModal } from '@/components/modals/ResponsiveModal';
 import { toast } from 'sonner';
-import { validateImageFile, createImagePreview } from '@/lib/imageUtils';
+import { validateImageFile, createImagePreview, processFileIfHEIC } from '@/lib/imageUtils';
 import { uploadImageToStorage } from '@/lib/storageUtils';
 import { createStickerCard } from '@/services/stickerAlbumService';
 
@@ -47,10 +47,15 @@ export function StickerUploadModal({ open, onOpenChange, onSuccess }: StickerUpl
     }
 
     try {
-      setSelectedFile(file);
-      setFileName(file.name);
-      setFileSize(file.size);
-      const preview = await createImagePreview(file);
+      const processedFileOrBlob = await processFileIfHEIC(file);
+      const processedFile = processedFileOrBlob instanceof File 
+        ? processedFileOrBlob 
+        : new File([processedFileOrBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: processedFileOrBlob.type });
+
+      setSelectedFile(processedFile);
+      setFileName(processedFile.name);
+      setFileSize(processedFile.size);
+      const preview = await createImagePreview(processedFile);
       setPhotoPreview(preview);
     } catch {
       toast.error('Erro ao processar a imagem.');
@@ -171,9 +176,9 @@ export function StickerUploadModal({ open, onOpenChange, onSuccess }: StickerUpl
               </div>
               <div className="text-center">
                 <p className="text-sm font-semibold text-foreground">Toque para selecionar</p>
-                <p className="text-xs text-muted-foreground mt-0.5">JPG, PNG ou WEBP · Foto vertical funciona melhor</p>
+                <p className="text-xs text-muted-foreground mt-0.5">JPG, PNG, WEBP ou HEIC · Foto vertical funciona melhor</p>
               </div>
-              <input ref={inputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+              <input ref={inputRef} type="file" accept="image/*, .heic, .heif" onChange={handleFileChange} className="hidden" />
             </label>
           ) : (
             <div className="relative rounded-2xl overflow-hidden border border-border/40 bg-muted/20">

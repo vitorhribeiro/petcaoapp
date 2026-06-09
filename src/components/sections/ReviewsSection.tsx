@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { uploadImageToStorage } from '@/lib/storageUtils';
-import { validateImageFile } from '@/lib/imageUtils';
+import { validateImageFile, processFileIfHEIC } from '@/lib/imageUtils';
 import { Star, ChevronLeft, ChevronRight, MessageSquare, Store, Settings, Plus, Upload, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConfig } from '@/hooks/useConfig';
@@ -106,9 +106,19 @@ export function ReviewsSection() {
     if (!file) return;
     const validation = validateImageFile(file);
     if (!validation.valid) { toast.error(validation.error || 'Arquivo inválido'); e.target.value = ''; return; }
-    setReviewPhotoFile(file);
-    // Show local preview immediately
-    setReviewPhoto(URL.createObjectURL(file));
+    
+    try {
+      const processedFileOrBlob = await processFileIfHEIC(file);
+      const fileToSet = processedFileOrBlob instanceof File 
+        ? processedFileOrBlob 
+        : new File([processedFileOrBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: processedFileOrBlob.type });
+
+      setReviewPhotoFile(fileToSet);
+      // Show local preview immediately
+      setReviewPhoto(URL.createObjectURL(fileToSet));
+    } catch (error) {
+      toast.error('Erro ao processar imagem. Tente outra foto.');
+    }
     e.target.value = '';
   };
 
@@ -298,7 +308,7 @@ export function ReviewsSection() {
             </div>
             <div className="space-y-2">
               <Label>Foto do pet (opcional)</Label>
-              <Input type="file" accept="image/*" onChange={handlePhotoChange} className="text-base" />
+              <Input type="file" accept="image/*, .heic, .heif" onChange={handlePhotoChange} className="text-base" />
               {reviewPhoto && (
                 <div className="w-20 h-20 rounded-lg overflow-hidden border border-border">
                   <OptimizedImage src={reviewPhoto} alt="Preview" className="w-full h-full" showSkeleton={false} />
