@@ -365,7 +365,7 @@ export function PhotoViewer({ images, initialIndex, open, onClose, showAdminActi
             {/* Scrollable Area (Caption + Comments List) */}
             <div className="flex-1 overflow-y-auto custom-scrollbar hidden md:block">
               {/* Caption Section */}
-              {(image.caption || image.pet_name) && (
+              {(image.caption || image.pet_name) && image.category !== 'copa' && (
                 <div className="px-5 py-5 border-b border-border/5">
                   <div className="flex gap-3 items-start">
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold shrink-0 mt-0.5">
@@ -399,8 +399,8 @@ export function PhotoViewer({ images, initialIndex, open, onClose, showAdminActi
             <div className="shrink-0 flex flex-col border-t border-border/5 bg-card">
               
               {/* Mobile Only: Caption moved above actions */}
-              <div className="md:hidden mt-3 mb-3 px-4">
-                {(image.caption || image.pet_name) && (
+              {image.category !== 'copa' && (image.caption || image.pet_name) && (
+                <div className="md:hidden mt-3 mb-3 px-4">
                   <p className="text-sm text-foreground leading-snug">
                     <span className="font-semibold">{displayName}</span>{' '}
                     {image.caption || ''}
@@ -408,11 +408,11 @@ export function PhotoViewer({ images, initialIndex, open, onClose, showAdminActi
                       <span className="text-muted-foreground">🐾 {image.pet_name}</span>
                     )}
                   </p>
-                )}
-                {image.pet_name && image.caption && (
-                  <p className="text-xs text-muted-foreground mt-0.5">🐾 {image.pet_name}</p>
-                )}
-              </div>
+                  {image.pet_name && image.caption && (
+                    <p className="text-xs text-muted-foreground mt-0.5">🐾 {image.pet_name}</p>
+                  )}
+                </div>
+              )}
 
             {/* Interaction Bar (Likes, Share, etc.) */}
             <div className="shrink-0 border-t border-border/5 bg-card px-5 py-4">

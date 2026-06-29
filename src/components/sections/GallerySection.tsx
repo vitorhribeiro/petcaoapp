@@ -378,13 +378,13 @@ const LazyGalleryCard = React.memo(function LazyGalleryCard({ image, onClick }: 
           className="w-full h-full object-cover"
         />
       </div>
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-        {image.pet_name && (
+      {image.pet_name && image.category !== 'copa' && (
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
           <p className="text-white text-xs font-bold truncate tracking-wide">
             🐾 {image.pet_name}
           </p>
-        )}
-      </div>
+        </div>
+      )}
     </button>
   );
 });
